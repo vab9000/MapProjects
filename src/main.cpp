@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <execution>
 #include <windows.h>
-#include <CommCtrl.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
