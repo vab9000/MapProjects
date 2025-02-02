@@ -5,43 +5,54 @@
 #ifndef COUNTRY_HPP
 #define COUNTRY_HPP
 
-#include <vector>
 #include <string>
-#include "../Base/Province.hpp"
+#include <vector>
+#include "Tag.hpp"
+#include "../Base/AI.hpp"
+#include "../Warfare/Army.hpp"
 
-class Country {
+class Province;
+
+class Country : public Tag {
 	std::vector<Province *> *provinces;
+	std::vector<Army *> *armies;
+	AI *ai;
 
 public:
-	std::string name;
-	unsigned int color;
-
 	Country() {
-		name = "";
-		color = 0;
+		Tag();
 		provinces = new std::vector<Province *>();
+		armies = new std::vector<Army *>();
+		ai = new AI();
 	}
 
-	Country(const std::string &name) {
-		this->name = name;
-		color = 0;
+	explicit Country(const std::string &name, const unsigned int color) {
+		Tag(name, color);
 		provinces = new std::vector<Province *>();
+		armies = new std::vector<Army *>();
+		ai = new AI();
 	}
 
 	~Country() {
+		for (const auto &army : *armies) {
+			delete army;
+		}
+
 		delete provinces;
+		delete armies;
+		delete ai;
 	}
 
-	void addProvince(Province *province) {
+	void addProvince(Province *province) const {
 		provinces->emplace_back(province);
 	}
 
-	void removeProvince(Province *province) {
-		provinces->erase(std::remove(provinces->begin(), provinces->end(), province), provinces->end());
+	void removeProvince(Province *province) const {
+		std::erase(*provinces, province);
 	}
 
-	bool hasProvince(Province *province) {
-		return std::find(provinces->begin(), provinces->end(), province) != provinces->end();
+	bool hasProvince(const Province *province) const {
+		return std::ranges::find(*provinces, province) != provinces->end();
 	}
 
 	[[nodiscard]] std::vector<Province *> *getProvinces() const {

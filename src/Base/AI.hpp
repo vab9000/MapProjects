@@ -43,7 +43,7 @@ public:
         actions->clear();
     }
 
-    void performActions() {
+    void performActions() const {
         auto dis = std::uniform_real_distribution(0.0, 1.0);
 
         const auto random = dis(*gen);

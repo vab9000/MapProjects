@@ -6,10 +6,8 @@
 #include <utility>
 #include <vector>
 #include "../Tags/Country.hpp"
+#include "Utils.hpp"
 
-/*
-A unit of land in the game world.
- */
 class Province {
 	std::vector<std::array<int, 2>> *pixels;
 	std::vector<std::pair<Province *, std::array<int, 2>>> *outline;
@@ -21,7 +19,7 @@ class Province {
 public:
 	std::string name;
 	unsigned int color;
-	unsigned int mapColor;
+	unsigned int baseColor;
 	unsigned int numPixels;
 	unsigned int numOutline;
 	int bounds[4]{};
@@ -31,7 +29,7 @@ public:
 		locked = false;
 		this->name = name;
 		this->color = color;
-		mapColor = color;
+		baseColor = color;
 		bounds[0] = i;
 		bounds[1] = j;
 		bounds[2] = i;
@@ -194,6 +192,19 @@ public:
 		}
 		if (y > bounds[3]) {
 			bounds[3] = y;
+		}
+	}
+
+	void recolor(const MapMode mode) {
+		if (mode == MapMode::PROVINCES) {
+			color = baseColor;
+		} else if (mode == MapMode::OWNER) {
+			if (owner != nullptr) {
+				color = owner->color;
+			}
+			else {
+				color = 0xFFFFFFFF;
+			}
 		}
 	}
 };

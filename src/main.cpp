@@ -11,20 +11,21 @@
 
 #include "Base/Province.hpp"
 #include "Base/Image.hpp"
-#include "Base/AI.hpp"
-#include "Tags/Country.hpp"
+#include "Tags/Tag.hpp"
+#include "Base/Utils.hpp"
 
 Image image;
 HBITMAP bmp;
 std::shared_mutex provinceMutex;
 std::unordered_map<unsigned int, Province *> provinces;
-std::unordered_map<unsigned int, Country *> countries;
+std::unordered_map<unsigned int, Tag *> tags;
 Province *selectedProvince = nullptr;
 int offset[2] = {0, 0};
 double zoom = 1.0;
 int previousMouse[2] = {0, 0};
 bool mouseDown = false;
 bool mouseMoved = false;
+auto mapMode = MapMode::OWNER;
 
 void selectProvince(Province *province);
 
@@ -124,7 +125,8 @@ void reloadBitmap() {
     const auto bytes = new BYTE[image.width * image.height * 4];
 
     const auto provinceValues = provinces | std::views::values;
-    std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(), [bytes](const Province *province) {
+    std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(), [bytes](Province *province) {
+    	province->recolor(mapMode);
         const auto pixels = province->getPixels();
         for (int i = 0; i < province->numPixels; i++) {
             const auto pixel = pixels[i];
@@ -423,8 +425,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         delete province;
     }
 
-	for (const auto &country: countries | std::views::values) {
-		delete country;
+	for (const auto &tag: tags | std::views::values) {
+		delete tag;
 	}
 
     stbi_image_free(image.data);
