@@ -46,7 +46,7 @@ class Army {
 	Tag *tag;
 	std::vector<Unit *> *units;
 	AI *ai;
-	ArmyDirective directive;
+	ArmyDirective directive{};
 
 public:
 	explicit Army(Tag *tag) {
