@@ -14,7 +14,7 @@ class Province {
 	std::array<int, 2> *lockedPixels{};
 	std::pair<Province *, std::array<int, 2>> *lockedOutline{};
 	bool locked{};
-	Country* owner;
+	Country *owner;
 
 public:
 	std::string name;
@@ -120,8 +120,7 @@ public:
 		if (center[0] == -1) {
 			double minDistance = (std::numeric_limits<double>::max)();
 			for (int i = 0; i < numPixels; i++) {
-				if (const auto dist = distance(lockedPixels[i], {testCenter[0], testCenter[1]});
-					dist < minDistance) {
+				if (const auto dist = distance(lockedPixels[i], {testCenter[0], testCenter[1]}); dist < minDistance) {
 					minDistance = dist;
 					center[0] = lockedPixels[i][0];
 					center[1] = lockedPixels[i][1];
@@ -141,16 +140,14 @@ public:
 		delete[] y;
 	}
 
-	void setOwner(Country* newOwner) {
+	void setOwner(Country *newOwner) {
 		if (owner != nullptr && owner->hasProvince(this)) {
 			owner->removeProvince(this);
 		}
 		owner = newOwner;
 	}
 
-	[[nodiscard]] Country* getOwner() const {
-		return owner;
-	}
+	[[nodiscard]] Country *getOwner() const { return owner; }
 
 	void addPixel(const int x, const int y) {
 		if (locked) {
@@ -201,8 +198,7 @@ public:
 		} else if (mode == MapMode::OWNER) {
 			if (owner != nullptr) {
 				color = owner->color;
-			}
-			else {
+			} else {
 				color = 0xFFFFFFFF;
 			}
 		}

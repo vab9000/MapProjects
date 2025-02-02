@@ -20,14 +20,12 @@ class Country : public Tag {
 
 public:
 	Country() {
-		Tag();
 		provinces = new std::vector<Province *>();
 		armies = new std::vector<Army *>();
 		ai = new AI();
 	}
 
-	explicit Country(const std::string &name, const unsigned int color) {
-		Tag(name, color);
+	explicit Country(const std::string &name, const unsigned int color) : Tag(name, color) {
 		provinces = new std::vector<Province *>();
 		armies = new std::vector<Army *>();
 		ai = new AI();
