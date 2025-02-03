@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.29)
-project(MapGame)
+project(MapSimulation)
 
 set(CMAKE_CXX_STANDARD 23)
 
 set(CMAKE_GENERATOR_PLATFORM Win32)
 
-add_executable(MapGame WIN32 src/main.cpp)
+add_executable(MapSimulation WIN32 src/main.cpp)
 
 include_directories(libs/stb/include)
 
