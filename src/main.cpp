@@ -98,9 +98,9 @@ void reloadBitmapProvince(const Province *province) {
 				bytes[index + 2] = 0;
 				bytes[index + 3] = 255;
 			} else {
-				bytes[index] = static_cast<BYTE>(color % 256);
-				bytes[index + 1] = static_cast<BYTE>((color >> 8) % 256);
-				bytes[index + 2] = static_cast<BYTE>((color >> 16) % 256);
+				bytes[index] = static_cast<BYTE>(color);
+				bytes[index + 1] = static_cast<BYTE>(color >> 8);
+				bytes[index + 2] = static_cast<BYTE>(color >> 16);
 				bytes[index + 3] = 255;
 			}
 		}
@@ -138,9 +138,9 @@ void reloadBitmap() {
 			const auto pixel = pixels[i];
 			const auto color = province->color;
 			const auto index = (pixel[0] + pixel[1] * image.width) * 4;
-			bytes[index] = static_cast<BYTE>(color % 256);
-			bytes[index + 1] = static_cast<BYTE>((color >> 8) % 256);
-			bytes[index + 2] = static_cast<BYTE>((color >> 16) % 256);
+			bytes[index] = static_cast<BYTE>(color);
+			bytes[index + 1] = static_cast<BYTE>(color >> 8);
+			bytes[index + 2] = static_cast<BYTE>(color >> 16);
 			bytes[index + 3] = 255;
 		}
 		const auto outline = province->getOutline();
@@ -161,9 +161,9 @@ void reloadBitmap() {
 					bytes[index + 2] = 0;
 					bytes[index + 3] = 255;
 				} else {
-					bytes[index] = static_cast<BYTE>(color % 256);
-					bytes[index + 1] = static_cast<BYTE>((color >> 8) % 256);
-					bytes[index + 2] = static_cast<BYTE>((color >> 16) % 256);
+					bytes[index] = static_cast<BYTE>(color);
+					bytes[index + 1] = static_cast<BYTE>(color >> 8);
+					bytes[index + 2] = static_cast<BYTE>(color >> 16);
 					bytes[index + 3] = 255;
 				}
 			}
