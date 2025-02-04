@@ -8,10 +8,33 @@
 #include <vector>
 #include <random>
 
-#include "Action.hpp"
-
 // How unlikely the AI is to perform an action
 constexpr double INERTIA = 10.0;
+
+class Action {
+public:
+    void (*action)(void *, void *);
+    void *sParam;
+    void *oParam;
+    int (*weightFunc)(void *, void *);
+
+    Action(void (*action)(void *, void *), void(*sParam), void(*oParam), int (*getWeight)(void *, void *)) {
+        this->action = action;
+        this->sParam = sParam;
+        this->oParam = oParam;
+        this->weightFunc = getWeight;
+    }
+
+    ~Action() = default;
+
+    void perform() const {
+        action(sParam, oParam);
+    }
+
+    [[nodiscard]] int getWeight() const {
+        return weightFunc(sParam, oParam);
+    }
+};
 
 class AI {
     std::vector<Action*> *actions;
@@ -49,9 +72,9 @@ public:
         const auto random = dis(*gen);
 
         for (const auto &action : *actions) {
-			if (const int weight = action->getWeight(action->sParam, action->oParam); weight >= 1) {
+			if (const int weight = action->getWeight(); weight >= 1) {
                 if (const auto chance = 1.0 - (1 / ((weight * weight) / INERTIA + 1)); random < chance) {
-                    action->action(action->sParam, action->oParam);
+                    action->perform();
                 }
             }
         }

@@ -73,7 +73,7 @@ void reloadBitmapProvince(const Province *province) {
 
 	const auto color = province->color;
 	const auto pixels = province->getPixels();
-	for (unsigned int i = 0; i < province->numPixels; i++) {
+	for (unsigned int i = 0; i < province->numPixels; ++i) {
 		const auto pixel = pixels[i];
 		const auto index = (pixel[0] + pixel[1] * image.width) * 4;
 		bytes[index] = static_cast<BYTE>(color);
@@ -82,7 +82,7 @@ void reloadBitmapProvince(const Province *province) {
 		bytes[index + 3] = 255;
 	}
 	const auto outline = province->getOutline();
-	for (unsigned int i = 0; i < province->numOutline; i++) {
+	for (unsigned int i = 0; i < province->numOutline; ++i) {
 		const auto pixel = outline[i].second;
 		const auto otherProvince = outline[i].first;
 		const auto index = (pixel[0] + pixel[1] * image.width) * 4;
@@ -134,7 +134,7 @@ void reloadBitmap() {
 
 	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(), [bytes](const Province *province) {
 		const auto pixels = province->getPixels();
-		for (unsigned int i = 0; i < province->numPixels; i++) {
+		for (unsigned int i = 0; i < province->numPixels; ++i) {
 			const auto pixel = pixels[i];
 			const auto color = province->color;
 			const auto index = (pixel[0] + pixel[1] * image.width) * 4;
@@ -144,7 +144,7 @@ void reloadBitmap() {
 			bytes[index + 3] = 255;
 		}
 		const auto outline = province->getOutline();
-		for (unsigned int i = 0; i < province->numOutline; i++) {
+		for (unsigned int i = 0; i < province->numOutline; ++i) {
 			const auto otherProvince = outline[i].first;
 			const auto pixel = outline[i].second;
 			const auto color = province->color;
@@ -192,7 +192,7 @@ void loadImage() {
 		return false;
 	};
 
-	image = Image{};
+	image = Image();
 
 	image.data = stbi_load("assets/provinces.png", &image.width, &image.height, &image.channels, 3);
 

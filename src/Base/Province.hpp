@@ -66,7 +66,7 @@ public:
 		locked = true;
 
 		lockedPixels = new std::array<int, 2>[numPixels];
-		for (int i = 0; i < numPixels; i++) {
+		for (int i = 0; i < numPixels; ++i) {
 			lockedPixels[i][0] = pixels->at(i)[0];
 			lockedPixels[i][1] = pixels->at(i)[1];
 			x[i] = lockedPixels[i][0];
@@ -75,7 +75,7 @@ public:
 		delete pixels;
 
 		lockedOutline = new std::pair<Province *, std::array<int, 2>>[numOutline];
-		for (int i = 0; i < numOutline; i++) {
+		for (int i = 0; i < numOutline; ++i) {
 			lockedOutline[i].first = outline->at(i).first;
 			lockedOutline[i].second[0] = outline->at(i).second[0];
 			lockedOutline[i].second[1] = outline->at(i).second[1];
@@ -97,7 +97,7 @@ public:
 			testCenter[1] = y[totalPixels / 2];
 		}
 
-		for (int i = 0; i < numPixels; i++) {
+		for (int i = 0; i < numPixels; ++i) {
 			if (lockedPixels[i][0] == testCenter[0] && lockedPixels[i][1] == testCenter[1]) {
 				center[0] = testCenter[0];
 				center[1] = testCenter[1];
@@ -105,7 +105,7 @@ public:
 			}
 		}
 
-		for (int i = 0; i < numOutline; i++) {
+		for (int i = 0; i < numOutline; ++i) {
 			if (lockedOutline[i].second[0] == testCenter[0] && lockedOutline[i].second[1] == testCenter[1]) {
 				center[0] = testCenter[0];
 				center[1] = testCenter[1];
@@ -119,14 +119,14 @@ public:
 
 		if (center[0] == -1) {
 			double minDistance = (std::numeric_limits<double>::max)();
-			for (int i = 0; i < numPixels; i++) {
+			for (int i = 0; i < numPixels; ++i) {
 				if (const auto dist = distance(lockedPixels[i], {testCenter[0], testCenter[1]}); dist < minDistance) {
 					minDistance = dist;
 					center[0] = lockedPixels[i][0];
 					center[1] = lockedPixels[i][1];
 				}
 			}
-			for (int i = 0; i < numOutline; i++) {
+			for (int i = 0; i < numOutline; ++i) {
 				if (const auto dist = distance(lockedOutline[i].second, {testCenter[0], testCenter[1]});
 				    dist < minDistance) {
 					minDistance = dist;

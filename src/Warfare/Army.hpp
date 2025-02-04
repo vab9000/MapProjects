@@ -6,6 +6,7 @@
 #define ARMY_HPP
 
 #include <vector>
+#include "../Characters/Character.hpp"
 #include "../Base/AI.hpp"
 
 class Tag;
@@ -28,6 +29,7 @@ public:
 	Army *army;
 	std::vector<Province *> *path;
 	unsigned int travelProgress;
+	Character *general;
 
 	Unit() {
 		size = 0;
@@ -35,6 +37,7 @@ public:
 		army = nullptr;
 		path = new std::vector<Province *>();
 		travelProgress = 0;
+		general = nullptr;
 	}
 
 	~Unit() {
