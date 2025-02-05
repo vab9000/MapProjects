@@ -1,7 +1,3 @@
-//
-// Created by varun on 2/2/2025.
-//
-
 #ifndef UTILS_HPP
 #define UTILS_HPP
 
@@ -11,7 +7,7 @@ enum class MapMode {
 };
 
 class Date {
-	unsigned int absoluteDays() const {
+	[[nodiscard]] unsigned int absoluteDays() const {
 		unsigned int totalDays = 0;
 
 		for (unsigned int y = 0; y < year; ++y) {
@@ -71,9 +67,7 @@ public:
 	unsigned int month;
 	unsigned int day;
 
-	Date() {
-		this(0, 0, 0);
-	}
+	Date() : Date(0, 0, 0) {}
 
 	Date(const unsigned int year, const unsigned int month, const unsigned int day) {
 		this->year = year;
@@ -87,7 +81,7 @@ public:
 		this->day = other->day;
 	}
 
-	Date clone() const { return Date(this); }
+	[[nodiscard]] Date clone() const { return Date(this); }
 
 	bool operator==(const Date &other) const { return year == other.year && month == other.month && day == other.day; }
 

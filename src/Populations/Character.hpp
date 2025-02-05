@@ -1,7 +1,3 @@
-//
-// Created by varun on 2/4/2025.
-//
-
 #ifndef CHARACTER_HPP
 #define CHARACTER_HPP
 
@@ -26,8 +22,8 @@ public:
 		delete traits;
 	}
 
-	int age(const Date currentDate) const {
-		return currentDate.year - birthday.year;
+	[[nodiscard]] int age(const Date currentDate) const {
+		return static_cast<int>(currentDate.year) - static_cast<int>(birthday.year);
 	}
 };
 

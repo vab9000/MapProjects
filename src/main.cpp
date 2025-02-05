@@ -28,6 +28,7 @@ int previousMouse[2] = {0, 0};
 bool mouseDown = false;
 bool mouseMoved = false;
 auto mapMode = MapMode::OWNER;
+auto date = Date();
 
 void selectProvince(Province *province);
 
@@ -128,9 +129,8 @@ void reloadBitmap() {
 
 	const auto provinceValues = provinces | std::views::values;
 
-	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(), [](Province *province) {
-		province->recolor(mapMode);
-	});
+	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(),
+	              [](Province *province) { province->recolor(mapMode); });
 
 	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(), [bytes](const Province *province) {
 		const auto pixels = province->getPixels();
@@ -182,8 +182,8 @@ void reloadBitmap() {
 }
 
 void loadImage() {
-	auto checkBorder = [](const unsigned int color, Province **ptr, const unsigned int i, const unsigned int j, const Image &image,
-	                      const std::unordered_map<unsigned int, Province *> &provinces) {
+	auto checkBorder = [](const unsigned int color, Province **ptr, const unsigned int i, const unsigned int j,
+	                      const Image &image, const std::unordered_map<unsigned int, Province *> &provinces) {
 		if (image.getColor(i, j) != color) {
 			*ptr = provinces.at(image.getColor(i, j));
 			return true;

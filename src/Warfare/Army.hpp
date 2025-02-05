@@ -1,25 +1,19 @@
-//
-// Created by varun on 2/1/2025.
-//
-
 #ifndef ARMY_HPP
 #define ARMY_HPP
 
 #include <vector>
-#include "../Characters/Character.hpp"
 #include "../Base/AI.hpp"
+#include "../Populations/Character.hpp"
+#include "../Base/Province.hpp"
 
 class Tag;
-class Province;
 class Army;
 
-enum class ArmyDirectiveType {
-	ATTACK
-};
+enum class ArmyDirectiveType { ATTACK };
 
 struct ArmyDirective {
-    ArmyDirectiveType type;
-    void *target;
+	ArmyDirectiveType type;
+	void *target;
 };
 
 class Unit {
@@ -28,8 +22,9 @@ public:
 	Province *location;
 	Army *army;
 	std::vector<Province *> *path;
-	unsigned int travelProgress;
+	double travelProgress;
 	Character *general;
+	bool retreating;
 
 	Unit() {
 		size = 0;
@@ -38,11 +33,10 @@ public:
 		path = new std::vector<Province *>();
 		travelProgress = 0;
 		general = nullptr;
+		retreating = false;
 	}
 
-	~Unit() {
-		delete path;
-	}
+	~Unit() { delete path; }
 };
 
 class Army {
@@ -56,16 +50,13 @@ public:
 		this->tag = tag;
 		units = new std::vector<Unit *>();
 		ai = new AI();
-		directive = {
-            .type = ArmyDirectiveType::ATTACK,
-            .target = nullptr
-        };
+		directive = {.type = ArmyDirectiveType::ATTACK, .target = nullptr};
 	}
 
 	~Army() {
 		for (const auto &unit: *units) {
-            delete unit;
-        }
+			delete unit;
+		}
 
 		delete units;
 		delete ai;

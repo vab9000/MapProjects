@@ -1,7 +1,3 @@
-//
-// Created by varun on 1/18/2025.
-//
-
 #ifndef AI_HPP
 #define AI_HPP
 

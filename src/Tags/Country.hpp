@@ -1,15 +1,11 @@
-//
-// Created by varun on 2/1/2025.
-//
-
 #ifndef COUNTRY_HPP
 #define COUNTRY_HPP
 
 #include <string>
 #include <vector>
-#include "Tag.hpp"
 #include "../Base/AI.hpp"
 #include "../Warfare/Army.hpp"
+#include "Tag.hpp"
 
 class Province;
 
@@ -32,7 +28,7 @@ public:
 	}
 
 	~Country() {
-		for (const auto &army : *armies) {
+		for (const auto &army: *armies) {
 			delete army;
 		}
 
@@ -41,23 +37,16 @@ public:
 		delete ai;
 	}
 
-	void addProvince(Province *province) const {
-		provinces->emplace_back(province);
-	}
+	void addProvince(Province *province) const { provinces->emplace_back(province); }
 
-	void removeProvince(Province *province) const {
-		std::erase(*provinces, province);
-	}
+	void removeProvince(Province *province) const { std::erase(*provinces, province); }
 
 	bool hasProvince(const Province *province) const {
 		return std::ranges::find(*provinces, province) != provinces->end();
 	}
 
-	[[nodiscard]] std::vector<Province *> *getProvinces() const {
-		return provinces;
-	}
+	[[nodiscard]] std::vector<Province *> *getProvinces() const { return provinces; }
 };
 
 
-
-#endif //COUNTRY_HPP
+#endif // COUNTRY_HPP

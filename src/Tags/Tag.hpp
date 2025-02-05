@@ -1,7 +1,3 @@
-//
-// Created by varun on 2/2/2025.
-//
-
 #ifndef TAG_HPP
 #define TAG_HPP
 
