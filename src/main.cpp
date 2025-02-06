@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <execution>
 #include <ranges>
+#include <unordered_set>
 #include <shared_mutex>
 #include <unordered_map>
 #include <windows.h>
@@ -30,6 +31,8 @@ bool mouseMoved = false;
 auto mapMode = MapMode::OWNER;
 auto date = Date();
 
+void changeMapMode(MapMode mode);
+
 void selectProvince(Province *province);
 
 void reloadBitmapProvince(const Province *province);
@@ -43,6 +46,17 @@ LRESULT CALLBACK windowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 HWND createDisplay();
 
 void startMessageLoop(HWND hwnd);
+
+void changeMapMode(const MapMode mode) {
+	mapMode = mode;
+
+	const auto provinceValues = provinces | std::views::values;
+
+	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(),
+	              [](Province *province) { province->recolor(mapMode); });
+
+	reloadBitmap();
+}
 
 void selectProvince(Province *province) {
 	const auto oldSelectedProvince = selectedProvince;
@@ -83,17 +97,18 @@ void reloadBitmapProvince(const Province *province) {
 		bytes[index + 3] = 255;
 	}
 	const auto outline = province->getOutline();
+	auto updatedProvinces = std::unordered_set<Province*>();
 	for (unsigned int i = 0; i < province->numOutline; ++i) {
 		const auto pixel = outline[i].second;
 		const auto otherProvince = outline[i].first;
 		const auto index = (pixel[0] + pixel[1] * image.width) * 4;
-		if (selectedProvince != nullptr && province->color == selectedProvince->color) {
+		if (selectedProvince != nullptr && color == selectedProvince->color) {
 			bytes[index] = 255;
 			bytes[index + 1] = 255;
 			bytes[index + 2] = 255;
 			bytes[index + 3] = 255;
 		} else {
-			if (otherProvince != nullptr && otherProvince->color != province->color) {
+			if (otherProvince != nullptr && otherProvince->color != color) {
 				bytes[index] = 0;
 				bytes[index + 1] = 0;
 				bytes[index + 2] = 0;
@@ -105,13 +120,32 @@ void reloadBitmapProvince(const Province *province) {
 				bytes[index + 3] = 255;
 			}
 		}
+		if (!updatedProvinces.contains(otherProvince)) {
+			updatedProvinces.insert(otherProvince);
+			if (otherProvince == nullptr) {
+				continue;
+			}
+			const auto otherOutline = otherProvince->getOutline();
+			for (unsigned int j = 0; j < otherProvince->numOutline; ++j) {
+				const auto otherPixel = otherOutline[j].second;
+				const auto otherIndex = (otherPixel[0] + otherPixel[1] * image.width) * 4;
+				if (outline[j].first == province) {
+					if (otherProvince->color == color) {
+						bytes[otherIndex] = static_cast<BYTE>(color);
+						bytes[otherIndex + 1] = static_cast<BYTE>(color >> 8);
+						bytes[otherIndex + 2] = static_cast<BYTE>(color >> 16);
+						bytes[otherIndex + 3] = 255;
+					}
+					else {
+						bytes[otherIndex] = 0;
+						bytes[otherIndex + 1] = 0;
+						bytes[otherIndex + 2] = 0;
+						bytes[otherIndex + 3] = 255;
+					}
+				}
+			}
+		}
 	}
-
-	const auto centerIndex = (province->center[0] + province->center[1] * image.width) * 4;
-	bytes[centerIndex] = 125;
-	bytes[centerIndex + 1] = 125;
-	bytes[centerIndex + 2] = 125;
-	bytes[centerIndex + 3] = 255;
 
 	bmp = CreateBitmap(image.width, image.height, 1, 32, bytes);
 
@@ -128,9 +162,6 @@ void reloadBitmap() {
 	const auto bytes = new BYTE[image.width * image.height * 4];
 
 	const auto provinceValues = provinces | std::views::values;
-
-	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(),
-	              [](Province *province) { province->recolor(mapMode); });
 
 	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(), [bytes](const Province *province) {
 		const auto pixels = province->getPixels();
