@@ -189,7 +189,7 @@ void Province::recolor(const MapMode mode) {
 	}
 }
 
-[[nodiscard]] unsigned int Province::distance(const Province& other) const {
+[[nodiscard]] unsigned int Province::distance(const Province &other) const {
 	return static_cast<unsigned int>(sqrt((center[0] - other.center[0]) * (center[0] - other.center[0]) +
-				(center[1] - other.center[1]) * (center[1] - other.center[1])));
+	                                      (center[1] - other.center[1]) * (center[1] - other.center[1])));
 }

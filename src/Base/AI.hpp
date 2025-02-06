@@ -8,6 +8,8 @@
 constexpr double INERTIA = 10.0;
 
 class Action {
+    int weightCache;
+    int numCache = 0;
 public:
     void (*action)(void *, void *);
     void *sParam;
@@ -19,6 +21,7 @@ public:
         this->sParam = sParam;
         this->oParam = oParam;
         this->weightFunc = getWeight;
+        weightCache = this->getWeight();
     }
 
     ~Action() = default;
@@ -27,7 +30,12 @@ public:
         action(sParam, oParam);
     }
 
-    [[nodiscard]] int getWeight() const {
+    [[nodiscard]] int getWeight() {
+        if (numCache != 0) {
+            numCache--;
+            return weightCache;
+        }
+        numCache = 30;
         return weightFunc(sParam, oParam);
     }
 };

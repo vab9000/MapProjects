@@ -6,15 +6,15 @@
 #include <windows.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+#include "Base/Image.hpp"
+#include "Base/Province.hpp"
+#include "Base/Utils.hpp"
+#include "Tags/Country.hpp"
+#include "Tags/Tag.hpp"
 
 #pragma comment(                                                                                                       \
         linker,                                                                                                        \
         "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
-
-#include "Base/Image.hpp"
-#include "Base/Province.hpp"
-#include "Base/Utils.hpp"
-#include "Tags/Tag.hpp"
 
 Image image;
 HBITMAP bmp;

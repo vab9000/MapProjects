@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 23)
 
 set(CMAKE_GENERATOR_PLATFORM Win32)
 
-add_executable(MapSimulation WIN32 src/main.cpp src/Base/Province.cpp)
+add_executable(MapSimulation WIN32 src/main.cpp src/Base/Province.cpp src/Warfare/Army.cpp)
 
 include_directories(libs/stb/include)
 

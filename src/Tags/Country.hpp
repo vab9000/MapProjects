@@ -11,30 +11,18 @@ class Province;
 
 class Country : public Tag {
 	std::vector<Province *> *provinces;
-	std::vector<Army *> *armies;
-	AI *ai;
 
 public:
 	Country() {
 		provinces = new std::vector<Province *>();
-		armies = new std::vector<Army *>();
-		ai = new AI();
 	}
 
 	explicit Country(const std::string &name, const unsigned int color) : Tag(name, color) {
 		provinces = new std::vector<Province *>();
-		armies = new std::vector<Army *>();
-		ai = new AI();
 	}
 
-	~Country() {
-		for (const auto &army: *armies) {
-			delete army;
-		}
-
+	~Country() override {
 		delete provinces;
-		delete armies;
-		delete ai;
 	}
 
 	void addProvince(Province *province) const { provinces->emplace_back(province); }
@@ -46,6 +34,10 @@ public:
 	}
 
 	[[nodiscard]] std::vector<Province *> *getProvinces() const { return provinces; }
+
+	[[nodiscard]] bool hasArmyAccess(const Province &province) const override {
+		return true;
+	}
 };
 
 

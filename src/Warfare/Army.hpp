@@ -3,8 +3,9 @@
 
 #include <vector>
 #include "../Base/AI.hpp"
-#include "../Populations/Character.hpp"
 #include "../Base/Province.hpp"
+#include "../Populations/Character.hpp"
+
 
 class Tag;
 class Army;
@@ -26,41 +27,24 @@ public:
 	Character *general;
 	bool retreating;
 
-	Unit() {
-		size = 0;
-		location = nullptr;
-		army = nullptr;
-		path = new std::vector<Province *>();
-		travelProgress = 0;
-		general = nullptr;
-		retreating = false;
-	}
+	explicit Unit(Army *army, Province *location);
 
-	~Unit() { delete path; }
+	~Unit();
+
+	void setDestination(Province *destination);
 };
 
 class Army {
-	Tag *tag;
-	std::vector<Unit *> *units;
 	AI *ai;
 	ArmyDirective directive{};
 
 public:
-	explicit Army(Tag *tag) {
-		this->tag = tag;
-		units = new std::vector<Unit *>();
-		ai = new AI();
-		directive = {.type = ArmyDirectiveType::ATTACK, .target = nullptr};
-	}
+	std::vector<Unit *> *units;
+	Tag *tag;
 
-	~Army() {
-		for (const auto &unit: *units) {
-			delete unit;
-		}
+	explicit Army(Tag *tag);
 
-		delete units;
-		delete ai;
-	}
+	~Army();
 };
 
 

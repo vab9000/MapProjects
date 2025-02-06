@@ -1,10 +1,11 @@
 #ifndef PROVINCE_HPP
 #define PROVINCE_HPP
 
-#include <string>
-#include <vector>
-#include <utility>
 #include <array>
+#include <string>
+#include <utility>
+#include <vector>
+#include "Utils.hpp"
 
 class Country;
 enum class MapMode;
