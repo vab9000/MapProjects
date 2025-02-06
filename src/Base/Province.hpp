@@ -3,9 +3,11 @@
 
 #include <array>
 #include <string>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 #include "Utils.hpp"
+
 
 class Country;
 enum class MapMode;
@@ -26,6 +28,7 @@ public:
 	unsigned int baseColor;
 	unsigned int numPixels;
 	unsigned int numOutline;
+	std::unordered_set<Province *> *neighbors;
 	int bounds[4]{};
 	int center[2]{};
 
@@ -51,7 +54,10 @@ public:
 
 	void recolor(MapMode mode);
 
-	[[nodiscard]] unsigned int distance(const Province& other) const;
+	[[nodiscard]] unsigned int distance(const Province &other) const;
+
+	[[nodiscard]] std::vector<Province *> getPathTo(Province *destination, bool (*accessible)(const Province &, void *),
+	                                                double (*costModifier)(const Province &, void *), void *param);
 };
 
 #endif // PROVINCE_HPP

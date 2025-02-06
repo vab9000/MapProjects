@@ -1,9 +1,10 @@
 #include <algorithm>
+#include <chrono>
 #include <execution>
 #include <ranges>
-#include <unordered_set>
 #include <shared_mutex>
 #include <unordered_map>
+#include <unordered_set>
 #include <windows.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -97,7 +98,7 @@ void reloadBitmapProvince(const Province *province) {
 		bytes[index + 3] = 255;
 	}
 	const auto outline = province->getOutline();
-	auto updatedProvinces = std::unordered_set<Province*>();
+	auto updatedProvinces = std::unordered_set<Province *>();
 	for (unsigned int i = 0; i < province->numOutline; ++i) {
 		const auto pixel = outline[i].second;
 		const auto otherProvince = outline[i].first;
@@ -135,8 +136,7 @@ void reloadBitmapProvince(const Province *province) {
 						bytes[otherIndex + 1] = static_cast<BYTE>(color >> 8);
 						bytes[otherIndex + 2] = static_cast<BYTE>(color >> 16);
 						bytes[otherIndex + 3] = 255;
-					}
-					else {
+					} else {
 						bytes[otherIndex] = 0;
 						bytes[otherIndex + 1] = 0;
 						bytes[otherIndex + 2] = 0;
@@ -266,6 +266,14 @@ void loadImage() {
 	for (const auto &province: provinces | std::views::values) {
 		province->lock();
 	}
+
+	// Test code for pathfinding optimization
+	// const auto army = new Army(tags.at(0x002500F0));
+	// const auto unit = new Unit(army, provinces.at(0x002500F0));
+	// const auto start = std::chrono::high_resolution_clock::now();
+	// unit->setDestination(provinces.at(0x00DB20D2));
+	// const auto end = std::chrono::high_resolution_clock::now();
+	// std::chrono::duration<double> elapsed = end - start;
 }
 
 LRESULT CALLBACK windowProc(const HWND hwnd, const UINT uMsg, const WPARAM wParam, const LPARAM lParam) {

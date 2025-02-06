@@ -1,7 +1,10 @@
 #include "Province.hpp"
 #include <algorithm>
 #include <array>
+#include <queue>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 #include "../Populations/Pop.hpp"
@@ -25,6 +28,7 @@ Province::Province(const std::string &name, const unsigned int color, const int 
 	center[1] = -1;
 	owner = nullptr;
 	pops = new std::vector<Pop *>();
+	neighbors = new std::unordered_set<Province *>();
 }
 
 Province::~Province() {
@@ -36,6 +40,7 @@ Province::~Province() {
 		delete outline;
 	}
 	delete pops;
+	delete neighbors;
 }
 
 void Province::lock() {
@@ -148,6 +153,7 @@ void Province::addOutline(const int x, const int y, Province *other) {
 	}
 	outline->emplace_back(other, std::array{x, y});
 	numOutline += 1;
+	neighbors->emplace(other);
 }
 
 [[nodiscard]] std::array<int, 2> *Province::getPixels() const {
@@ -192,4 +198,55 @@ void Province::recolor(const MapMode mode) {
 [[nodiscard]] unsigned int Province::distance(const Province &other) const {
 	return static_cast<unsigned int>(sqrt((center[0] - other.center[0]) * (center[0] - other.center[0]) +
 	                                      (center[1] - other.center[1]) * (center[1] - other.center[1])));
+}
+
+[[nodiscard]] std::vector<Province *> Province::getPathTo(Province *destination,
+                                                          bool (*accessible)(const Province &, void *),
+                                                          double (*costModifier)(const Province &, void *),
+                                                          void *param) {
+	std::unordered_map<Province *, double> distances;
+	std::unordered_map<Province *, Province *> previous;
+	std::priority_queue<std::pair<double, Province *>, std::vector<std::pair<double, Province *>>, std::greater<>>
+	        queue;
+
+	distances[this] = 0;
+	queue.emplace(0, this);
+
+	auto reached = false;
+
+	while (!queue.empty()) {
+		auto [currentDistance, currentProvince] = queue.top();
+		queue.pop();
+
+		if (currentProvince == destination) {
+			reached = true;
+			break;
+		}
+
+		for (const auto &neighborProvince: *currentProvince->neighbors) {
+			if (neighborProvince == nullptr || !accessible(*neighborProvince, param) ||
+			    costModifier(*neighborProvince, param) < 0) {
+				continue;
+			}
+
+			if (double newDistance = currentDistance + costModifier(*neighborProvince, param) *
+			                                                   currentProvince->distance(*neighborProvince);
+			    !distances.contains(neighborProvince) || newDistance < distances[neighborProvince]) {
+				distances[neighborProvince] = newDistance;
+				previous[neighborProvince] = currentProvince;
+				queue.emplace(newDistance, neighborProvince);
+			}
+		}
+	}
+
+	if (!reached) {
+		return {};
+	}
+
+	std::vector<Province *> path;
+	for (Province *at = destination; at != nullptr; at = previous[at]) {
+		path.insert(path.begin(), at);
+	}
+
+	return path;
 }

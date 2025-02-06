@@ -1,6 +1,4 @@
 #include "Army.hpp"
-#include <queue>
-#include <unordered_map>
 #include <vector>
 #include "../Base/AI.hpp"
 #include "../Base/Province.hpp"
@@ -21,51 +19,15 @@ Unit::Unit(Army *army, Province *location) {
 Unit::~Unit() { delete path; }
 
 void Unit::setDestination(Province *destination) {
-	if (location == nullptr || destination == nullptr) {
-		return;
-	}
-
-	std::unordered_map<Province *, double> distances;
-	std::unordered_map<Province *, Province *> previous;
-	std::priority_queue<std::pair<double, Province *>, std::vector<std::pair<double, Province *>>, std::greater<>>
-			queue;
-
-	distances[location] = 0;
-	queue.emplace(0, location);
-
-	auto reached = false;
-
-	while (!queue.empty()) {
-		auto [currentDistance, currentProvince] = queue.top();
-		queue.pop();
-
-		if (currentProvince == destination) {
-			reached = true;
-			break;
-		}
-
-		const auto outline = currentProvince->getOutline();
-		for (unsigned int i = 0; i < currentProvince->numOutline; ++i) {
-			auto neighborProvince = outline[i].first;
-			if (neighborProvince == nullptr || !army->tag->hasArmyAccess(*neighborProvince)) {
-				continue;
-			}
-
-			if (double newDistance = currentDistance + currentProvince->distance(*neighborProvince);
-			    !distances.contains(neighborProvince) || newDistance < distances[neighborProvince]) {
-				distances[neighborProvince] = newDistance;
-				previous[neighborProvince] = currentProvince;
-				queue.emplace(newDistance, neighborProvince);
-			}
-		}
-	}
-
-	if (!reached) {
-		return;
-	}
-	path->clear();
-	for (Province *at = destination; at != nullptr; at = previous[at]) {
-		path->insert(path->begin(), at);
+	const auto generatedPath = location->getPathTo(
+	        destination,
+	        [](const Province &province, void *param) {
+		        const auto unit = static_cast<Unit *>(param);
+		        return unit->army->tag->hasArmyAccess(province);
+	        },
+	        [](const Province &, void *) { return 1.0; }, this);
+	for (const auto &province: generatedPath) {
+		path->emplace_back(province);
 	}
 }
 
