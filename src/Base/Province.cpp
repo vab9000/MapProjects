@@ -1,18 +1,18 @@
-#include "Province.hpp"
 #include <algorithm>
 #include <array>
 #include <queue>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
+#include "Province.hpp"
 #include "../Populations/Pop.hpp"
 #include "../Tags/Country.hpp"
 #include "Utils.hpp"
 
 Province::Province(const std::string &name, const unsigned int color, const int i, const int j) {
 	locked = false;
+	distancesProcessed = false;
 	this->name = name;
 	this->color = color;
 	baseColor = color;
@@ -28,7 +28,7 @@ Province::Province(const std::string &name, const unsigned int color, const int 
 	center[1] = -1;
 	owner = nullptr;
 	pops = new std::vector<Pop *>();
-	neighbors = new std::unordered_set<Province *>();
+	neighbors = new std::unordered_map<Province *, double>();
 }
 
 Province::~Province() {
@@ -52,8 +52,6 @@ void Province::lock() {
 
 	const auto x = new int[totalPixels];
 	const auto y = new int[totalPixels];
-
-	locked = true;
 
 	lockedPixels = new std::array<int, 2>[numPixels];
 	for (int i = 0; i < numPixels; ++i) {
@@ -128,13 +126,22 @@ void Province::lock() {
 
 	delete[] x;
 	delete[] y;
+
+	locked = true;
 }
 
-void Province::setOwner(Country *newOwner) {
+void Province::processDistances() {
+	for (const auto neighbor: *neighbors | std::views::keys) {
+		neighbors->operator[](neighbor) = this->distance(*neighbor);
+	}
+	distancesProcessed = true;
+}
+
+void Province::setOwner(const Country &newOwner) {
 	if (owner != nullptr && owner->hasProvince(this)) {
 		owner->removeProvince(this);
 	}
-	owner = newOwner;
+	owner = &const_cast<Country &>(newOwner);
 }
 
 [[nodiscard]] Country *Province::getOwner() const { return owner; }
@@ -147,13 +154,13 @@ void Province::addPixel(const int x, const int y) {
 	numPixels += 1;
 }
 
-void Province::addOutline(const int x, const int y, Province *other) {
+void Province::addOutline(const int x, const int y, const Province &other) {
 	if (locked) {
 		return;
 	}
-	outline->emplace_back(other, std::array{x, y});
+	outline->emplace_back(&const_cast<Province &>(other), std::array{x, y});
 	numOutline += 1;
-	neighbors->emplace(other);
+	neighbors->emplace(&const_cast<Province &>(other), 0.0);
 }
 
 [[nodiscard]] std::array<int, 2> *Province::getPixels() const {
@@ -195,12 +202,15 @@ void Province::recolor(const MapMode mode) {
 	}
 }
 
-[[nodiscard]] unsigned int Province::distance(const Province &other) const {
-	return static_cast<unsigned int>(sqrt((center[0] - other.center[0]) * (center[0] - other.center[0]) +
-	                                      (center[1] - other.center[1]) * (center[1] - other.center[1])));
+[[nodiscard]] double Province::distance(const Province &other) const {
+	if (distancesProcessed&& neighbors->contains(&const_cast<Province &>(other))) {
+		return neighbors->at(&const_cast<Province &>(other));
+	}
+	return sqrt((center[0] - other.center[0]) * (center[0] - other.center[0]) +
+	                                      (center[1] - other.center[1]) * (center[1] - other.center[1]));
 }
 
-[[nodiscard]] std::vector<Province *> Province::getPathTo(Province *destination,
+[[nodiscard]] std::vector<Province *> Province::getPathTo(const Province &destination,
                                                           bool (*accessible)(const Province &, void *),
                                                           double (*costModifier)(const Province &, void *),
                                                           void *param) {
@@ -218,19 +228,19 @@ void Province::recolor(const MapMode mode) {
 		auto [currentDistance, currentProvince] = queue.top();
 		queue.pop();
 
-		if (currentProvince == destination) {
+		if (currentProvince == &const_cast<Province &>(destination)) {
 			reached = true;
 			break;
 		}
 
-		for (const auto &neighborProvince: *currentProvince->neighbors) {
+		for (const auto &[neighborProvince, neighborDistance]: *currentProvince->neighbors) {
 			if (neighborProvince == nullptr || !accessible(*neighborProvince, param) ||
 			    costModifier(*neighborProvince, param) < 0) {
 				continue;
 			}
 
 			if (double newDistance = currentDistance + costModifier(*neighborProvince, param) *
-			                                                   currentProvince->distance(*neighborProvince);
+			                                                   neighborDistance;
 			    !distances.contains(neighborProvince) || newDistance < distances[neighborProvince]) {
 				distances[neighborProvince] = newDistance;
 				previous[neighborProvince] = currentProvince;
@@ -243,8 +253,9 @@ void Province::recolor(const MapMode mode) {
 		return {};
 	}
 
+	double totalDistance = distances[&const_cast<Province &>(destination)];
 	std::vector<Province *> path;
-	for (Province *at = destination; at != nullptr; at = previous[at]) {
+	for (Province *at = &const_cast<Province &>(destination); at != nullptr; at = previous[at]) {
 		path.insert(path.begin(), at);
 	}
 

@@ -5,20 +5,20 @@
 #include "../Populations/Character.hpp"
 #include "../Tags/Tag.hpp"
 
-Unit::Unit(Army *army, Province *location) {
+Unit::Unit(const Army &army, const Province &location) {
 	size = 0;
-	this->location = location;
-	this->army = army;
-	army->units->emplace_back(this);
+	this->location = &const_cast<Province &>(location);
+	this->army = &const_cast<Army &>(army);
 	path = new std::vector<Province *>();
 	travelProgress = 0;
 	general = nullptr;
 	retreating = false;
+	speed = 1.0;
 }
 
 Unit::~Unit() { delete path; }
 
-void Unit::setDestination(Province *destination) {
+void Unit::setDestination(const Province &destination) {
 	const auto generatedPath = location->getPathTo(
 	        destination,
 	        [](const Province &province, void *param) {
@@ -31,12 +31,20 @@ void Unit::setDestination(Province *destination) {
 	}
 }
 
-Army::Army(Tag *tag) {
-	this->tag = tag;
+void Unit::move() {
+	travelProgress += speed;
+	if (travelProgress >= 100) {
+		location = path->at(0);
+		path->erase(path->begin());
+		travelProgress = 0;
+	}
+}
+
+Army::Army(const Tag &tag) {
+	this->tag = &const_cast<Tag &>(tag);
 	units = new std::vector<Unit *>();
 	ai = new AI();
 	directive = {.type = ArmyDirectiveType::ATTACK, .target = nullptr};
-	tag->armies->emplace_back(this);
 }
 
 Army::~Army() {
@@ -46,4 +54,10 @@ Army::~Army() {
 
 	delete units;
 	delete ai;
+}
+
+[[nodiscard]] Unit *Army::newUnit(const Province &location) const {
+	auto unit = new Unit(*this, location);
+	units->emplace_back(unit);
+	return unit;
 }

@@ -3,7 +3,7 @@
 
 #include <array>
 #include <string>
-#include <unordered_set>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 #include "Utils.hpp"
@@ -20,7 +20,9 @@ class Province {
 	std::pair<Province *, std::array<int, 2>> *lockedOutline{};
 	std::vector<Pop *> *pops;
 	bool locked{};
+	bool distancesProcessed{};
 	Country *owner;
+	std::unordered_map<Province *, double> *neighbors;
 
 public:
 	std::string name;
@@ -28,7 +30,6 @@ public:
 	unsigned int baseColor;
 	unsigned int numPixels;
 	unsigned int numOutline;
-	std::unordered_set<Province *> *neighbors;
 	int bounds[4]{};
 	int center[2]{};
 
@@ -38,13 +39,15 @@ public:
 
 	void lock();
 
-	void setOwner(Country *newOwner);
+	void processDistances();
+
+	void setOwner(const Country &newOwner);
 
 	[[nodiscard]] Country *getOwner() const;
 
 	void addPixel(int x, int y);
 
-	void addOutline(int x, int y, Province *other);
+	void addOutline(int x, int y, const Province &other);
 
 	[[nodiscard]] std::array<int, 2> *getPixels() const;
 
@@ -54,9 +57,9 @@ public:
 
 	void recolor(MapMode mode);
 
-	[[nodiscard]] unsigned int distance(const Province &other) const;
+	[[nodiscard]] double distance(const Province &other) const;
 
-	[[nodiscard]] std::vector<Province *> getPathTo(Province *destination, bool (*accessible)(const Province &, void *),
+	[[nodiscard]] std::vector<Province *> getPathTo(const Province &destination, bool (*accessible)(const Province &, void *),
 	                                                double (*costModifier)(const Province &, void *), void *param);
 };
 

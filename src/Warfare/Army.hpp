@@ -26,12 +26,15 @@ public:
 	double travelProgress;
 	Character *general;
 	bool retreating;
+	double speed;
 
-	explicit Unit(Army *army, Province *location);
+	Unit(const Army &army, const Province &location);
 
 	~Unit();
 
-	void setDestination(Province *destination);
+	void setDestination(const Province &destination);
+
+	void move();
 };
 
 class Army {
@@ -42,9 +45,11 @@ public:
 	std::vector<Unit *> *units;
 	Tag *tag;
 
-	explicit Army(Tag *tag);
+	explicit Army(const Tag &tag);
 
 	~Army();
+
+	[[nodiscard]] Unit *newUnit(const Province &location) const;
 };
 
 

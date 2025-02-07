@@ -33,6 +33,12 @@ public:
 	}
 
 	[[nodiscard]] virtual bool hasArmyAccess(const Province &province) const = 0;
+
+	[[nodiscard]] Army *newArmy() const {
+		auto army = new Army(*this);
+		armies->emplace_back(army);
+		return army;
+	}
 };
 
 #endif // TAG_HPP

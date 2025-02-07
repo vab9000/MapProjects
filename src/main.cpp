@@ -103,7 +103,7 @@ void reloadBitmapProvince(const Province *province) {
 		const auto pixel = outline[i].second;
 		const auto otherProvince = outline[i].first;
 		const auto index = (pixel[0] + pixel[1] * image.width) * 4;
-		if (selectedProvince != nullptr && color == selectedProvince->color) {
+		if (selectedProvince != nullptr && province->baseColor == selectedProvince->baseColor) {
 			bytes[index] = 255;
 			bytes[index + 1] = 255;
 			bytes[index + 2] = 255;
@@ -199,12 +199,6 @@ void reloadBitmap() {
 				}
 			}
 		}
-
-		const auto centerIndex = (province->center[0] + province->center[1] * image.width) * 4;
-		bytes[centerIndex] = 125;
-		bytes[centerIndex + 1] = 125;
-		bytes[centerIndex + 2] = 125;
-		bytes[centerIndex + 3] = 255;
 	});
 
 	bmp = CreateBitmap(image.width, image.height, 1, 32, bytes);
@@ -234,13 +228,13 @@ void loadImage() {
 		for (unsigned int j = 0; j < image.height; ++j) {
 			std::unique_lock lock(provinceMutex);
 			if (const auto color = image.getColor(i, j); provinces.contains(color)) {
-				Province *province = provinces.at(color);
+				auto province = provinces.at(color);
 				province->expandBounds(i, j);
 			} else {
-				auto *province = new Province(std::string("Province ") + std::to_string(provinces.size()), color, i, j);
-				auto *country = new Country("", color);
+				auto province = new Province(std::string("Province ") + std::to_string(provinces.size()), color, i, j);
+				auto country = new Country("", color);
 				tags[color] = country;
-				province->setOwner(country);
+				province->setOwner(*country);
 				provinces[color] = province;
 			}
 		}
@@ -256,7 +250,7 @@ void loadImage() {
 			    (i < image.width - 1 && checkBorder(color, &otherProvince, i + 1, j, image, provinces)) ||
 			    (j > 0 && checkBorder(color, &otherProvince, i, j - 1, image, provinces)) ||
 			    (j < image.height - 1 && checkBorder(color, &otherProvince, i, j + 1, image, provinces))) {
-				province->addOutline(i, j, otherProvince);
+				province->addOutline(i, j, *otherProvince);
 			} else {
 				province->addPixel(i, j);
 			}
@@ -267,11 +261,16 @@ void loadImage() {
 		province->lock();
 	}
 
+	for (const auto &province: provinces | std::views::values) {
+		province->processDistances();
+	}
+
 	// Test code for pathfinding optimization
-	// const auto army = new Army(tags.at(0x002500F0));
-	// const auto unit = new Unit(army, provinces.at(0x002500F0));
+	// const auto army = tags.at(0x002500F0)->newArmy();
+	// const auto unit = army->newUnit(*provinces.at(0x002500F0));
+	// testUnit = unit;
 	// const auto start = std::chrono::high_resolution_clock::now();
-	// unit->setDestination(provinces.at(0x00DB20D2));
+	// unit->setDestination(*provinces.at(0x00DB20D2));
 	// const auto end = std::chrono::high_resolution_clock::now();
 	// std::chrono::duration<double> elapsed = end - start;
 }
@@ -384,6 +383,21 @@ LRESULT CALLBACK windowProc(const HWND hwnd, const UINT uMsg, const WPARAM wPara
 				           static_cast<int>(image.height * zoom), hdcMem, 0, 0, image.width, image.height, SRCCOPY);
 				DeleteDC(hdcMem);
 			}
+
+			// Draw the test unit path
+			// if (testUnit != nullptr) {
+			// 	const auto path = testUnit->path;
+			// 	const Province *previous = nullptr;
+			// 	SelectObject(buffer, GetStockObject(DC_PEN));
+			// 	for (const auto & i : *path) {
+			// 		const auto pixel = i->center;
+			// 		if (previous != nullptr) {
+			// 			MoveToEx(buffer, previous->center[0] + offset[0], previous->center[1] + offset[1], nullptr);
+			// 			LineTo(buffer, pixel[0] + offset[0], pixel[1] + offset[1]);
+			// 		}
+			// 		previous = i;
+			// 	}
+			// }
 
 			BitBlt(hdc, 0, 0, ps.rcPaint.right - ps.rcPaint.left, ps.rcPaint.bottom - ps.rcPaint.top, buffer, 0, 0,
 			       SRCCOPY);
