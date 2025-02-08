@@ -1,12 +1,12 @@
 #include <algorithm>
 #include <chrono>
 #include <execution>
+#include <opencv2/opencv.hpp>
 #include <ranges>
 #include <shared_mutex>
 #include <unordered_map>
 #include <unordered_set>
 #include <windows.h>
-#include <opencv2/opencv.hpp>
 #include "Base/Image.hpp"
 #include "Base/Province.hpp"
 #include "Base/Utils.hpp"
@@ -35,7 +35,7 @@ void changeMapMode(MapMode mode);
 
 void selectProvince(Province *province);
 
-void reloadBitmapProvince(const Province *province);
+void reloadBitmapProvince(const Province &province);
 
 void reloadBitmap();
 
@@ -52,10 +52,8 @@ void changeMapMode(const MapMode mode) {
 
 	const auto provinceValues = provinces | std::views::values;
 
-	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(), [](Province *province) {
-		std::unique_lock lock(provinceMutex);
-		province->recolor(mapMode);
-	});
+	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(),
+	              [](Province *province) { province->recolor(mapMode); });
 
 	reloadBitmap();
 }
@@ -64,18 +62,14 @@ void selectProvince(Province *province) {
 	const auto oldSelectedProvince = selectedProvince;
 	selectedProvince = province;
 	if (oldSelectedProvince != nullptr) {
-		reloadBitmapProvince(oldSelectedProvince);
+		reloadBitmapProvince(*oldSelectedProvince);
 	}
 	if (selectedProvince != nullptr) {
-		reloadBitmapProvince(selectedProvince);
+		reloadBitmapProvince(*selectedProvince);
 	}
 }
 
-void reloadBitmapProvince(const Province *province) {
-	if (bmp == nullptr || province == nullptr) {
-		return;
-	}
-
+void reloadBitmapProvince(const Province &province) {
 	BITMAP bmpInfo;
 	GetObject(bmp, sizeof(BITMAP), &bmpInfo);
 
@@ -88,65 +82,75 @@ void reloadBitmapProvince(const Province *province) {
 
 	GetBitmapBits(bmp, bmpSize, bytes);
 
-	const auto color = province->color;
-	const auto pixels = province->getPixels();
-	for (unsigned int i = 0; i < province->numPixels; ++i) {
+	const auto color = province.color;
+	const auto pixels = province.getPixels();
+
+	std::vector<int> indices(province.numPixels);
+	std::iota(indices.begin(), indices.end(), 0);
+
+	std::for_each(std::execution::par, indices.begin(), indices.end(), [pixels, &bytes, color](const int i) {
 		const auto pixel = pixels[i];
 		const auto index = (pixel[0] + pixel[1] * image.width) * 4;
 		bytes[index] = static_cast<BYTE>(color);
 		bytes[index + 1] = static_cast<BYTE>(color >> 8);
 		bytes[index + 2] = static_cast<BYTE>(color >> 16);
 		bytes[index + 3] = 255;
-	}
-	const auto outline = province->getOutline();
+	});
+
+	indices = std::vector<int>(province.numOutline);
+	std::iota(indices.begin(), indices.end(), 0);
+
+	const auto outline = province.getOutline();
 	auto updatedProvinces = std::unordered_set<Province *>();
-	for (unsigned int i = 0; i < province->numOutline; ++i) {
-		const auto pixel = outline[i].second;
-		const auto otherProvince = outline[i].first;
-		const auto index = (pixel[0] + pixel[1] * image.width) * 4;
-		if (selectedProvince != nullptr && province->baseColor == selectedProvince->baseColor) {
-			bytes[index] = 255;
-			bytes[index + 1] = 255;
-			bytes[index + 2] = 255;
-			bytes[index + 3] = 255;
-		} else {
-			if (otherProvince != nullptr && otherProvince->color != color) {
-				bytes[index] = 0;
-				bytes[index + 1] = 0;
-				bytes[index + 2] = 0;
-				bytes[index + 3] = 255;
-			} else {
-				bytes[index] = static_cast<BYTE>(color);
-				bytes[index + 1] = static_cast<BYTE>(color >> 8);
-				bytes[index + 2] = static_cast<BYTE>(color >> 16);
-				bytes[index + 3] = 255;
-			}
-		}
-		if (!updatedProvinces.contains(otherProvince)) {
-			updatedProvinces.insert(otherProvince);
-			if (otherProvince == nullptr) {
-				continue;
-			}
-			const auto otherOutline = otherProvince->getOutline();
-			for (unsigned int j = 0; j < otherProvince->numOutline; ++j) {
-				const auto otherPixel = otherOutline[j].second;
-				const auto otherIndex = (otherPixel[0] + otherPixel[1] * image.width) * 4;
-				if (outline[j].first == province) {
-					if (otherProvince->color == color) {
-						bytes[otherIndex] = static_cast<BYTE>(color);
-						bytes[otherIndex + 1] = static_cast<BYTE>(color >> 8);
-						bytes[otherIndex + 2] = static_cast<BYTE>(color >> 16);
-						bytes[otherIndex + 3] = 255;
-					} else {
-						bytes[otherIndex] = 0;
-						bytes[otherIndex + 1] = 0;
-						bytes[otherIndex + 2] = 0;
-						bytes[otherIndex + 3] = 255;
-					}
-				}
-			}
-		}
-	}
+	std::for_each(std::execution::par, indices.begin(), indices.end(),
+	              [outline, &bytes, &updatedProvinces, &province, color](const int i) {
+		              const auto pixel = outline[i].second;
+		              const auto otherProvince = outline[i].first;
+		              const auto index = (pixel[0] + pixel[1] * image.width) * 4;
+		              if (selectedProvince != nullptr && province.baseColor == selectedProvince->baseColor) {
+			              bytes[index] = 255;
+			              bytes[index + 1] = 255;
+			              bytes[index + 2] = 255;
+			              bytes[index + 3] = 255;
+		              } else {
+			              if (otherProvince != nullptr && otherProvince->color != color) {
+				              bytes[index] = 0;
+				              bytes[index + 1] = 0;
+				              bytes[index + 2] = 0;
+				              bytes[index + 3] = 255;
+			              } else {
+				              bytes[index] = static_cast<BYTE>(color);
+				              bytes[index + 1] = static_cast<BYTE>(color >> 8);
+				              bytes[index + 2] = static_cast<BYTE>(color >> 16);
+				              bytes[index + 3] = 255;
+			              }
+		              }
+		              std::unique_lock lock(provinceMutex);
+		              if (!updatedProvinces.contains(otherProvince)) {
+			              updatedProvinces.insert(otherProvince);
+			              if (otherProvince == nullptr) {
+				              return;
+			              }
+			              const auto otherOutline = otherProvince->getOutline();
+			              for (unsigned int j = 0; j < otherProvince->numOutline; ++j) {
+				              const auto otherPixel = otherOutline[j].second;
+				              const auto otherIndex = (otherPixel[0] + otherPixel[1] * image.width) * 4;
+				              if (otherOutline[j].first == &const_cast<Province &>(province)) {
+					              if (otherProvince->color == color) {
+						              bytes[otherIndex] = static_cast<BYTE>(color);
+						              bytes[otherIndex + 1] = static_cast<BYTE>(color >> 8);
+						              bytes[otherIndex + 2] = static_cast<BYTE>(color >> 16);
+						              bytes[otherIndex + 3] = 255;
+					              } else {
+						              bytes[otherIndex] = 0;
+						              bytes[otherIndex + 1] = 0;
+						              bytes[otherIndex + 2] = 0;
+						              bytes[otherIndex + 3] = 255;
+					              }
+				              }
+			              }
+		              }
+	              });
 
 	bmp = CreateBitmap(image.width, image.height, 1, 32, bytes);
 
@@ -166,7 +170,11 @@ void reloadBitmap() {
 
 	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(), [bytes](const Province *province) {
 		const auto pixels = province->getPixels();
-		for (unsigned int i = 0; i < province->numPixels; ++i) {
+
+		std::vector<int> indices(province->numPixels);
+		std::iota(indices.begin(), indices.end(), 0);
+
+		std::for_each(std::execution::par, indices.begin(), indices.end(), [pixels, province, bytes](const int i) {
 			const auto pixel = pixels[i];
 			const auto color = province->color;
 			const auto index = (pixel[0] + pixel[1] * image.width) * 4;
@@ -174,9 +182,13 @@ void reloadBitmap() {
 			bytes[index + 1] = static_cast<BYTE>(color >> 8);
 			bytes[index + 2] = static_cast<BYTE>(color >> 16);
 			bytes[index + 3] = 255;
-		}
+		});
+
 		const auto outline = province->getOutline();
-		for (unsigned int i = 0; i < province->numOutline; ++i) {
+
+		indices = std::vector<int>(province->numOutline);
+		std::iota(indices.begin(), indices.end(), 0);
+		std::for_each(std::execution::par, indices.begin(), indices.end(), [outline, province, bytes](const int i) {
 			const auto otherProvince = outline[i].first;
 			const auto pixel = outline[i].second;
 			const auto color = province->color;
@@ -199,7 +211,7 @@ void reloadBitmap() {
 					bytes[index + 3] = 255;
 				}
 			}
-		}
+		});
 	});
 
 	bmp = CreateBitmap(image.width, image.height, 1, 32, bytes);
@@ -208,7 +220,7 @@ void reloadBitmap() {
 }
 
 void loadImage() {
-	auto processPixel = [](const Pixel &pixel, const int *position) {
+	constexpr auto processPixel = [](const Pixel &pixel, const int *position) {
 		const auto i = position[1];
 		const auto j = position[0];
 		std::unique_lock lock(provinceMutex);
@@ -225,23 +237,24 @@ void loadImage() {
 		}
 	};
 
-	auto processPixelBorders = [](const Pixel &pixel, const int *position) {
+	constexpr auto isBorder = [&](const int x, const int y, const unsigned int color, const Province *&otherProvince) {
+		if (x >= 0 && x < image.width && y >= 0 && y < image.height && image.getColor(x, y) != color) {
+			otherProvince = provinces.at(image.getColor(x, y));
+			return true;
+		}
+		return false;
+	};
+
+	constexpr auto processPixelBorders = [isBorder](const Pixel &pixel, const int *position) {
 		const auto i = position[1];
 		const auto j = position[0];
 		const auto color = pixel.x + (pixel.y << 8) + (pixel.z << 16);
-		std::unique_lock lock(provinceMutex);
 		Province *province = provinces.at(color);
-		const Province *otherProvince = nullptr;
 
-		auto isBorder = [&](const int x, const int y) {
-			if (x >= 0 && x < image.width && y >= 0 && y < image.height && image.getColor(x, y) != color) {
-				otherProvince = provinces.at(image.getColor(x, y));
-				return true;
-			}
-			return false;
-		};
-
-		if (isBorder(i - 1, j) || isBorder(i + 1, j) || isBorder(i, j - 1) || isBorder(i, j + 1)) {
+		std::unique_lock lock(provinceMutex);
+		if (const Province *otherProvince = nullptr;
+		    isBorder(i - 1, j, color, otherProvince) || isBorder(i + 1, j, color, otherProvince) ||
+		    isBorder(i, j - 1, color, otherProvince) || isBorder(i, j + 1, color, otherProvince)) {
 			province->addOutline(i, j, *otherProvince);
 		} else {
 			province->addPixel(i, j);
@@ -256,22 +269,18 @@ void loadImage() {
 
 	auto provinceValues = provinces | std::views::values;
 
-	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(), [](Province *province) {
-		std::unique_lock lock(provinceMutex);
-		province->lock();
-	});
+	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(),
+	              [](Province *province) { province->lock(); });
 
-	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(), [](Province *province) {
-		std::unique_lock lock(provinceMutex);
-		province->processDistances();
-	});
+	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(),
+	              [](Province *province) { province->processDistances(); });
 
 	// Test code for pathfinding optimization
-	// const auto army = tags.at(0x002500F0)->newArmy();
-	// const auto unit = army->newUnit(*provinces.at(0x002500F0));
+	// const auto army = tags.at(0x6B643E)->newArmy();
+	// const auto unit = army->newUnit(*provinces.at(0x6B643E));
 	// testUnit = unit;
 	// const auto start = std::chrono::high_resolution_clock::now();
-	// unit->setDestination(*provinces.at(0x00DB20D2));
+	// unit->setDestination(*provinces.at(0xDF2050));
 	// const auto end = std::chrono::high_resolution_clock::now();
 	// std::chrono::duration<double> elapsed = end - start;
 }
