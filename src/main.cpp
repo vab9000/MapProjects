@@ -6,8 +6,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <windows.h>
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+#include <opencv2/opencv.hpp>
 #include "Base/Image.hpp"
 #include "Base/Province.hpp"
 #include "Base/Utils.hpp"
@@ -53,8 +52,10 @@ void changeMapMode(const MapMode mode) {
 
 	const auto provinceValues = provinces | std::views::values;
 
-	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(),
-	              [](Province *province) { province->recolor(mapMode); });
+	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(), [](Province *province) {
+		std::unique_lock lock(provinceMutex);
+		province->recolor(mapMode);
+	});
 
 	reloadBitmap();
 }
@@ -207,63 +208,63 @@ void reloadBitmap() {
 }
 
 void loadImage() {
-	auto checkBorder = [](const unsigned int color, Province **ptr, const unsigned int i, const unsigned int j,
-	                      const Image &image, const std::unordered_map<unsigned int, Province *> &provinces) {
-		if (image.getColor(i, j) != color) {
-			*ptr = provinces.at(image.getColor(i, j));
-			return true;
+	auto processPixel = [](const Pixel &pixel, const int *position) {
+		const auto i = position[1];
+		const auto j = position[0];
+		std::unique_lock lock(provinceMutex);
+		if (const auto color = pixel.x + (pixel.y << 8) + (pixel.z << 16); provinces.contains(color)) {
+			const auto province = provinces.at(color);
+			province->expandBounds(i, j);
+		} else {
+			const auto province =
+			        new Province(std::string("Province ") + std::to_string(provinces.size()), color, i, j);
+			const auto country = new Country("", color);
+			tags[color] = country;
+			province->setOwner(*country);
+			provinces[color] = province;
 		}
-
-		return false;
 	};
 
-	image = Image();
+	auto processPixelBorders = [](const Pixel &pixel, const int *position) {
+		const auto i = position[1];
+		const auto j = position[0];
+		const auto color = pixel.x + (pixel.y << 8) + (pixel.z << 16);
+		std::unique_lock lock(provinceMutex);
+		Province *province = provinces.at(color);
+		const Province *otherProvince = nullptr;
 
-	image.data = stbi_load("assets/provinces.png", &image.width, &image.height, &image.channels, 3);
-
-	std::vector<unsigned int> iRange(image.width);
-	std::iota(iRange.begin(), iRange.end(), 0);
-
-	std::for_each(std::execution::par, iRange.begin(), iRange.end(), [](auto &&i) {
-		for (unsigned int j = 0; j < image.height; ++j) {
-			std::unique_lock lock(provinceMutex);
-			if (const auto color = image.getColor(i, j); provinces.contains(color)) {
-				auto province = provinces.at(color);
-				province->expandBounds(i, j);
-			} else {
-				auto province = new Province(std::string("Province ") + std::to_string(provinces.size()), color, i, j);
-				auto country = new Country("", color);
-				tags[color] = country;
-				province->setOwner(*country);
-				provinces[color] = province;
+		auto isBorder = [&](const int x, const int y) {
+			if (x >= 0 && x < image.width && y >= 0 && y < image.height && image.getColor(x, y) != color) {
+				otherProvince = provinces.at(image.getColor(x, y));
+				return true;
 			}
-		}
-	});
+			return false;
+		};
 
-	std::for_each(std::execution::par, iRange.begin(), iRange.end(), [checkBorder](auto &&i) {
-		for (unsigned int j = 0; j < image.height; ++j) {
-			const auto color = image.getColor(i, j);
-			Province *province = provinces.at(color);
-			std::unique_lock lock(provinceMutex);
-			if (Province *otherProvince = nullptr;
-			    (i > 0 && checkBorder(color, &otherProvince, i - 1, j, image, provinces)) ||
-			    (i < image.width - 1 && checkBorder(color, &otherProvince, i + 1, j, image, provinces)) ||
-			    (j > 0 && checkBorder(color, &otherProvince, i, j - 1, image, provinces)) ||
-			    (j < image.height - 1 && checkBorder(color, &otherProvince, i, j + 1, image, provinces))) {
-				province->addOutline(i, j, *otherProvince);
-			} else {
-				province->addPixel(i, j);
-			}
+		if (isBorder(i - 1, j) || isBorder(i + 1, j) || isBorder(i, j - 1) || isBorder(i, j + 1)) {
+			province->addOutline(i, j, *otherProvince);
+		} else {
+			province->addPixel(i, j);
 		}
-	});
+	};
 
-	for (const auto &province: provinces | std::views::values) {
+	image = Image("assets/provinces.png");
+
+	image.cvImage.forEach<Pixel>(processPixel);
+
+	image.cvImage.forEach<Pixel>(processPixelBorders);
+
+	auto provinceValues = provinces | std::views::values;
+
+	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(), [](Province *province) {
+		std::unique_lock lock(provinceMutex);
 		province->lock();
-	}
+	});
 
-	for (const auto &province: provinces | std::views::values) {
+	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(), [](Province *province) {
+		std::unique_lock lock(provinceMutex);
 		province->processDistances();
-	}
+	});
 
 	// Test code for pathfinding optimization
 	// const auto army = tags.at(0x002500F0)->newArmy();
@@ -466,8 +467,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	for (const auto &tag: tags | std::views::values) {
 		delete tag;
 	}
-
-	stbi_image_free(image.data);
 
 	return 0;
 }

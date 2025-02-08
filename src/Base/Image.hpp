@@ -1,16 +1,27 @@
 #ifndef IMAGE_HPP
 #define IMAGE_HPP
 
+#include <opencv2/opencv.hpp>
+
+typedef cv::Point3_<uint8_t> Pixel;
+
 class Image {
 public:
-	unsigned char *data;
-	int width;
-	int height;
-	int channels;
+	int width{};
+	int height{};
+	cv::Mat cvImage;
+
+	Image() = default;
+
+	explicit Image(const std::string &path) {
+		cvImage = imread(path, cv::IMREAD_COLOR);
+		width = cvImage.cols;
+		height = cvImage.rows;
+	}
 
 	[[nodiscard]] unsigned int getColor(const unsigned int i, const unsigned int j) const {
-		return (static_cast<int>(data[(i + j * width) * 3]) << 16) +
-		       (static_cast<int>(data[(i + j * width) * 3 + 1]) << 8) + static_cast<int>(data[(i + j * width) * 3 + 2]);
+		const auto pixel = cvImage.at<Pixel>(j, i);
+		return pixel.x + (pixel.y << 8) + (pixel.z << 16);
 	}
 };
 
