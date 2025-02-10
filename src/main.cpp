@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <chrono>
 #include <execution>
+#include <glad/glad.h>
 #include <opencv2/opencv.hpp>
 #include <ranges>
 #include <shared_mutex>
@@ -18,7 +19,9 @@
         "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 Image image;
-HBITMAP bmp;
+HWND hwnd;
+HGLRC openglHdc = nullptr;
+BYTE *bytes;
 std::shared_mutex provinceMutex;
 std::unordered_map<unsigned int, Province *> provinces;
 std::unordered_map<unsigned int, Tag *> tags;
@@ -30,6 +33,8 @@ bool mouseDown = false;
 bool mouseMoved = false;
 auto mapMode = MapMode::OWNER;
 auto date = Date();
+GLuint texture;
+GLuint readFboId = 0;
 
 void changeMapMode(MapMode mode);
 
@@ -70,25 +75,13 @@ void selectProvince(Province *province) {
 }
 
 void reloadBitmapProvince(const Province &province) {
-	BITMAP bmpInfo;
-	GetObject(bmp, sizeof(BITMAP), &bmpInfo);
-
-	const auto hdc = CreateCompatibleDC(nullptr);
-
-	const auto hbmOld = SelectObject(hdc, bmp);
-
-	const auto bmpSize = bmpInfo.bmWidth * bmpInfo.bmHeight * 4;
-	auto *bytes = new BYTE[bmpSize];
-
-	GetBitmapBits(bmp, bmpSize, bytes);
-
 	const auto color = province.color;
 	const auto pixels = province.getPixels();
 
 	std::vector<int> indices(province.numPixels);
 	std::iota(indices.begin(), indices.end(), 0);
 
-	std::for_each(std::execution::par, indices.begin(), indices.end(), [pixels, &bytes, color](const int i) {
+	std::for_each(std::execution::par, indices.begin(), indices.end(), [pixels, color](const int i) {
 		const auto pixel = pixels[i];
 		const auto index = (pixel[0] + pixel[1] * image.width) * 4;
 		bytes[index] = static_cast<BYTE>(color);
@@ -103,7 +96,7 @@ void reloadBitmapProvince(const Province &province) {
 	const auto outline = province.getOutline();
 	auto updatedProvinces = std::unordered_set<Province *>();
 	std::for_each(std::execution::par, indices.begin(), indices.end(),
-	              [outline, &bytes, &updatedProvinces, &province, color](const int i) {
+	              [outline, &updatedProvinces, &province, color](const int i) {
 		              const auto pixel = outline[i].second;
 		              const auto otherProvince = outline[i].first;
 		              const auto index = (pixel[0] + pixel[1] * image.width) * 4;
@@ -152,29 +145,26 @@ void reloadBitmapProvince(const Province &province) {
 		              }
 	              });
 
-	bmp = CreateBitmap(image.width, image.height, 1, 32, bytes);
+	const auto hdc = GetDC(hwnd);
 
-	delete[] bytes;
+	wglMakeCurrent(hdc, openglHdc);
 
-	SelectObject(hdc, hbmOld);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, province.bounds[1], image.width, province.bounds[3] - province.bounds[1],
+	                GL_BGRA, GL_UNSIGNED_BYTE, bytes + image.width * province.bounds[1] * 4);
 
-	DeleteDC(hdc);
+	ReleaseDC(hwnd, hdc);
 }
 
 void reloadBitmap() {
-	DeleteObject(bmp);
-
-	const auto bytes = new BYTE[image.width * image.height * 4];
-
 	const auto provinceValues = provinces | std::views::values;
 
-	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(), [bytes](const Province *province) {
+	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(), [](const Province *province) {
 		const auto pixels = province->getPixels();
 
 		std::vector<int> indices(province->numPixels);
 		std::iota(indices.begin(), indices.end(), 0);
 
-		std::for_each(std::execution::par, indices.begin(), indices.end(), [pixels, province, bytes](const int i) {
+		std::for_each(std::execution::par, indices.begin(), indices.end(), [pixels, province](const int i) {
 			const auto pixel = pixels[i];
 			const auto color = province->color;
 			const auto index = (pixel[0] + pixel[1] * image.width) * 4;
@@ -188,7 +178,7 @@ void reloadBitmap() {
 
 		indices = std::vector<int>(province->numOutline);
 		std::iota(indices.begin(), indices.end(), 0);
-		std::for_each(std::execution::par, indices.begin(), indices.end(), [outline, province, bytes](const int i) {
+		std::for_each(std::execution::par, indices.begin(), indices.end(), [outline, province](const int i) {
 			const auto otherProvince = outline[i].first;
 			const auto pixel = outline[i].second;
 			const auto color = province->color;
@@ -214,9 +204,15 @@ void reloadBitmap() {
 		});
 	});
 
-	bmp = CreateBitmap(image.width, image.height, 1, 32, bytes);
+	if (openglHdc != nullptr) {
+		const auto hdc = GetDC(hwnd);
 
-	delete[] bytes;
+		wglMakeCurrent(hdc, openglHdc);
+
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, image.width, image.height, GL_BGRA, GL_UNSIGNED_BYTE, bytes);
+
+		ReleaseDC(hwnd, hdc);
+	}
 }
 
 void loadImage() {
@@ -261,7 +257,7 @@ void loadImage() {
 		}
 	};
 
-	image = Image("assets/provinces.png");
+	image = Image("assets/provinces1.png");
 
 	image.cvImage.forEach<Pixel>(processPixel);
 
@@ -379,20 +375,20 @@ LRESULT CALLBACK windowProc(const HWND hwnd, const UINT uMsg, const WPARAM wPara
 			PAINTSTRUCT ps;
 			const auto hdc = BeginPaint(hwnd, &ps);
 
-			const auto buffer = CreateCompatibleDC(hdc);
-			const auto bitmap =
-			        CreateCompatibleBitmap(hdc, ps.rcPaint.right - ps.rcPaint.left, ps.rcPaint.bottom - ps.rcPaint.top);
-			SelectObject(buffer, bitmap);
+			wglMakeCurrent(hdc, openglHdc);
 
-			FillRect(buffer, &ps.rcPaint, static_cast<HBRUSH>(GetStockObject(WHITE_BRUSH)));
+			glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT);
 
-			if (bmp != nullptr) {
-				const auto hdcMem = CreateCompatibleDC(buffer);
-				SelectObject(hdcMem, bmp);
-				StretchBlt(buffer, offset[0], offset[1], static_cast<int>(image.width * zoom),
-				           static_cast<int>(image.height * zoom), hdcMem, 0, 0, image.width, image.height, SRCCOPY);
-				DeleteDC(hdcMem);
-			}
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, readFboId);
+			glBlitFramebuffer(0, 0, image.width, image.height, offset[0], ps.rcPaint.bottom - offset[1],
+			                  static_cast<int>(image.width * zoom) + offset[0],
+			                  ps.rcPaint.bottom - static_cast<int>(image.height * zoom) - offset[1],
+			                  GL_COLOR_BUFFER_BIT, GL_NEAREST);
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+			SwapBuffers(hdc);
+
+			wglMakeCurrent(nullptr, nullptr);
 
 			// Draw the test unit path
 			// if (testUnit != nullptr) {
@@ -408,12 +404,6 @@ LRESULT CALLBACK windowProc(const HWND hwnd, const UINT uMsg, const WPARAM wPara
 			// 		previous = i;
 			// 	}
 			// }
-
-			BitBlt(hdc, 0, 0, ps.rcPaint.right - ps.rcPaint.left, ps.rcPaint.bottom - ps.rcPaint.top, buffer, 0, 0,
-			       SRCCOPY);
-
-			DeleteObject(bitmap);
-			DeleteDC(buffer);
 
 			EndPaint(hwnd, &ps);
 		}
@@ -436,19 +426,77 @@ HWND createDisplay() {
 		return nullptr;
 	}
 
-	const auto hwnd = CreateWindowEx(0, wc.lpszClassName, "Display", WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT,
-	                                 CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr,
-	                                 GetModuleHandle(nullptr), nullptr);
+	hwnd = CreateWindowEx(0, wc.lpszClassName, "Display", WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT,
+	                      CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr, GetModuleHandle(nullptr),
+	                      nullptr);
+
+	ShowWindow(hwnd, SW_SHOWDEFAULT);
+
+	const HDC hdc = GetDC(hwnd);
+	constexpr DWORD pixelFormatFlags = PFD_SUPPORT_OPENGL | PFD_SUPPORT_COMPOSITION | PFD_GENERIC_ACCELERATED |
+	                                   PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER;
+	constexpr PIXELFORMATDESCRIPTOR pfd = {sizeof(PIXELFORMATDESCRIPTOR),
+	                                       1,
+	                                       pixelFormatFlags,
+	                                       PFD_TYPE_RGBA,
+	                                       24,
+	                                       8,
+	                                       0,
+	                                       8,
+	                                       0,
+	                                       8,
+	                                       0,
+	                                       0,
+	                                       0,
+	                                       0,
+	                                       0,
+	                                       0,
+	                                       0,
+	                                       PFD_MAIN_PLANE,
+	                                       0,
+	                                       0,
+	                                       0,
+	                                       0};
+	const int pixelFormat = ChoosePixelFormat(hdc, &pfd);
+	SetPixelFormat(hdc, pixelFormat, &pfd);
+	openglHdc = wglCreateContext(hdc);
+
+	wglMakeCurrent(hdc, openglHdc);
+
+	constexpr auto getAnyGLFuncAddress = [](const char *name) {
+		auto p = reinterpret_cast<void *>(wglGetProcAddress(name));
+		if (p == nullptr || (p == reinterpret_cast<void *>(0x1)) || (p == reinterpret_cast<void *>(0x2)) ||
+		    (p == reinterpret_cast<void *>(0x3)) || (p == reinterpret_cast<void *>(-1))) {
+			const HMODULE module = LoadLibraryA("opengl32.dll");
+			p = reinterpret_cast<void *>(GetProcAddress(module, name));
+		}
+		return p;
+	};
+
+	if (!gladLoadGLLoader(getAnyGLFuncAddress)) {
+		std::cout << "Failed to initialize GLAD" << std::endl;
+		return nullptr;
+	}
+
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.width, image.height, 0, GL_BGRA, GL_UNSIGNED_BYTE, bytes);
+
+	glGenFramebuffers(1, &readFboId);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, readFboId);
+	glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+
+	ReleaseDC(hwnd, hdc);
 
 	return hwnd;
 }
 
-void startMessageLoop(const HWND hwnd) {
+void startMessageLoop() {
 	if (hwnd == nullptr) {
 		return;
 	}
-
-	ShowWindow(hwnd, SW_SHOWDEFAULT);
 
 	auto msg = MSG{.hwnd = hwnd, .message = WM_NULL, .wParam = 0, .lParam = 0, .time = 0, .pt = POINT{0, 0}};
 
@@ -461,13 +509,19 @@ void startMessageLoop(const HWND hwnd) {
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	loadImage();
 
-	const auto hwnd = createDisplay();
+	bytes = new BYTE[image.width * image.height * 4];
 
 	reloadBitmap();
 
-	startMessageLoop(hwnd);
+	if (createDisplay(); hwnd != nullptr) {
+		startMessageLoop();
 
-	DestroyWindow(hwnd);
+		DestroyWindow(hwnd);
+
+		wglDeleteContext(openglHdc);
+	}
+
+	delete[] bytes;
 
 	for (const auto &province: provinces | std::views::values) {
 		delete province;

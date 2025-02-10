@@ -253,7 +253,6 @@ void Province::recolor(const MapMode mode) {
 		return {};
 	}
 
-	double totalDistance = distances[&const_cast<Province &>(destination)];
 	std::vector<Province *> path;
 	for (Province *at = &const_cast<Province &>(destination); at != nullptr; at = previous[at]) {
 		path.insert(path.begin(), at);
