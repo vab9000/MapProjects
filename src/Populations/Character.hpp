@@ -4,22 +4,18 @@
 #include <unordered_set>
 #include "../Base/Utils.hpp"
 
-enum class PersonalityTraits {
+enum class PersonalityTrait {
 	AMBITIOUS,
 };
 
 class Character {
 public:
-	std::unordered_set<PersonalityTraits> *traits;
+	std::unordered_set<PersonalityTrait> traits;
 	Date birthday{};
 
 	explicit Character() {
-		traits = new std::unordered_set<PersonalityTraits>();
+		traits = std::unordered_set<PersonalityTrait>();
 		birthday = Date(0, 0, 0);
-	}
-
-	~Character() {
-		delete traits;
 	}
 
 	[[nodiscard]] int age(const Date currentDate) const {

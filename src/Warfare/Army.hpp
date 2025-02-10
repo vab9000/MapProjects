@@ -22,7 +22,7 @@ public:
 	unsigned int size;
 	Province *location;
 	Army *army;
-	std::vector<Province *> *path;
+	std::vector<Province *> path;
 	double travelProgress;
 	Character *general;
 	bool retreating;
@@ -30,26 +30,24 @@ public:
 
 	Unit(const Army &army, const Province &location);
 
-	~Unit();
-
 	void setDestination(const Province &destination);
 
 	void move();
 };
 
 class Army {
-	AI *ai;
+	AI ai;
 	ArmyDirective directive{};
 
 public:
-	std::vector<Unit *> *units;
+	std::vector<Unit *> units;
 	Tag *tag;
 
 	explicit Army(const Tag &tag);
 
 	~Army();
 
-	[[nodiscard]] Unit *newUnit(const Province &location) const;
+	[[nodiscard]] Unit *newUnit(const Province &location);
 };
 
 

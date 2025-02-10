@@ -41,41 +41,45 @@ public:
 };
 
 class AI {
-    std::vector<Action*> *actions;
-    std::default_random_engine *gen;
+    std::vector<Action*> actions;
+    std::default_random_engine gen;
 
 public:
     AI() {
-        actions = new std::vector<Action*>();
+        actions = std::vector<Action*>();
         std::random_device rd;
-        gen = new std::default_random_engine(rd());
+        gen = std::default_random_engine(rd());
     }
 
     ~AI() {
-        delete actions;
-        delete gen;
+        for (const auto action : actions) {
+			delete action;
+		}
     }
 
-    void addAction(Action *action) const {
-        actions->emplace_back(action);
+    void addAction(Action *action) {
+        actions.emplace_back(action);
     }
 
-    void addActions(const std::vector<Action*> &actionsVector) const {
+    void addActions(const std::vector<Action*> &actionsVector) {
         for (const auto action : actionsVector) {
             addAction(action);
         }
     }
 
-    void clearActions() const {
-        actions->clear();
+    void clearActions() {
+        for (const auto action : actions) {
+            delete action;
+        }
+        actions.clear();
     }
 
-    void performActions() const {
+    void performActions() {
         auto dis = std::uniform_real_distribution(0.0, 1.0);
 
-        const auto random = dis(*gen);
+        const auto random = dis(gen);
 
-        for (const auto &action : *actions) {
+        for (const auto &action : actions) {
 			if (const int weight = action->getWeight(); weight >= 1) {
                 if (const auto chance = 1.0 - (1 / ((weight * weight) / INERTIA + 1)); random < chance) {
                     action->perform();

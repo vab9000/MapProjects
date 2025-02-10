@@ -257,7 +257,7 @@ void loadImage() {
 		}
 	};
 
-	image = Image("assets/provinces1.png");
+	image = Image("assets/provinces.png");
 
 	image.cvImage.forEach<Pixel>(processPixel);
 

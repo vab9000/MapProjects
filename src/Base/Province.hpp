@@ -14,15 +14,15 @@ enum class MapMode;
 class Pop;
 
 class Province {
-	std::vector<std::array<int, 2>> *pixels;
-	std::vector<std::pair<Province *, std::array<int, 2>>> *outline;
+	std::vector<std::array<int, 2>> pixels;
+	std::vector<std::pair<Province *, std::array<int, 2>>> outline;
 	std::array<int, 2> *lockedPixels{};
 	std::pair<Province *, std::array<int, 2>> *lockedOutline{};
-	std::vector<Pop *> *pops;
+	std::vector<Pop *> pops;
 	bool locked{};
 	bool distancesProcessed{};
 	Country *owner;
-	std::unordered_map<Province *, double> *neighbors;
+	std::unordered_map<Province *, double> neighbors;
 
 public:
 	std::string name;
@@ -32,6 +32,8 @@ public:
 	unsigned int numOutline;
 	int bounds[4]{};
 	int center[2]{};
+
+	Province();
 
 	Province(const std::string &name, unsigned int color, int i, int j);
 
@@ -49,9 +51,9 @@ public:
 
 	void addOutline(int x, int y, const Province &other);
 
-	[[nodiscard]] std::array<int, 2> *getPixels() const;
+	[[nodiscard]] const std::array<int, 2> *getPixels() const;
 
-	[[nodiscard]] std::pair<Province *, std::array<int, 2>> *getOutline() const;
+	[[nodiscard]] const std::pair<Province *, std::array<int, 2>> *getOutline() const;
 
 	void expandBounds(int x, int y);
 

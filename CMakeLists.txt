@@ -17,8 +17,6 @@ target_link_libraries(MapSimulation PUBLIC ${OpenCV_LIBS})
 
 target_include_directories(MapSimulation PUBLIC ${OpenCV_INCLUDE_DIRS})
 
-target_link_libraries(MapSimulation PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/libs/glfw3/Release/glfw3.lib)
-
 target_include_directories(MapSimulation PUBLIC libs/glad/include)
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/assets/small.png DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Debug/assets)
