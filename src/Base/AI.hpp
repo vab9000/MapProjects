@@ -89,5 +89,13 @@ public:
     }
 };
 
+class HasAI {
+public:
+    AI ai;
+
+    virtual ~HasAI() = default;
+
+    virtual void updateAI() = 0;
+};
 
 #endif //AI_HPP

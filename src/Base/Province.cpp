@@ -257,3 +257,7 @@ void Province::recolor(const MapMode mode) {
 
 	return path;
 }
+
+void Province::tick() {
+	// TODO: Implement
+}

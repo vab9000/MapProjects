@@ -20,8 +20,7 @@ public:
 		provinces = std::vector<Province *>();
 	}
 
-	~Country() {
-	}
+	~Country() override = default;
 
 	void addProvince(Province *province) { provinces.emplace_back(province); }
 

@@ -3,28 +3,27 @@
 
 #include "../Base/AI.hpp"
 
-class Tag {
+class Tag : public HasAI {
 public:
 	std::string name;
 	unsigned int color;
 	std::vector<Army *> armies;
-	AI ai;
 
 	Tag() {
+		ai = AI();
 		name = "";
 		color = 0;
 		armies = std::vector<Army *>();
-		ai = AI();
 	}
 
 	Tag(const std::string &name, const unsigned int color) {
+		ai = AI();
 		this->name = name;
 		this->color = color;
 		armies = std::vector<Army *>();
-		ai = AI();
 	}
 
-	virtual ~Tag() {
+	~Tag() override {
 		for (const auto &army: armies) {
             delete army;
         }
@@ -38,6 +37,10 @@ public:
 		auto army = new Army(*this);
 		armies.emplace_back(army);
 		return army;
+	}
+
+	void updateAI() override {
+
 	}
 };
 

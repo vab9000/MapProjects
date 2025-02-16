@@ -63,6 +63,8 @@ public:
 
 	[[nodiscard]] std::vector<Province *> getPathTo(const Province &destination, bool (*accessible)(const Province &, void *),
 	                                                double (*costModifier)(const Province &, void *), void *param);
+
+	void tick();
 };
 
 #endif // PROVINCE_HPP

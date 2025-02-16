@@ -35,8 +35,7 @@ public:
 	void move();
 };
 
-class Army {
-	AI ai;
+class Army : public HasAI {
 	ArmyDirective directive{};
 
 public:
@@ -45,7 +44,9 @@ public:
 
 	explicit Army(const Tag &tag);
 
-	~Army();
+	~Army() override;
+
+	void updateAI() override;
 
 	[[nodiscard]] Unit *newUnit(const Province &location);
 };

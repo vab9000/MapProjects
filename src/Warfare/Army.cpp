@@ -51,6 +51,32 @@ Army::~Army() {
 	}
 }
 
+void setUnitDestination(void* sParam, void* oParam) {
+	const auto unit = static_cast<Unit *>(sParam);
+	const auto province = static_cast<Province*>(oParam);
+    unit->setDestination(*province);
+}
+
+int getSetUnitDestinationWeight(void* sParam, void* oParam) {
+    const auto unit = static_cast<Unit *>(sParam);
+    const auto province = static_cast<Province*>(oParam);
+    return 100;
+}
+
+void Army::updateAI() {
+	ai.clearActions();
+	auto actions = std::vector<Action *>();
+	switch (directive.type) {
+        case ArmyDirectiveType::ATTACK:
+            for (const auto &unit: units) {
+                auto action = new Action(setUnitDestination, unit, directive.target, getSetUnitDestinationWeight);
+                actions.emplace_back(action);
+            }
+            break;
+    }
+    ai.performActions();
+}
+
 [[nodiscard]] Unit *Army::newUnit(const Province &location) {
 	auto unit = new Unit(*this, location);
 	units.emplace_back(unit);

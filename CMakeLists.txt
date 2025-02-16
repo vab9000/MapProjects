@@ -1,5 +1,7 @@
-cmake_minimum_required(VERSION 3.29)
+cmake_minimum_required(VERSION 3.30)
 project(MapSimulation)
+
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 set(CMAKE_CXX_STANDARD 23)
 
@@ -7,11 +9,15 @@ set(CMAKE_GENERATOR_PLATFORM Win32)
 
 find_package(OpenCV REQUIRED PATHS libs/opencv/ NO_DEFAULT_PATH)
 
+find_package(OpenGL REQUIRED)
+
 add_executable(MapSimulation WIN32 src/main.cpp src/Base/Province.cpp src/Warfare/Army.cpp libs/glad/src/glad.c)
 
-target_link_libraries(MapSimulation PUBLIC "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.22621.0/um/x64/Gdi32.Lib")
+target_link_libraries(MapSimulation PRIVATE comctl32)
 
-target_link_libraries(MapSimulation PUBLIC "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.22621.0/um/x64/OpenGl32.Lib")
+target_link_libraries(MapSimulation PRIVATE Gdi32.Lib)
+
+target_link_libraries(MapSimulation PRIVATE ${OPENGL_LIBRARIES})
 
 target_link_libraries(MapSimulation PUBLIC ${OpenCV_LIBS})
 

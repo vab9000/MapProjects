@@ -67,7 +67,7 @@ public:
 	unsigned int month;
 	unsigned int day;
 
-	Date() : Date(0, 0, 0) {}
+	Date() : Date(0, 1, 1) {}
 
 	Date(const unsigned int year, const unsigned int month, const unsigned int day) {
 		this->year = year;
@@ -115,6 +115,10 @@ public:
 
 	int operator-(const Date &other) const {
 		return static_cast<int>(absoluteDays()) - static_cast<int>(other.absoluteDays());
+	}
+
+	[[nodiscard]] std::string toString() const {
+		return std::to_string(day) + '/' + std::to_string(month) + '/' + std::to_string(year);
 	}
 };
 
