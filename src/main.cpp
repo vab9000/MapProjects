@@ -7,13 +7,11 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <windows.h>
-#include <GL/gl.h>
 #include "Base/Image.hpp"
 #include "Base/Province.hpp"
 #include "Base/Utils.hpp"
 #include "Tags/Country.hpp"
 #include "Tags/Tag.hpp"
-#pragma comment(lib, "OpenGL32.lib")
 
 #include <commctrl.h>
 
@@ -21,8 +19,6 @@
         linker,                                                                                                        \
         "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
-int width = 0;
-int height = 0;
 Image image;
 HWND mapHwnd;
 HWND guiHwnd;
