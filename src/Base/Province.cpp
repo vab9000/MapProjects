@@ -259,5 +259,7 @@ void Province::recolor(const MapMode mode) {
 }
 
 void Province::tick() {
-	// TODO: Implement
+	if (owner != nullptr) {
+        owner->gold += 1;
+    }
 }
