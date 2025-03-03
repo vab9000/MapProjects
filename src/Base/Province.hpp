@@ -33,8 +33,6 @@ public:
 	int bounds[4]{};
 	int center[2]{};
 
-	Province();
-
 	Province(const std::string &name, unsigned int color, int i, int j);
 
 	~Province();

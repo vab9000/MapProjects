@@ -20,7 +20,7 @@ public:
 	}
 
 	[[nodiscard]] unsigned int getColor(const unsigned int i, const unsigned int j) const {
-		const auto pixel = cvImage.at<Pixel>(j, i);
+		const auto pixel = cvImage.at<Pixel>(static_cast<int>(j), static_cast<int>(i));
 		return pixel.x + (pixel.y << 8) + (pixel.z << 16);
 	}
 };

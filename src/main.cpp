@@ -19,24 +19,27 @@
         linker,                                                                                                        \
         "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
-Image image;
-HWND mapHwnd;
-HWND guiHwnd;
-HGLRC openglHdc = nullptr;
-BYTE *bytes;
-std::unordered_map<unsigned int, Province *> provinces;
-std::unordered_map<unsigned int, Tag *> tags;
-Province *selectedProvince = nullptr;
 int offset[2] = {0, 0};
 double zoom = 1.0;
 int previousMouse[2] = {0, 0};
 bool mouseDown = false;
 bool mouseMoved = false;
+bool open = true;
+
+HWND mapHwnd = nullptr;
+HWND guiHwnd = nullptr;
+HGLRC openglHdc = nullptr;
+GLuint texture = 0;
+GLuint readFboId = 0;
+BYTE *bytes = nullptr;
+auto image = Image();
+
+auto provinces = std::unordered_map<unsigned int, Province *>();
+auto tags = std::unordered_map<unsigned int, Tag *>();
+
+Province *selectedProvince = nullptr;
 auto mapMode = MapMode::OWNER;
 auto date = Date();
-GLuint texture;
-GLuint readFboId = 0;
-bool open = true;
 
 void changeMapMode(MapMode mode);
 
@@ -80,6 +83,13 @@ void selectProvince(Province *province) {
 	}
 }
 
+constexpr void setPixel(BYTE *bytes, const int index, const BYTE r, const BYTE g, const BYTE b) {
+	bytes[index] = r;
+	bytes[index + 1] = g;
+	bytes[index + 2] = b;
+	bytes[index + 3] = 255;
+}
+
 void reloadBitmapProvince(const Province &province) {
 	const auto color = province.color;
 	const auto pixels = province.getPixels();
@@ -90,10 +100,7 @@ void reloadBitmapProvince(const Province &province) {
 	std::for_each(std::execution::par, indices.begin(), indices.end(), [pixels, color](const int i) {
 		const auto pixel = pixels[i];
 		const auto index = (pixel[0] + pixel[1] * image.width) * 4;
-		bytes[index] = static_cast<BYTE>(color);
-		bytes[index + 1] = static_cast<BYTE>(color >> 8);
-		bytes[index + 2] = static_cast<BYTE>(color >> 16);
-		bytes[index + 3] = 255;
+		setPixel(bytes, index, static_cast<BYTE>(color), static_cast<BYTE>(color >> 8), static_cast<BYTE>(color >> 16));
 	});
 
 	const auto outline = province.getOutline();
@@ -103,21 +110,13 @@ void reloadBitmapProvince(const Province &province) {
 		const auto otherProvince = outline[i].first;
 		const auto index = (pixel[0] + pixel[1] * image.width) * 4;
 		if (selectedProvince != nullptr && province.baseColor == selectedProvince->baseColor) {
-			bytes[index] = 255;
-			bytes[index + 1] = 255;
-			bytes[index + 2] = 255;
-			bytes[index + 3] = 255;
+			setPixel(bytes, index, 255, 255, 255);
 		} else {
 			if (otherProvince != nullptr && otherProvince->color != color) {
-				bytes[index] = 0;
-				bytes[index + 1] = 0;
-				bytes[index + 2] = 0;
-				bytes[index + 3] = 255;
+				setPixel(bytes, index, 0, 0, 0);
 			} else {
-				bytes[index] = static_cast<BYTE>(color);
-				bytes[index + 1] = static_cast<BYTE>(color >> 8);
-				bytes[index + 2] = static_cast<BYTE>(color >> 16);
-				bytes[index + 3] = 255;
+				setPixel(bytes, index, static_cast<BYTE>(color), static_cast<BYTE>(color >> 8),
+				         static_cast<BYTE>(color >> 16));
 			}
 		}
 		if (!updatedProvinces.contains(otherProvince)) {
@@ -131,15 +130,10 @@ void reloadBitmapProvince(const Province &province) {
 				const auto otherIndex = (otherPixel[0] + otherPixel[1] * image.width) * 4;
 				if (otherOutline[j].first == &const_cast<Province &>(province)) {
 					if (otherProvince->color == color) {
-						bytes[otherIndex] = static_cast<BYTE>(color);
-						bytes[otherIndex + 1] = static_cast<BYTE>(color >> 8);
-						bytes[otherIndex + 2] = static_cast<BYTE>(color >> 16);
-						bytes[otherIndex + 3] = 255;
+						setPixel(bytes, otherIndex, static_cast<BYTE>(color), static_cast<BYTE>(color >> 8),
+						         static_cast<BYTE>(color >> 16));
 					} else {
-						bytes[otherIndex] = 0;
-						bytes[otherIndex + 1] = 0;
-						bytes[otherIndex + 2] = 0;
-						bytes[otherIndex + 3] = 255;
+						setPixel(bytes, otherIndex, 0, 0, 0);
 					}
 				}
 			}
@@ -169,10 +163,8 @@ void reloadBitmap() {
 			const auto pixel = pixels[i];
 			const auto color = province->color;
 			const auto index = (pixel[0] + pixel[1] * image.width) * 4;
-			bytes[index] = static_cast<BYTE>(color);
-			bytes[index + 1] = static_cast<BYTE>(color >> 8);
-			bytes[index + 2] = static_cast<BYTE>(color >> 16);
-			bytes[index + 3] = 255;
+			setPixel(bytes, index, static_cast<BYTE>(color), static_cast<BYTE>(color >> 8),
+			         static_cast<BYTE>(color >> 16));
 		});
 
 		const auto outline = province->getOutline();
@@ -185,21 +177,13 @@ void reloadBitmap() {
 			const auto color = province->color;
 			const auto index = (pixel[0] + pixel[1] * image.width) * 4;
 			if (selectedProvince != nullptr && province->color == selectedProvince->color) {
-				bytes[index] = 255;
-				bytes[index + 1] = 255;
-				bytes[index + 2] = 255;
-				bytes[index + 3] = 255;
+				setPixel(bytes, index, 255, 255, 255);
 			} else {
 				if (otherProvince != nullptr && otherProvince->color != province->color) {
-					bytes[index] = 0;
-					bytes[index + 1] = 0;
-					bytes[index + 2] = 0;
-					bytes[index + 3] = 255;
+					setPixel(bytes, index, 0, 0, 0);
 				} else {
-					bytes[index] = static_cast<BYTE>(color);
-					bytes[index + 1] = static_cast<BYTE>(color >> 8);
-					bytes[index + 2] = static_cast<BYTE>(color >> 16);
-					bytes[index + 3] = 255;
+					setPixel(bytes, index, static_cast<BYTE>(color), static_cast<BYTE>(color >> 8),
+					         static_cast<BYTE>(color >> 16));
 				}
 			}
 		});
@@ -225,8 +209,8 @@ void loadImage() {
 			province->expandBounds(i, j);
 		} else {
 			constexpr auto invertColor = [](const unsigned int colorToChange) {
-                return (colorToChange & 0xFF) << 16 | (colorToChange & 0xFF00) | (colorToChange & 0xFF0000) >> 16;
-            };
+				return (colorToChange & 0xFF) << 16 | (colorToChange & 0xFF00) | (colorToChange & 0xFF0000) >> 16;
+			};
 
 			const auto province =
 			        new Province(std::string("Province ") + std::to_string(provinces.size()), color, i, j);
@@ -260,7 +244,7 @@ void loadImage() {
 		}
 	};
 
-	image = Image("assets/provinces.png");
+	image = Image("assets/small.png");
 
 	for (int i = 0; i < image.cvImage.rows; ++i) {
 		for (int j = 0; j < image.cvImage.cols; ++j) {
@@ -313,8 +297,8 @@ LRESULT CALLBACK guiWindowProc(const HWND hwnd, const UINT uMsg, const WPARAM wP
 	switch (uMsg) {
 		case WM_CREATE: {
 			const auto mapModeSelector =
-			        CreateWindowEx(0, WC_COMBOBOX, TEXT(""), CBS_DROPDOWNLIST | WS_CHILD | WS_VISIBLE, 0, 50, 100, 50,
-			                       hwnd, reinterpret_cast<HMENU>(1), GetModuleHandle(nullptr), nullptr);
+			        CreateWindowEx(0, WC_COMBOBOX, TEXT(""), CBS_DROPDOWNLIST | WS_CHILD | WS_VISIBLE | WS_BORDER, 0,
+			                       50, 100, 50, hwnd, reinterpret_cast<HMENU>(1), GetModuleHandle(nullptr), nullptr);
 			SendMessage(mapModeSelector, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>("PROVINCES"));
 			SendMessage(mapModeSelector, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>("OWNER"));
 			SendMessage(mapModeSelector, CB_SETCURSEL, 0, 0);
@@ -461,9 +445,6 @@ LRESULT CALLBACK mapWindowProc(const HWND hwnd, const UINT uMsg, const WPARAM wP
 
 			wglMakeCurrent(hdc, openglHdc);
 
-			glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT);
-
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, readFboId);
 			glBlitFramebuffer(0, 0, image.width, image.height, offset[0], ps.rcPaint.bottom - offset[1],
 			                  static_cast<int>(image.width * zoom) + offset[0],
@@ -512,9 +493,9 @@ HWND createDisplay() {
 	                         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr, GetModuleHandle(nullptr),
 	                         nullptr);
 
-	guiHwnd =
-	        CreateWindowEx(0, wc1.lpszClassName, "GUI", WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_CLIPCHILDREN, CW_USEDEFAULT, CW_USEDEFAULT,
-	                       CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr, GetModuleHandle(nullptr), nullptr);
+	guiHwnd = CreateWindowEx(0, wc1.lpszClassName, "GUI", WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_CLIPCHILDREN,
+	                         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr,
+	                         GetModuleHandle(nullptr), nullptr);
 
 	ShowWindow(mapHwnd, SW_SHOWDEFAULT);
 	ShowWindow(guiHwnd, SW_SHOWDEFAULT);

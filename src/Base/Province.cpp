@@ -10,8 +10,6 @@
 #include "../Tags/Country.hpp"
 #include "Utils.hpp"
 
-Province::Province() : owner(nullptr), color(0), baseColor(0), numPixels(0), numOutline(0) {}
-
 Province::Province(const std::string &name, const unsigned int color, const int i, const int j) {
 	locked = false;
 	distancesProcessed = false;
