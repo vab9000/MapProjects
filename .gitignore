@@ -1,8 +1,15 @@
 # Build files
 cmake-build-debug/
+bin/
+obj/
 
-# CLion
+# Solution
+*.sln
+*.user
+
+# IDE
 .idea/
 
 # Libraries
 libs/
+

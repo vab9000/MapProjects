@@ -1,0 +1,683 @@
+Climate,Vegetation,Density,Total
+Csb,"tropical semi-evergreen broadleaf forest",174,6858
+Cwa,"tropical grassland",47,125376
+Csb,"cool mixed forest",309,1295
+Af,"cold deciduous forest",-1,0
+Cfb,"erect dwarf-shrub tundra",0,8
+Cfa,"cold evergreen needleleaf forest",478,6
+BSk,"cold evergreen needleleaf forest",8,68036
+Dfc,"cool mixed forest",3,973671
+Dfb,"temperate sclerophyll woodland and shrubland",0,2121
+Dsd,"cool evergreen needleleaf forest",-1,0
+Aw,"temperate deciduous broadleaf forest",-1,0
+Cwb,"cold deciduous forest",-1,0
+Cwa,"warm-temperate evergreen broadleaf and mixed forest",85,2241714
+Csc,"desert",-1,0
+Dwb,"temperate deciduous broadleaf forest",19,545236
+Af,"warm-temperate evergreen broadleaf and mixed forest",26,1155892
+Dwb,"warm-temperate evergreen broadleaf and mixed forest",8,31380
+Dsd,"desert",-1,0
+Dfc,"temperate deciduous broadleaf forest",4,13642
+Dsa,"wet sclerophyll forest",-1,0
+Dfb,"wet sclerophyll forest",0,1757
+Dsc,"cool evergreen needleleaf forest",4,63250
+Csb,"tropical grassland",27,213297
+Dfa,"wet sclerophyll forest",-1,0
+Dwc,"graminoid and forb tundra",1,206486
+Cfa,"temperate sclerophyll woodland and shrubland",39,331520
+Csa,"cool evergreen needleleaf forest",31,656
+Am,"low and high shrub tundra",-1,0
+Dfb,"graminoid and forb tundra",-1,9
+Cfb,"cold evergreen needleleaf forest",53,6081
+Cfc,"cold evergreen needleleaf forest",20,504
+Dwc,"tropical xerophytic shrubland",-1,122
+Aw,None,23,361183
+Dwb,"tropical deciduous broadleaf forest and woodland",-1,0
+Csa,"desert",55,8497
+ET,"cold deciduous forest",0,620742
+None,"tropical grassland",54,15045
+Cwb,"cool evergreen needleleaf forest",-1,0
+Cfc,"temperate sclerophyll woodland and shrubland",0,3527
+Dwc,"temperate deciduous broadleaf savanna",-1,0
+Cfa,"erect dwarf-shrub tundra",-1,0
+Csa,"tropical deciduous broadleaf forest and woodland",146,58
+Cfa,"tropical xerophytic shrubland",33,209596
+Csa,"tropical savanna",85,884
+Dwc,"tropical evergreen broadleaf forest",-1,0
+Dsa,"low and high shrub tundra",-1,0
+Cfa,"tropical semi-evergreen broadleaf forest",45,30232
+Cwa,"cool mixed forest",540,47
+Csc,"tropical xerophytic shrubland",7,13
+Am,"cold evergreen needleleaf forest",-1,0
+Aw,"temperate deciduous broadleaf savanna",-1,0
+Dwa,"low and high shrub tundra",-1,0
+Dfc,"warm-temperate evergreen broadleaf and mixed forest",1,1092
+Dfd,"prostrate dwarf-shrub tundra",-1,0
+Cfb,"tropical deciduous broadleaf forest and woodland",8,112470
+Cfa,"cool mixed forest",179,1222
+Aw,"low and high shrub tundra",-1,0
+Dwa,"cold deciduous forest",-1,0
+Dfd,"tropical savanna",-1,0
+Csa,"tropical evergreen broadleaf forest",-1,0
+BWk,"cool mixed forest",1,33316
+Dfa,"cold deciduous forest",-1,0
+Cfc,"desert",-1,0
+Dfa,"cool evergreen needleleaf forest",18,3
+Dfb,None,15,857127
+Dwd,"temperate sclerophyll woodland and shrubland",-1,0
+Dwb,"cool evergreen needleleaf forest",-1,2
+Dfd,"graminoid and forb tundra",-1,27
+Dsb,"cool evergreen needleleaf forest",6,142772
+Dwa,"tropical xerophytic shrubland",-1,0
+Cfc,"prostrate dwarf-shrub tundra",-1,0
+Cfb,None,61,80298
+EF,"cool mixed forest",0,42
+Dsb,"tropical xerophytic shrubland",3,19247
+BWk,"tropical grassland",5,4293023
+Dfc,"low and high shrub tundra",0,4679994
+EF,"wet sclerophyll forest",-1,2
+Dsc,"temperate sclerophyll woodland and shrubland",-1,1
+Dfa,"tropical semi-evergreen broadleaf forest",-1,0
+Dfd,"tropical evergreen broadleaf forest",-1,0
+EF,"tropical savanna",-1,0
+Csa,"temperate deciduous broadleaf forest",80,196449
+Csa,"tropical xerophytic shrubland",90,340750
+Cwa,"tropical xerophytic shrubland",33,965164
+Cwb,"tropical deciduous broadleaf forest and woodland",17,1168
+Dfa,"tropical evergreen broadleaf forest",-1,0
+Dsa,"temperate evergreen needleleaf open woodland",29,17371
+EF,"temperate sclerophyll woodland and shrubland",-1,0
+BSk,"erect dwarf-shrub tundra",0,15312
+Dfc,"prostrate dwarf-shrub tundra",-1,1
+BWk,"erect dwarf-shrub tundra",-1,168
+Dsa,"tropical semi-evergreen broadleaf forest",-1,0
+Csa,"low and high shrub tundra",-1,0
+Dsb,None,20,7185
+Cfa,"cool evergreen needleleaf forest",-1,0
+Dsc,"temperate deciduous broadleaf savanna",-1,0
+Dwc,"tropical grassland",2,1149849
+Csa,"temperate sclerophyll woodland and shrubland",31,125356
+EF,"temperate evergreen needleleaf open woodland",-1,0
+Dsd,"erect dwarf-shrub tundra",-1,0
+Dsd,"cool mixed forest",-1,0
+Cfb,"low and high shrub tundra",23,1451
+Csb,None,66,16978
+Dsb,"warm-temperate evergreen broadleaf and mixed forest",12,59888
+EF,"tropical evergreen broadleaf forest",-1,0
+None,"graminoid and forb tundra",0,105770
+EF,"temperate deciduous broadleaf savanna",-1,0
+Dfb,"erect dwarf-shrub tundra",5,515
+Af,"prostrate dwarf-shrub tundra",-1,0
+Csc,"tropical savanna",-1,0
+BWk,"cool evergreen needleleaf forest",1,12498
+Dwb,"temperate sclerophyll woodland and shrubland",-1,0
+Csa,"warm-temperate evergreen broadleaf and mixed forest",103,753491
+Cfb,"tropical savanna",54,130468
+Cfa,"temperate deciduous broadleaf savanna",-1,0
+Cfb,"graminoid and forb tundra",-1,0
+Csc,"temperate sclerophyll woodland and shrubland",1,84
+Cwc,"tropical semi-evergreen broadleaf forest",-1,0
+Csb,"temperate deciduous broadleaf savanna",-1,0
+Aw,"cold evergreen needleleaf forest",-1,0
+Af,"cool mixed forest",74,2
+BWk,"prostrate dwarf-shrub tundra",-1,0
+Cwa,"cold evergreen needleleaf forest",63,6588
+Dfb,"tropical deciduous broadleaf forest and woodland",-1,0
+ET,"desert",0,788054
+Dwa,None,83,37026
+Cfb,"desert",-1,0
+Cwa,"temperate sclerophyll woodland and shrubland",59,6790
+Cfb,"tropical xerophytic shrubland",91,43126
+Cfc,"tropical grassland",19,770
+Dwb,"cold evergreen needleleaf forest",5,400316
+Cfa,"prostrate dwarf-shrub tundra",-1,0
+BSk,"cold deciduous forest",7,4782
+Cwa,"temperate evergreen needleleaf open woodland",-1,0
+Dwa,"tropical savanna",-1,0
+Dfb,"tropical evergreen broadleaf forest",-1,0
+Cwa,None,95,59538
+Am,"tropical deciduous broadleaf forest and woodland",35,364137
+BSk,"prostrate dwarf-shrub tundra",-1,0
+BWh,"cold evergreen needleleaf forest",-1,0
+Dsd,"tropical xerophytic shrubland",-1,0
+Cwc,"temperate sclerophyll woodland and shrubland",2,9
+BSh,"cold deciduous forest",-1,0
+Aw,"tropical deciduous broadleaf forest and woodland",80,2310837
+BSh,"tropical xerophytic shrubland",18,3019625
+Dsd,"tropical deciduous broadleaf forest and woodland",-1,0
+Am,"temperate deciduous broadleaf savanna",-1,0
+Cwb,"cold evergreen needleleaf forest",46,8623
+Cwc,"cold evergreen needleleaf forest",-1,6
+Dwd,"cold evergreen needleleaf forest",-1,34
+ET,"tropical semi-evergreen broadleaf forest",-1,0
+Csa,"graminoid and forb tundra",117,6712
+EF,None,0,91558193
+Dwb,"tropical xerophytic shrubland",43,200
+Cfa,"warm-temperate evergreen broadleaf and mixed forest",133,3841881
+Dsc,"temperate deciduous broadleaf forest",0,5533
+Cwa,"cool evergreen needleleaf forest",-1,0
+Dfa,"prostrate dwarf-shrub tundra",-1,0
+Cwc,"cool mixed forest",-1,0
+Af,"tropical xerophytic shrubland",69,277
+Aw,"graminoid and forb tundra",-1,0
+BSh,"graminoid and forb tundra",-1,0
+Dwd,"tropical evergreen broadleaf forest",-1,0
+EF,"graminoid and forb tundra",0,247507
+Dwa,"tropical evergreen broadleaf forest",-1,0
+Af,"tropical deciduous broadleaf forest and woodland",34,85218
+Cfc,"cool mixed forest",6,68
+Aw,"tropical savanna",17,11092535
+EF,"cool evergreen needleleaf forest",-1,5
+Dsc,"erect dwarf-shrub tundra",0,24854
+Csc,"erect dwarf-shrub tundra",-1,153
+Dwd,"wet sclerophyll forest",-1,0
+Dsb,"graminoid and forb tundra",-1,0
+Csb,"tropical xerophytic shrubland",58,180875
+Cwb,"tropical xerophytic shrubland",47,550239
+None,"cool mixed forest",72,12067
+Dwb,"desert",11,28557
+BSk,"tropical deciduous broadleaf forest and woodland",-1,2
+Dwa,"tropical grassland",113,717660
+Dwa,"cool evergreen needleleaf forest",-1,0
+Cwb,"prostrate dwarf-shrub tundra",-1,0
+ET,"erect dwarf-shrub tundra",0,3619893
+Csa,"prostrate dwarf-shrub tundra",-1,0
+Cwc,"low and high shrub tundra",-1,0
+BSk,"tropical semi-evergreen broadleaf forest",-1,0
+ET,"low and high shrub tundra",0,6115528
+Cwb,"tropical semi-evergreen broadleaf forest",6,125
+Csc,"wet sclerophyll forest",0,7523
+Dfc,"erect dwarf-shrub tundra",2,323892
+Cfa,"temperate evergreen needleleaf open woodland",126,1876
+None,"wet sclerophyll forest",4,8517
+Csa,"cold evergreen needleleaf forest",423,1278
+Cfc,"wet sclerophyll forest",0,125433
+ET,"temperate deciduous broadleaf forest",0,8123
+Dsc,"warm-temperate evergreen broadleaf and mixed forest",0,4664
+Af,"tropical semi-evergreen broadleaf forest",6,246205
+Dsc,"tropical evergreen broadleaf forest",-1,0
+Csb,"graminoid and forb tundra",171,61
+Cfa,"tropical savanna",22,1325079
+Dwc,"tropical savanna",-1,0
+BSh,None,26,72883
+Cwb,"temperate deciduous broadleaf forest",6,53359
+Cfb,"temperate sclerophyll woodland and shrubland",30,688675
+Dwa,"erect dwarf-shrub tundra",-1,0
+Dfd,"cool mixed forest",-1,0
+Af,"tropical grassland",54,22889
+Dsd,"graminoid and forb tundra",-1,0
+Csc,"tropical grassland",5,2784
+Dfa,"temperate deciduous broadleaf savanna",-1,0
+BWk,None,0,1306721
+BWh,"temperate sclerophyll woodland and shrubland",0,143077
+Dwb,"tropical evergreen broadleaf forest",-1,0
+Dwc,"tropical semi-evergreen broadleaf forest",-1,0
+BSh,"warm-temperate evergreen broadleaf and mixed forest",44,211414
+EF,"low and high shrub tundra",0,182969
+Dwd,"tropical xerophytic shrubland",-1,0
+BWk,"desert",12,4535945
+Csc,"cold evergreen needleleaf forest",-1,3
+BSk,"tropical xerophytic shrubland",28,809302
+None,"prostrate dwarf-shrub tundra",0,3086
+Cfa,"cold deciduous forest",-1,0
+Dsb,"tropical savanna",-1,0
+Am,"prostrate dwarf-shrub tundra",-1,0
+Csa,"cool mixed forest",47,16
+Csb,"desert",39,1248
+BWk,"cold deciduous forest",1,149
+Cfc,"erect dwarf-shrub tundra",9,12357
+BWk,"temperate evergreen needleleaf open woodland",9,417726
+Cwc,"tropical evergreen broadleaf forest",-1,0
+ET,"tropical savanna",-1,1
+Dwa,"temperate evergreen needleleaf open woodland",765,4
+Dwb,"wet sclerophyll forest",-1,0
+Cwc,"desert",-1,0
+Dwd,"desert",-1,0
+Dwa,"wet sclerophyll forest",-1,0
+None,"cold evergreen needleleaf forest",9,19078
+Cfb,"temperate deciduous broadleaf savanna",-1,0
+Dsb,"temperate sclerophyll woodland and shrubland",-1,0
+Dwd,None,0,5907
+Dsb,"low and high shrub tundra",-1,0
+BSh,"tropical grassland",20,2407438
+Dwb,"cool mixed forest",16,715779
+Am,"erect dwarf-shrub tundra",-1,0
+None,"tropical savanna",8,8652
+Dfc,"tropical xerophytic shrubland",-1,25
+Af,"cold evergreen needleleaf forest",-1,0
+BSk,"temperate evergreen needleleaf open woodland",17,1842397
+Dwb,"prostrate dwarf-shrub tundra",-1,0
+Cwa,"desert",400,92
+Dfd,"temperate deciduous broadleaf forest",-1,0
+Dsa,"temperate deciduous broadleaf forest",19,199694
+Cfb,"temperate deciduous broadleaf forest",159,1579768
+BWh,"cool evergreen needleleaf forest",-1,0
+Dfb,"tropical grassland",16,1572809
+BSk,"cool evergreen needleleaf forest",20,28911
+BSk,"warm-temperate evergreen broadleaf and mixed forest",66,516591
+Csb,"warm-temperate evergreen broadleaf and mixed forest",88,774087
+ET,"tropical evergreen broadleaf forest",-1,0
+Dsb,"tropical grassland",6,87983
+Dsa,"cold deciduous forest",-1,0
+Csc,"prostrate dwarf-shrub tundra",-1,0
+BSh,"cold evergreen needleleaf forest",-1,0
+Dwb,"tropical semi-evergreen broadleaf forest",-1,0
+Dfa,"low and high shrub tundra",-1,0
+Dwa,"graminoid and forb tundra",-1,0
+Csb,"wet sclerophyll forest",0,48057
+Af,"temperate deciduous broadleaf forest",-1,0
+Csa,"wet sclerophyll forest",-1,0
+Dfd,"erect dwarf-shrub tundra",-1,285
+Cwb,"tropical savanna",23,35439
+BSh,"tropical deciduous broadleaf forest and woodland",128,809658
+ET,"temperate evergreen needleleaf open woodland",0,23624
+Dwd,"tropical deciduous broadleaf forest and woodland",-1,0
+BSh,"erect dwarf-shrub tundra",-1,0
+Csb,"temperate sclerophyll woodland and shrubland",35,276571
+Cfb,"wet sclerophyll forest",9,309946
+Af,"tropical savanna",24,111069
+Dsc,"tropical semi-evergreen broadleaf forest",-1,0
+BWh,"erect dwarf-shrub tundra",-1,0
+Dsb,"cool mixed forest",2,26418
+Am,"tropical xerophytic shrubland",277,901
+Aw,"desert",-1,0
+Dfc,"temperate evergreen needleleaf open woodland",1,271605
+Csa,"cold deciduous forest",-1,0
+Dfb,"tropical savanna",-1,0
+Af,"temperate evergreen needleleaf open woodland",5,5
+None,"erect dwarf-shrub tundra",0,81842
+Csb,"low and high shrub tundra",-1,0
+Cwb,"temperate sclerophyll woodland and shrubland",1,1306
+BSh,"temperate deciduous broadleaf savanna",-1,0
+BWk,"tropical semi-evergreen broadleaf forest",-1,0
+BSh,"desert",41,129446
+Dsb,"prostrate dwarf-shrub tundra",-1,0
+Cwb,"tropical grassland",49,539498
+ET,"wet sclerophyll forest",0,339607
+Dwa,"temperate deciduous broadleaf forest",255,791760
+EF,"tropical grassland",0,22916
+Csa,"tropical semi-evergreen broadleaf forest",38,2850
+Cwb,"warm-temperate evergreen broadleaf and mixed forest",47,1268578
+Am,"desert",-1,0
+Dsd,"tropical evergreen broadleaf forest",-1,0
+Dwd,"tropical semi-evergreen broadleaf forest",-1,0
+Dsa,"tropical evergreen broadleaf forest",-1,0
+Csb,"tropical deciduous broadleaf forest and woodland",329,172
+Dwb,"erect dwarf-shrub tundra",-1,0
+Aw,"tropical semi-evergreen broadleaf forest",30,1632795
+BWh,"prostrate dwarf-shrub tundra",-1,0
+Dwa,"cool mixed forest",101,95962
+Dsa,"cool evergreen needleleaf forest",0,46
+Cwb,"erect dwarf-shrub tundra",-1,0
+Dfa,"cold evergreen needleleaf forest",-1,0
+Csc,"cool mixed forest",0,94
+Cwc,"graminoid and forb tundra",-1,0
+Cwc,"temperate evergreen needleleaf open woodland",-1,0
+Dfb,"temperate deciduous broadleaf savanna",-1,0
+Aw,"erect dwarf-shrub tundra",-1,0
+Dwc,"cold deciduous forest",0,1164676
+BSh,"prostrate dwarf-shrub tundra",-1,0
+Dfc,"cold deciduous forest",0,3260172
+Dsd,"temperate sclerophyll woodland and shrubland",-1,0
+Am,"cool mixed forest",17,5
+Dsd,"low and high shrub tundra",-1,47
+Dwc,"temperate deciduous broadleaf forest",2,158475
+Dwc,"tropical deciduous broadleaf forest and woodland",-1,0
+Cfa,"tropical grassland",29,320543
+None,"tropical deciduous broadleaf forest and woodland",69,4488
+BSk,"graminoid and forb tundra",0,11983
+Csb,"temperate deciduous broadleaf forest",82,137794
+Cwa,"tropical evergreen broadleaf forest",5,178
+Af,"desert",-1,0
+ET,"warm-temperate evergreen broadleaf and mixed forest",3,29872
+Dsc,"tropical deciduous broadleaf forest and woodland",-1,0
+Dfb,"cold evergreen needleleaf forest",18,2061591
+Dfc,"cold evergreen needleleaf forest",2,25092148
+Csc,"warm-temperate evergreen broadleaf and mixed forest",7,375
+Dsa,"temperate deciduous broadleaf savanna",-1,0
+Am,"tropical savanna",26,258457
+BWh,"temperate deciduous broadleaf savanna",-1,0
+Dfa,"desert",61,7395
+Cfc,"tropical deciduous broadleaf forest and woodland",-1,0
+Cwa,"erect dwarf-shrub tundra",-1,0
+Csb,"cold evergreen needleleaf forest",41,111
+Af,"low and high shrub tundra",-1,0
+Dwd,"tropical savanna",-1,0
+Dsb,"tropical evergreen broadleaf forest",-1,0
+Dwb,"cold deciduous forest",16,3266
+BSk,"tropical savanna",7,589
+Dfd,"tropical deciduous broadleaf forest and woodland",-1,0
+EF,"tropical xerophytic shrubland",-1,26
+Dfd,"cold evergreen needleleaf forest",-1,2233
+Dfb,"cold deciduous forest",15,152034
+Cwa,"low and high shrub tundra",-1,0
+Csb,"temperate evergreen needleleaf open woodland",23,6953
+Am,"temperate evergreen needleleaf open woodland",544,2175
+Aw,"prostrate dwarf-shrub tundra",-1,0
+Af,None,20,145452
+Dfa,"tropical savanna",-1,0
+BWh,"temperate deciduous broadleaf forest",-1,0
+Cfc,"tropical semi-evergreen broadleaf forest",-1,0
+Dfa,None,63,56640
+BWh,"cold deciduous forest",-1,0
+Aw,"warm-temperate evergreen broadleaf and mixed forest",47,535419
+Cfc,"temperate evergreen needleleaf open woodland",-1,0
+Cfc,"warm-temperate evergreen broadleaf and mixed forest",2,1319
+None,"cold deciduous forest",21,1393
+ET,"tropical grassland",3,1005872
+Dfa,"temperate sclerophyll woodland and shrubland",-1,0
+Dwc,None,1,105751
+Dfb,"temperate deciduous broadleaf forest",71,1509862
+Cwc,"tropical deciduous broadleaf forest and woodland",-1,0
+Aw,"cold deciduous forest",-1,0
+Dwc,"erect dwarf-shrub tundra",-1,343
+Cfa,None,80,176033
+None,"cool evergreen needleleaf forest",7,5682
+Cwc,"temperate deciduous broadleaf savanna",-1,0
+Cwc,"warm-temperate evergreen broadleaf and mixed forest",41,707
+Cwb,"tropical evergreen broadleaf forest",0,22
+EF,"tropical deciduous broadleaf forest and woodland",-1,0
+Dfd,"temperate deciduous broadleaf savanna",-1,0
+EF,"desert",0,5475
+Dwb,"low and high shrub tundra",-1,0
+Dfc,"temperate sclerophyll woodland and shrubland",6,1932
+Cwc,None,14,356
+EF,"cold deciduous forest",-1,8
+None,"temperate evergreen needleleaf open woodland",94,428
+Cwc,"wet sclerophyll forest",-1,4
+Cfb,"prostrate dwarf-shrub tundra",-1,0
+BSh,"cool mixed forest",-1,0
+BSh,"cool evergreen needleleaf forest",-1,0
+Cfc,"low and high shrub tundra",25,3415
+BWk,"temperate sclerophyll woodland and shrubland",2,360621
+ET,"graminoid and forb tundra",0,4759850
+Am,None,26,132553
+Dwb,"temperate deciduous broadleaf savanna",-1,0
+Cfc,"tropical savanna",-1,0
+Dfc,"tropical semi-evergreen broadleaf forest",-1,0
+BSh,"tropical savanna",13,2971629
+Dsa,None,10,4064
+Dwa,"warm-temperate evergreen broadleaf and mixed forest",188,6315
+Dsc,"graminoid and forb tundra",-1,3
+Csc,"cool evergreen needleleaf forest",0,1204
+BWh,"tropical deciduous broadleaf forest and woodland",44,51502
+Csa,"tropical grassland",82,279023
+Am,"cold deciduous forest",-1,0
+Cfc,"tropical evergreen broadleaf forest",-1,0
+Am,"cool evergreen needleleaf forest",-1,0
+Dwc,"cool mixed forest",1,175654
+Dfc,"tropical deciduous broadleaf forest and woodland",-1,0
+Dfb,"prostrate dwarf-shrub tundra",-1,0
+Csa,None,16,120370
+Dfc,"graminoid and forb tundra",0,7893
+Dsc,"temperate evergreen needleleaf open woodland",0,89871
+Cfa,"wet sclerophyll forest",-1,0
+Dwd,"cold deciduous forest",0,951453
+Dsc,"desert",28,441
+Dwc,"temperate evergreen needleleaf open woodland",1,915
+None,"warm-temperate evergreen broadleaf and mixed forest",143,21681
+None,"desert",82,620
+BSh,"temperate sclerophyll woodland and shrubland",3,86371
+BWk,"tropical savanna",-1,1
+Dwa,"temperate deciduous broadleaf savanna",-1,0
+ET,"tropical deciduous broadleaf forest and woodland",0,78
+Dfd,"cold deciduous forest",0,2926876
+Dfa,"tropical xerophytic shrubland",-1,0
+Cfc,"temperate deciduous broadleaf forest",4,38656
+Cfb,"tropical semi-evergreen broadleaf forest",524,85
+Csc,"temperate deciduous broadleaf savanna",-1,0
+Cfb,"warm-temperate evergreen broadleaf and mixed forest",45,904498
+Dfd,"cool evergreen needleleaf forest",-1,0
+Dfc,"tropical grassland",2,46329
+Cwb,"desert",-1,7
+BWh,"tropical xerophytic shrubland",20,2548800
+Dsc,"tropical grassland",0,69681
+Cwa,"prostrate dwarf-shrub tundra",-1,0
+BSk,"tropical evergreen broadleaf forest",-1,0
+Dsa,"tropical savanna",-1,0
+Aw,"tropical evergreen broadleaf forest",29,1834076
+Af,"erect dwarf-shrub tundra",-1,0
+Dfc,"cool evergreen needleleaf forest",0,220085
+Dsa,"desert",7,3774
+ET,"cold evergreen needleleaf forest",0,1270258
+Dwa,"tropical deciduous broadleaf forest and woodland",-1,0
+ET,"tropical xerophytic shrubland",0,83575
+BWk,"tropical deciduous broadleaf forest and woodland",-1,0
+Am,"temperate deciduous broadleaf forest",-1,0
+BSh,"temperate deciduous broadleaf forest",225,20
+Dfd,"tropical grassland",-1,0
+Dsd,"tropical grassland",-1,0
+Dsa,"tropical deciduous broadleaf forest and woodland",-1,0
+Dsc,"cold evergreen needleleaf forest",0,1179094
+Dwb,"graminoid and forb tundra",1,1226
+Af,"tropical evergreen broadleaf forest",13,6118312
+None,"temperate deciduous broadleaf savanna",-1,0
+Dwb,"tropical grassland",23,714209
+Dfb,"low and high shrub tundra",13,9
+Dsb,"temperate deciduous broadleaf savanna",-1,0
+ET,"cool mixed forest",2,146172
+None,"low and high shrub tundra",0,53740
+Dfb,"tropical semi-evergreen broadleaf forest",-1,0
+Dsc,"wet sclerophyll forest",0,23907
+Am,"temperate sclerophyll woodland and shrubland",-1,0
+EF,"cold evergreen needleleaf forest",0,2208
+Cwa,"tropical semi-evergreen broadleaf forest",14,6396
+Dfc,"desert",2,458
+Dfc,"wet sclerophyll forest",0,18170
+Csa,"temperate evergreen needleleaf open woodland",51,15035
+Dwd,"erect dwarf-shrub tundra",-1,0
+None,"temperate sclerophyll woodland and shrubland",71,5209
+Dwa,"temperate sclerophyll woodland and shrubland",-1,0
+Dsb,"tropical semi-evergreen broadleaf forest",-1,0
+Cwb,"wet sclerophyll forest",25,1134
+Dwd,"low and high shrub tundra",0,121004
+Cfc,"cold deciduous forest",0,11
+Aw,"cool evergreen needleleaf forest",-1,0
+Dwb,None,15,26036
+Dfd,None,0,81941
+BSk,None,7,338328
+Af,"temperate deciduous broadleaf savanna",-1,0
+Dwc,"temperate sclerophyll woodland and shrubland",1,67
+Dsa,"cool mixed forest",-1,1
+Cwa,"tropical savanna",20,902493
+Dwd,"graminoid and forb tundra",-1,0
+Cwa,"tropical deciduous broadleaf forest and woodland",147,1121697
+Cwb,None,26,14363
+Csb,"tropical savanna",162,1586
+BSh,"tropical evergreen broadleaf forest",48,5786
+Dsa,"warm-temperate evergreen broadleaf and mixed forest",54,1426
+Dfa,"warm-temperate evergreen broadleaf and mixed forest",169,5822
+Aw,"tropical grassland",34,1219213
+None,"tropical evergreen broadleaf forest",41,16461
+BSk,"temperate deciduous broadleaf savanna",-1,0
+Dsc,"tropical savanna",-1,0
+Cfc,"graminoid and forb tundra",88,1
+Dfb,"tropical xerophytic shrubland",47,203
+Dsa,"erect dwarf-shrub tundra",-1,0
+BWk,"tropical xerophytic shrubland",4,398863
+Csa,"erect dwarf-shrub tundra",-1,0
+BWh,"desert",10,3158625
+Dfd,"warm-temperate evergreen broadleaf and mixed forest",-1,0
+Aw,"tropical xerophytic shrubland",15,239221
+Cwc,"temperate deciduous broadleaf forest",-1,0
+Cfb,"cold deciduous forest",86,439
+Dfa,"graminoid and forb tundra",-1,0
+Dsd,"tropical semi-evergreen broadleaf forest",-1,0
+Dwa,"prostrate dwarf-shrub tundra",-1,0
+Dfb,"cool mixed forest",60,7674267
+BWk,"temperate deciduous broadleaf forest",33,32343
+Dfb,"temperate evergreen needleleaf open woodland",13,440663
+Am,"tropical evergreen broadleaf forest",19,3484885
+Cwc,"prostrate dwarf-shrub tundra",-1,0
+Aw,"temperate evergreen needleleaf open woodland",48,7914
+Dsd,"temperate deciduous broadleaf forest",-1,0
+BSh,"low and high shrub tundra",-1,0
+Dsd,None,0,14689
+Cfa,"tropical evergreen broadleaf forest",14,449
+Dsc,"cold deciduous forest",0,327463
+Dfd,"temperate evergreen needleleaf open woodland",-1,0
+BSk,"desert",25,1400940
+Dsd,"temperate deciduous broadleaf savanna",-1,0
+Cwc,"cool evergreen needleleaf forest",-1,0
+Dfb,"desert",53,237
+Cwc,"erect dwarf-shrub tundra",-1,0
+Cfa,"temperate deciduous broadleaf forest",127,1050784
+Cwa,"cold deciduous forest",-1,0
+Dsc,"low and high shrub tundra",0,681447
+BSk,"low and high shrub tundra",-1,2
+Cfc,"tropical xerophytic shrubland",3,22
+Dwd,"cool evergreen needleleaf forest",-1,0
+Dwc,"low and high shrub tundra",0,389892
+BSk,"wet sclerophyll forest",1,114503
+None,None,0,553497653
+BWk,"wet sclerophyll forest",0,233718
+BWh,"tropical grassland",8,11040740
+Cfc,"temperate deciduous broadleaf savanna",-1,0
+BSk,"cool mixed forest",24,124538
+Dwc,"cool evergreen needleleaf forest",-1,23
+Dfd,"low and high shrub tundra",0,18986
+Dsb,"wet sclerophyll forest",0,5369
+None,"tropical xerophytic shrubland",127,2729
+Csc,"cold deciduous forest",-1,0
+Cwb,"temperate evergreen needleleaf open woodland",-1,1
+Dsb,"cold deciduous forest",38,44
+Dwa,"tropical semi-evergreen broadleaf forest",-1,0
+Cwb,"low and high shrub tundra",-1,0
+ET,"temperate deciduous broadleaf savanna",-1,0
+BWk,"temperate deciduous broadleaf savanna",-1,0
+Cwa,"graminoid and forb tundra",-1,0
+Cwc,"tropical savanna",-1,0
+Dsa,"prostrate dwarf-shrub tundra",-1,0
+Dwd,"warm-temperate evergreen broadleaf and mixed forest",-1,0
+BWk,"cold evergreen needleleaf forest",6,358
+EF,"temperate deciduous broadleaf forest",0,25
+ET,"prostrate dwarf-shrub tundra",0,52336
+Dwd,"prostrate dwarf-shrub tundra",-1,0
+Dwd,"temperate deciduous broadleaf forest",-1,0
+Dfd,"tropical xerophytic shrubland",-1,0
+Af,"temperate sclerophyll woodland and shrubland",-1,0
+Am,"graminoid and forb tundra",-1,0
+BWh,"graminoid and forb tundra",-1,0
+Cfb,"tropical evergreen broadleaf forest",1,211
+BWk,"tropical evergreen broadleaf forest",-1,0
+Dsb,"tropical deciduous broadleaf forest and woodland",-1,0
+Dfc,"tropical savanna",-1,0
+Dsa,"cold evergreen needleleaf forest",-1,0
+Cwc,"tropical xerophytic shrubland",38,240
+EF,"prostrate dwarf-shrub tundra",-1,83425
+Csc,"graminoid and forb tundra",-1,0
+BWh,"cool mixed forest",-1,4
+Dwb,"tropical savanna",-1,0
+Csb,"cold deciduous forest",-1,0
+Csb,"prostrate dwarf-shrub tundra",-1,0
+Csc,"low and high shrub tundra",0,9
+Dfa,"cool mixed forest",71,131787
+Cfa,"low and high shrub tundra",-1,0
+Aw,"temperate sclerophyll woodland and shrubland",54,602
+BWh,None,1,9773728
+BSk,"tropical grassland",18,6403884
+Am,"wet sclerophyll forest",15,874
+Dsc,"cool mixed forest",0,28840
+BWh,"tropical semi-evergreen broadleaf forest",-1,38
+BSh,"wet sclerophyll forest",14,13
+Csb,"cool evergreen needleleaf forest",60,86545
+Dfd,"desert",-1,0
+Dsb,"cold evergreen needleleaf forest",3,23840
+Af,"graminoid and forb tundra",-1,0
+Dsa,"temperate sclerophyll woodland and shrubland",-1,0
+BSk,"temperate deciduous broadleaf forest",139,459921
+EF,"erect dwarf-shrub tundra",0,80139
+Dwc,"prostrate dwarf-shrub tundra",-1,0
+BWh,"temperate evergreen needleleaf open woodland",15,177642
+BWh,"wet sclerophyll forest",-1,0
+Cfa,"graminoid and forb tundra",163,1
+Csc,"tropical deciduous broadleaf forest and woodland",-1,0
+None,"temperate deciduous broadleaf forest",158,11497
+Cwb,"temperate deciduous broadleaf savanna",-1,0
+Dwd,"cool mixed forest",-1,0
+ET,None,0,2961035
+ET,"temperate sclerophyll woodland and shrubland",1,16
+Cfa,"tropical deciduous broadleaf forest and woodland",19,26942
+Cfb,"temperate evergreen needleleaf open woodland",84,2192
+Dsd,"prostrate dwarf-shrub tundra",-1,0
+Cwb,"graminoid and forb tundra",-1,0
+Dwd,"temperate deciduous broadleaf savanna",-1,0
+Af,"wet sclerophyll forest",56,334
+BWh,"warm-temperate evergreen broadleaf and mixed forest",27,612
+BWk,"graminoid and forb tundra",-1,372
+Cfa,"desert",3,28
+Am,"tropical semi-evergreen broadleaf forest",25,1225526
+Cwc,"tropical grassland",23,8774
+Dsd,"cold evergreen needleleaf forest",-1,0
+BSh,"tropical semi-evergreen broadleaf forest",2,32
+Af,"cool evergreen needleleaf forest",-1,0
+BWh,"tropical savanna",18,103279
+Dsb,"erect dwarf-shrub tundra",-1,1
+Cwa,"temperate deciduous broadleaf forest",216,140469
+Csb,"erect dwarf-shrub tundra",-1,0
+Cfc,"cool evergreen needleleaf forest",2,21313
+Cfb,"tropical grassland",40,217579
+BSk,"temperate sclerophyll woodland and shrubland",12,610289
+Csc,"tropical evergreen broadleaf forest",-1,0
+Dsd,"wet sclerophyll forest",-1,0
+Csc,"tropical semi-evergreen broadleaf forest",-1,0
+Cwa,"wet sclerophyll forest",-1,0
+Dsd,"cold deciduous forest",0,212195
+Dfa,"temperate evergreen needleleaf open woodland",107,1164
+Dsb,"desert",3,1269
+Aw,"wet sclerophyll forest",109,5860
+Cwa,"temperate deciduous broadleaf savanna",-1,0
+BSh,"temperate evergreen needleleaf open woodland",25,6264
+EF,"tropical semi-evergreen broadleaf forest",-1,0
+Dfd,"wet sclerophyll forest",-1,0
+Dfc,None,1,2456097
+Dfb,"cool evergreen needleleaf forest",22,336893
+BWh,"low and high shrub tundra",-1,0
+Dsc,"tropical xerophytic shrubland",1,720
+Dwc,"warm-temperate evergreen broadleaf and mixed forest",0,3238
+Dfc,"temperate deciduous broadleaf savanna",-1,0
+BWh,"tropical evergreen broadleaf forest",21,258
+Dfd,"temperate sclerophyll woodland and shrubland",-1,0
+Dwa,"cold evergreen needleleaf forest",-1,0
+Csb,"tropical evergreen broadleaf forest",-1,0
+Dwc,"desert",2,32931
+Cfc,None,2,20205
+Dfb,"warm-temperate evergreen broadleaf and mixed forest",45,10399
+Dfa,"tropical grassland",44,818705
+Dsc,"prostrate dwarf-shrub tundra",-1,0
+Dsa,"tropical grassland",31,136012
+Dfd,"tropical semi-evergreen broadleaf forest",-1,0
+Am,"tropical grassland",80,27768
+Dsa,"graminoid and forb tundra",-1,0
+BWk,"low and high shrub tundra",-1,0
+Dfc,"tropical evergreen broadleaf forest",-1,0
+Dsb,"temperate deciduous broadleaf forest",9,237204
+Dsd,"warm-temperate evergreen broadleaf and mixed forest",-1,0
+Dwd,"tropical grassland",-1,0
+Dsb,"temperate evergreen needleleaf open woodland",9,452808
+Csc,"temperate deciduous broadleaf forest",0,238
+Cwb,"cool mixed forest",10,2375
+Dwb,"temperate evergreen needleleaf open woodland",83,1508
+None,"tropical semi-evergreen broadleaf forest",62,2368
+Dwc,"cold evergreen needleleaf forest",0,2615962
+Dwa,"desert",166,103479
+Dfa,"temperate deciduous broadleaf forest",144,1127643
+Cwc,"cold deciduous forest",-1,0
+Dsd,"tropical savanna",-1,0
+Dsd,"temperate evergreen needleleaf open woodland",-1,0
+Csc,"temperate evergreen needleleaf open woodland",-1,0
+Cfb,"cool mixed forest",209,420484
+BWk,"warm-temperate evergreen broadleaf and mixed forest",29,8408
+Dwd,"temperate evergreen needleleaf open woodland",-1,0
+Dsc,None,0,220851
+Cfb,"cool evergreen needleleaf forest",13,67265
+ET,"cool evergreen needleleaf forest",0,75430
+Dsa,"tropical xerophytic shrubland",2,2762
+Am,"warm-temperate evergreen broadleaf and mixed forest",49,669419
+Csa,"temperate deciduous broadleaf savanna",-1,0
+Dfa,"erect dwarf-shrub tundra",-1,0
+Dfa,"tropical deciduous broadleaf forest and woodland",-1,0
+Csc,None,0,334
+Aw,"cool mixed forest",-1,0
+EF,"warm-temperate evergreen broadleaf and mixed forest",-1,8
+Dwc,"wet sclerophyll forest",1,19
