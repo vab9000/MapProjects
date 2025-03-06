@@ -34,8 +34,8 @@ GLuint readFboId = 0;
 BYTE *bytes = nullptr;
 auto image = Image();
 
-auto provinces = std::unordered_map<unsigned int, Province *>();
-auto tags = std::unordered_map<unsigned int, Tag *>();
+auto provinces = std::unordered_map<unsigned int, std::unique_ptr<Province>>();
+auto tags = std::unordered_map<unsigned int, std::unique_ptr<Tag>>();
 
 Province *selectedProvince = nullptr;
 auto mapMode = MapMode::OWNER;
@@ -67,7 +67,7 @@ void changeMapMode(const MapMode mode) {
 	const auto provinceValues = provinces | std::views::values;
 
 	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(),
-	              [](Province *province) { province->recolor(mapMode); });
+	              [](const std::unique_ptr<Province> &province) { province->recolor(mapMode); });
 
 	reloadBitmap();
 }
@@ -83,7 +83,7 @@ void selectProvince(Province *province) {
 	}
 }
 
-constexpr void setPixel(BYTE *bytes, const int index, const BYTE r, const BYTE g, const BYTE b) {
+inline void setPixel(BYTE *bytes, const int index, const BYTE r, const BYTE g, const BYTE b) {
 	bytes[index] = r;
 	bytes[index + 1] = g;
 	bytes[index + 2] = b;
@@ -94,7 +94,7 @@ void reloadBitmapProvince(const Province &province) {
 	const auto color = province.color;
 	const auto pixels = province.getPixels();
 
-	std::vector<int> indices(province.numPixels);
+	std::vector<int> indices(province.getNumPixels());
 	std::iota(indices.begin(), indices.end(), 0);
 
 	std::for_each(std::execution::par, indices.begin(), indices.end(), [pixels, color](const int i) {
@@ -105,7 +105,7 @@ void reloadBitmapProvince(const Province &province) {
 
 	const auto outline = province.getOutline();
 	auto updatedProvinces = std::unordered_set<Province *>();
-	for (auto i = 0; i < province.numOutline; ++i) {
+	for (auto i = 0; i < province.getNumOutline(); ++i) {
 		const auto pixel = outline[i].second;
 		const auto otherProvince = outline[i].first;
 		const auto index = (pixel[0] + pixel[1] * image.width) * 4;
@@ -125,7 +125,7 @@ void reloadBitmapProvince(const Province &province) {
 				return;
 			}
 			const auto otherOutline = otherProvince->getOutline();
-			for (unsigned int j = 0; j < otherProvince->numOutline; ++j) {
+			for (unsigned int j = 0; j < otherProvince->getNumOutline(); ++j) {
 				const auto otherPixel = otherOutline[j].second;
 				const auto otherIndex = (otherPixel[0] + otherPixel[1] * image.width) * 4;
 				if (otherOutline[j].first == &const_cast<Province &>(province)) {
@@ -144,8 +144,8 @@ void reloadBitmapProvince(const Province &province) {
 
 	wglMakeCurrent(hdc, openglHdc);
 
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, province.bounds[1], image.width, province.bounds[3] - province.bounds[1],
-	                GL_BGRA, GL_UNSIGNED_BYTE, bytes + image.width * province.bounds[1] * 4);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, province.getBounds()[1], image.width, province.getBounds()[3] - province.getBounds()[1],
+	                GL_BGRA, GL_UNSIGNED_BYTE, bytes + image.width * province.getBounds()[1] * 4);
 
 	ReleaseDC(mapHwnd, hdc);
 }
@@ -153,41 +153,43 @@ void reloadBitmapProvince(const Province &province) {
 void reloadBitmap() {
 	const auto provinceValues = provinces | std::views::values;
 
-	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(), [](const Province *province) {
-		const auto pixels = province->getPixels();
+	std::for_each(
+	        std::execution::par, provinceValues.begin(), provinceValues.end(),
+	        [](const std::unique_ptr<Province> &province) {
+		        const auto pixels = province->getPixels();
 
-		std::vector<int> indices(province->numPixels);
-		std::iota(indices.begin(), indices.end(), 0);
+		        std::vector<int> indices(province->getNumPixels());
+		        std::iota(indices.begin(), indices.end(), 0);
 
-		std::for_each(std::execution::par, indices.begin(), indices.end(), [pixels, province](const int i) {
-			const auto pixel = pixels[i];
-			const auto color = province->color;
-			const auto index = (pixel[0] + pixel[1] * image.width) * 4;
-			setPixel(bytes, index, static_cast<BYTE>(color), static_cast<BYTE>(color >> 8),
-			         static_cast<BYTE>(color >> 16));
-		});
+		        std::for_each(std::execution::par, indices.begin(), indices.end(), [pixels, &province](const int i) {
+			        const auto pixel = pixels[i];
+			        const auto color = province->color;
+			        const auto index = (pixel[0] + pixel[1] * image.width) * 4;
+			        setPixel(bytes, index, static_cast<BYTE>(color), static_cast<BYTE>(color >> 8),
+			                 static_cast<BYTE>(color >> 16));
+		        });
 
-		const auto outline = province->getOutline();
+		        const auto outline = province->getOutline();
 
-		indices = std::vector<int>(province->numOutline);
-		std::iota(indices.begin(), indices.end(), 0);
-		std::for_each(std::execution::par, indices.begin(), indices.end(), [outline, province](const int i) {
-			const auto otherProvince = outline[i].first;
-			const auto pixel = outline[i].second;
-			const auto color = province->color;
-			const auto index = (pixel[0] + pixel[1] * image.width) * 4;
-			if (selectedProvince != nullptr && province->color == selectedProvince->color) {
-				setPixel(bytes, index, 255, 255, 255);
-			} else {
-				if (otherProvince != nullptr && otherProvince->color != province->color) {
-					setPixel(bytes, index, 0, 0, 0);
-				} else {
-					setPixel(bytes, index, static_cast<BYTE>(color), static_cast<BYTE>(color >> 8),
-					         static_cast<BYTE>(color >> 16));
-				}
-			}
-		});
-	});
+		        indices = std::vector<int>(province->getNumOutline());
+		        std::iota(indices.begin(), indices.end(), 0);
+		        std::for_each(std::execution::par, indices.begin(), indices.end(), [outline, &province](const int i) {
+			        const auto otherProvince = outline[i].first;
+			        const auto pixel = outline[i].second;
+			        const auto color = province->color;
+			        const auto index = (pixel[0] + pixel[1] * image.width) * 4;
+			        if (selectedProvince != nullptr && color == selectedProvince->color) {
+				        setPixel(bytes, index, 255, 255, 255);
+			        } else {
+				        if (otherProvince != nullptr && otherProvince->color != color) {
+					        setPixel(bytes, index, 0, 0, 0);
+				        } else {
+					        setPixel(bytes, index, static_cast<BYTE>(color), static_cast<BYTE>(color >> 8),
+					                 static_cast<BYTE>(color >> 16));
+				        }
+			        }
+		        });
+	        });
 
 	if (openglHdc != nullptr) {
 		const auto hdc = GetDC(mapHwnd);
@@ -205,25 +207,24 @@ void loadImage() {
 		const auto i = position[1];
 		const auto j = position[0];
 		if (const auto color = pixel.x + (pixel.y << 8) + (pixel.z << 16); provinces.contains(color)) {
-			const auto province = provinces.at(color);
+			const auto province = provinces.at(color).get();
 			province->expandBounds(i, j);
 		} else {
-			constexpr auto invertColor = [](const unsigned int colorToChange) {
+			auto invertColor = [](const unsigned int colorToChange) {
 				return (colorToChange & 0xFF) << 16 | (colorToChange & 0xFF00) | (colorToChange & 0xFF0000) >> 16;
 			};
-
-			const auto province =
-			        new Province(std::string("Province ") + std::to_string(provinces.size()), color, i, j);
-			const auto country = new Country("", invertColor(color));
-			tags[color] = country;
+			auto country = std::make_unique<Country>("", invertColor(color));
+			auto province = std::make_unique<Province>(std::string("Province ") + std::to_string(provinces.size()),
+			                                           color, i, j);
 			province->setOwner(*country);
-			provinces[color] = province;
+			tags.insert(std::make_pair(color, std::move(country)));
+			provinces.insert(std::make_pair(color, std::move(province)));
 		}
 	};
 
-	constexpr auto isBorder = [&](const int x, const int y, const unsigned int color, const Province *&otherProvince) {
+	auto isBorder = [&](const int x, const int y, const unsigned int color, const Province *&otherProvince) {
 		if (x >= 0 && x < image.width && y >= 0 && y < image.height && image.getColor(x, y) != color) {
-			otherProvince = provinces.at(image.getColor(x, y));
+			otherProvince = provinces.at(image.getColor(x, y)).get();
 			return true;
 		}
 		return false;
@@ -233,7 +234,7 @@ void loadImage() {
 		const auto i = position[1];
 		const auto j = position[0];
 		const auto color = pixel.x + (pixel.y << 8) + (pixel.z << 16);
-		Province *province = provinces.at(color);
+		Province *province = provinces.at(color).get();
 
 		if (const Province *otherProvince = nullptr;
 		    isBorder(i - 1, j, color, otherProvince) || isBorder(i + 1, j, color, otherProvince) ||
@@ -263,19 +264,19 @@ void loadImage() {
 	auto provinceValues = provinces | std::views::values;
 
 	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(),
-	              [](Province *province) { province->lock(); });
+	              [](const std::unique_ptr<Province> &province) { province->lock(); });
 
 	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(),
-	              [](Province *province) { province->processDistances(); });
+	              [](const std::unique_ptr<Province> &province) { province->processDistances(); });
 }
 
 [[noreturn]] DWORD startGameLoop(LPVOID) {
 	while (open) {
-		for (const auto provinceValues = provinces | std::views::values; auto *province: provinceValues) {
+		for (const auto provinceValues = provinces | std::views::values; const auto &province: provinceValues) {
 			province->tick();
 		}
 
-		for (const auto tagValues = tags | std::views::values; auto *tag: tagValues) {
+		for (const auto tagValues = tags | std::views::values; const auto &tag: tagValues) {
 			tag->updateAI();
 		}
 
@@ -392,7 +393,7 @@ LRESULT CALLBACK mapWindowProc(const HWND hwnd, const UINT uMsg, const WPARAM wP
 			const auto y = static_cast<int>((HIWORD(lParam) - offset[1]) / zoom);
 			if (!mouseMoved) {
 				const auto color = image.getColor(x, y);
-				const auto province = provinces.at(color);
+				const auto province = provinces.at(color).get();
 				selectProvince(province);
 				InvalidateRect(hwnd, nullptr, false);
 			}
@@ -533,7 +534,7 @@ HWND createDisplay() {
 
 	wglUseFontBitmaps(hdc, 0, 256, 1000);
 
-	constexpr auto getAnyGLFuncAddress = [](const char *name) {
+	auto getAnyGLFuncAddress = [](const char *name) {
 		auto p = reinterpret_cast<void *>(wglGetProcAddress(name));
 		if (p == nullptr || (p == reinterpret_cast<void *>(0x1)) || (p == reinterpret_cast<void *>(0x2)) ||
 		    (p == reinterpret_cast<void *>(0x3)) || (p == reinterpret_cast<void *>(-1))) {
@@ -590,14 +591,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	}
 
 	delete[] bytes;
-
-	for (const auto &province: provinces | std::views::values) {
-		delete province;
-	}
-
-	for (const auto &tag: tags | std::views::values) {
-		delete tag;
-	}
 
 	return 0;
 }

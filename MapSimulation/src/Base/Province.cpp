@@ -153,6 +153,9 @@ void Province::addOutline(const int x, const int y, const Province &other) {
 	if (locked) {
 		return;
 	}
+	if (x > 5000 || y > 5000) {
+        return;
+    }
 	outline.emplace_back(&const_cast<Province &>(other), std::array{x, y});
 	numOutline += 1;
 	neighbors.emplace(&const_cast<Province &>(other), 0.0);
@@ -260,4 +263,28 @@ void Province::tick() {
 	if (owner != nullptr) {
         owner->gold += 1;
     }
+}
+
+[[nodiscard]] unsigned int Province::getNumPixels() const {
+	return numPixels;
+}
+
+[[nodiscard]] unsigned int Province::getNumOutline() const {
+	return numOutline;
+}
+
+[[nodiscard]] const int *Province::getBounds() const {
+	return bounds;
+}
+
+[[nodiscard]] const int *Province::getCenter() const {
+	return center;
+}
+
+[[nodiscard]] const std::vector<Pop *> &Province::getPops() const {
+	return pops;
+}
+
+[[nodiscard]] const std::unordered_map<Province *, double> &Province::getNeighbors() const {
+	return neighbors;
 }

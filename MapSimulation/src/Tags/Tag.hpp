@@ -7,14 +7,14 @@ class Tag : public HasAI {
 public:
 	std::string name;
 	unsigned int color;
-	std::vector<Army *> armies;
+	std::vector<std::unique_ptr<Army>> armies;
 	int gold;
 
 	Tag() {
 		ai = AI();
 		name = "";
 		color = 0;
-		armies = std::vector<Army *>();
+		armies = std::vector<std::unique_ptr<Army>>();
 		gold = 0;
 	}
 
@@ -22,14 +22,8 @@ public:
 		ai = AI();
 		this->name = name;
 		this->color = color;
-		armies = std::vector<Army *>();
+		armies = std::vector<std::unique_ptr<Army>>();
 		gold = 0;
-	}
-
-	~Tag() override {
-		for (const auto &army: armies) {
-            delete army;
-        }
 	}
 
 	[[nodiscard]] virtual bool hasArmyAccess(const Province &province) const {
@@ -37,9 +31,9 @@ public:
 	}
 
 	[[nodiscard]] Army *newArmy() {
-		auto army = new Army(*this);
-		armies.emplace_back(army);
-		return army;
+		auto army = std::make_unique<Army>(*this);
+		armies.emplace_back(std::move(army));
+		return armies.back().get();
 	}
 
 	void updateAI() override {

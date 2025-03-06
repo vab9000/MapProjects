@@ -40,15 +40,9 @@ void Unit::move() {
 
 Army::Army(const Tag &tag) {
 	this->tag = &const_cast<Tag &>(tag);
-	units = std::vector<Unit *>();
+	units = std::vector<std::unique_ptr<Unit>>();
 	ai = AI();
 	directive = {.type = ArmyDirectiveType::ATTACK, .target = nullptr};
-}
-
-Army::~Army() {
-	for (const auto &unit: units) {
-		delete unit;
-	}
 }
 
 void setUnitDestination(void* sParam, void* oParam) {
@@ -69,7 +63,7 @@ void Army::updateAI() {
 	switch (directive.type) {
         case ArmyDirectiveType::ATTACK:
             for (const auto &unit: units) {
-                auto action = new Action(setUnitDestination, unit, directive.target, getSetUnitDestinationWeight);
+                auto action = new Action(setUnitDestination, unit.get(), directive.target, getSetUnitDestinationWeight);
                 actions.emplace_back(action);
             }
             break;

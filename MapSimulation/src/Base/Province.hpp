@@ -23,15 +23,15 @@ class Province {
 	bool distancesProcessed{};
 	Country *owner;
 	std::unordered_map<Province *, double> neighbors;
-
-public:
-	std::string name;
-	unsigned int color;
-	unsigned int baseColor;
 	unsigned int numPixels;
 	unsigned int numOutline;
 	int bounds[4]{};
 	int center[2]{};
+
+public:
+	unsigned int color;
+	unsigned int baseColor;
+	std::string name;
 
 	Province(const std::string &name, unsigned int color, int i, int j);
 
@@ -61,6 +61,18 @@ public:
 
 	[[nodiscard]] std::vector<Province *> getPathTo(const Province &destination, bool (*accessible)(const Province &, void *),
 	                                                double (*costModifier)(const Province &, void *), void *param);
+
+	[[nodiscard]] unsigned int getNumPixels() const;
+
+	[[nodiscard]] unsigned int getNumOutline() const;
+
+	[[nodiscard]] const int *getBounds() const;
+
+    [[nodiscard]] const int *getCenter() const;
+
+    [[nodiscard]] const std::vector<Pop *> &getPops() const;
+
+    [[nodiscard]] const std::unordered_map<Province *, double> &getNeighbors() const;
 
 	void tick();
 };

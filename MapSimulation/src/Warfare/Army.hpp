@@ -39,12 +39,10 @@ class Army : public HasAI {
 	ArmyDirective directive{};
 
 public:
-	std::vector<Unit *> units;
+	std::vector<std::unique_ptr<Unit>> units;
 	Tag *tag;
 
 	explicit Army(const Tag &tag);
-
-	~Army() override;
 
 	void updateAI() override;
 
