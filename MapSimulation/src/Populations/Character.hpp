@@ -1,5 +1,4 @@
-#ifndef CHARACTER_HPP
-#define CHARACTER_HPP
+#pragma once
 
 #include <unordered_set>
 #include "../Base/Utils.hpp"
@@ -24,6 +23,3 @@ public:
 		return static_cast<int>(currentDate.year) - static_cast<int>(birthday.year);
 	}
 };
-
-
-#endif // CHARACTER_HPP

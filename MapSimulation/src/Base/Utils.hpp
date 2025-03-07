@@ -1,5 +1,4 @@
-#ifndef UTILS_HPP
-#define UTILS_HPP
+#pragma once
 
 enum class MapMode {
 	PROVINCES,
@@ -121,5 +120,3 @@ public:
 		return std::to_string(day) + '/' + std::to_string(month) + '/' + std::to_string(year);
 	}
 };
-
-#endif // UTILS_HPP

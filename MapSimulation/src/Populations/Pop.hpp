@@ -1,5 +1,4 @@
-#ifndef POP_HPP
-#define POP_HPP
+#pragma once
 
 enum class Lifestyle {
 	TRIBAL,
@@ -10,6 +9,3 @@ public:
     unsigned int size;
     Lifestyle lifestyle;
 };
-
-
-#endif // POP_HPP

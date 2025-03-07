@@ -1,5 +1,4 @@
-#ifndef ARMY_HPP
-#define ARMY_HPP
+#pragma once
 
 #include <vector>
 #include "../Base/AI.hpp"
@@ -48,6 +47,3 @@ public:
 
 	[[nodiscard]] Unit *newUnit(const Province &location);
 };
-
-
-#endif // ARMY_HPP

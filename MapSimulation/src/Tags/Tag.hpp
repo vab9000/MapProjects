@@ -1,5 +1,4 @@
-#ifndef TAG_HPP
-#define TAG_HPP
+#pragma once
 
 #include "../Base/AI.hpp"
 
@@ -40,5 +39,3 @@ public:
 
 	}
 };
-
-#endif // TAG_HPP

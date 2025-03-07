@@ -1,5 +1,4 @@
-#ifndef PROVINCE_HPP
-#define PROVINCE_HPP
+#pragma once
 
 #include <array>
 #include <string>
@@ -16,10 +15,7 @@ class Pop;
 class Province {
 	std::vector<std::array<int, 2>> pixels;
 	std::vector<std::pair<Province *, std::array<int, 2>>> outline;
-	std::array<int, 2> *lockedPixels{};
-	std::pair<Province *, std::array<int, 2>> *lockedOutline{};
 	std::vector<Pop *> pops;
-	bool locked{};
 	bool distancesProcessed{};
 	Country *owner;
 	std::unordered_map<Province *, double> neighbors;
@@ -35,9 +31,7 @@ public:
 
 	Province(const std::string &name, unsigned int color, int i, int j);
 
-	~Province();
-
-	void lock();
+	void finalize();
 
 	void processDistances();
 
@@ -76,5 +70,3 @@ public:
 
 	void tick();
 };
-
-#endif // PROVINCE_HPP

@@ -59,12 +59,11 @@ int getSetUnitDestinationWeight(void* sParam, void* oParam) {
 
 void Army::updateAI() {
 	ai.clearActions();
-	auto actions = std::vector<Action *>();
 	switch (directive.type) {
         case ArmyDirectiveType::ATTACK:
             for (const auto &unit: units) {
-                auto action = new Action(setUnitDestination, unit.get(), directive.target, getSetUnitDestinationWeight);
-                actions.emplace_back(action);
+            	auto action = std::make_unique<Action>(setUnitDestination, unit.get(), directive.target, getSetUnitDestinationWeight);
+            	ai.addAction(std::move(action));
             }
             break;
     }
@@ -72,7 +71,7 @@ void Army::updateAI() {
 }
 
 [[nodiscard]] Unit *Army::newUnit(const Province &location) {
-	auto unit = new Unit(*this, location);
-	units.emplace_back(unit);
-	return unit;
+	auto unit = std::make_unique<Unit>(*this, location);
+	units.push_back(std::move(unit));
+	return units.back().get();
 }

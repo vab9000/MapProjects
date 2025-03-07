@@ -1,5 +1,4 @@
-#ifndef IMAGE_HPP
-#define IMAGE_HPP
+#pragma once
 
 #include <opencv2/opencv.hpp>
 
@@ -24,5 +23,3 @@ public:
 		return pixel.x + (pixel.y << 8) + (pixel.z << 16);
 	}
 };
-
-#endif // IMAGE_HPP

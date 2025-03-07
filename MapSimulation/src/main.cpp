@@ -31,7 +31,7 @@ HWND guiHwnd = nullptr;
 HGLRC openglHdc = nullptr;
 GLuint texture = 0;
 GLuint readFboId = 0;
-BYTE *bytes = nullptr;
+std::vector<BYTE> bytes;
 auto image = Image();
 
 auto provinces = std::unordered_map<unsigned int, std::unique_ptr<Province>>();
@@ -83,7 +83,7 @@ void selectProvince(Province *province) {
 	}
 }
 
-inline void setPixel(BYTE *bytes, const int index, const BYTE r, const BYTE g, const BYTE b) {
+inline void setPixel(std::vector<BYTE> &bytes, const int index, const BYTE r, const BYTE g, const BYTE b) {
 	bytes[index] = r;
 	bytes[index + 1] = g;
 	bytes[index + 2] = b;
@@ -144,8 +144,9 @@ void reloadBitmapProvince(const Province &province) {
 
 	wglMakeCurrent(hdc, openglHdc);
 
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, province.getBounds()[1], image.width, province.getBounds()[3] - province.getBounds()[1],
-	                GL_BGRA, GL_UNSIGNED_BYTE, bytes + image.width * province.getBounds()[1] * 4);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, province.getBounds()[1], image.width,
+	                province.getBounds()[3] - province.getBounds()[1], GL_BGRA, GL_UNSIGNED_BYTE,
+	                bytes.data() + image.width * province.getBounds()[1] * 4);
 
 	ReleaseDC(mapHwnd, hdc);
 }
@@ -196,7 +197,7 @@ void reloadBitmap() {
 
 		wglMakeCurrent(hdc, openglHdc);
 
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, image.width, image.height, GL_BGRA, GL_UNSIGNED_BYTE, bytes);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, image.width, image.height, GL_BGRA, GL_UNSIGNED_BYTE, bytes.data());
 
 		ReleaseDC(mapHwnd, hdc);
 	}
@@ -264,7 +265,7 @@ void loadImage() {
 	auto provinceValues = provinces | std::views::values;
 
 	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(),
-	              [](const std::unique_ptr<Province> &province) { province->lock(); });
+	              [](const std::unique_ptr<Province> &province) { province->finalize(); });
 
 	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(),
 	              [](const std::unique_ptr<Province> &province) { province->processDistances(); });
@@ -552,7 +553,7 @@ HWND createDisplay() {
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.width, image.height, 0, GL_BGRA, GL_UNSIGNED_BYTE, bytes);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.width, image.height, 0, GL_BGRA, GL_UNSIGNED_BYTE, bytes.data());
 
 	glGenFramebuffers(1, &readFboId);
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, readFboId);
@@ -576,7 +577,7 @@ void startMessageLoop() {
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	loadImage();
 
-	bytes = new BYTE[image.width * image.height * 4];
+	bytes = std::vector<BYTE>(image.width * image.height * 4);
 
 	reloadBitmap();
 
@@ -589,8 +590,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		wglDeleteContext(openglHdc);
 	}
-
-	delete[] bytes;
 
 	return 0;
 }

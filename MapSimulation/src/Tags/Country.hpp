@@ -1,5 +1,4 @@
-#ifndef COUNTRY_HPP
-#define COUNTRY_HPP
+#pragma once
 
 #include <string>
 #include <vector>
@@ -36,6 +35,3 @@ public:
 		return true;
 	}
 };
-
-
-#endif // COUNTRY_HPP

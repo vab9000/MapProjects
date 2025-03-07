@@ -1,5 +1,4 @@
-#ifndef AI_HPP
-#define AI_HPP
+#pragma once
 
 #include <vector>
 #include <random>
@@ -41,36 +40,21 @@ public:
 };
 
 class AI {
-    std::vector<Action*> actions;
+    std::vector<std::unique_ptr<Action>> actions;
     std::default_random_engine gen;
 
 public:
     AI() {
-        actions = std::vector<Action*>();
+        actions = std::vector<std::unique_ptr<Action>>();
         std::random_device rd;
         gen = std::default_random_engine(rd());
     }
 
-    ~AI() {
-        for (const auto action : actions) {
-			delete action;
-		}
-    }
-
-    void addAction(Action *action) {
-        actions.emplace_back(action);
-    }
-
-    void addActions(const std::vector<Action*> &actionsVector) {
-        for (const auto action : actionsVector) {
-            addAction(action);
-        }
+    void addAction(std::unique_ptr<Action> &&action) {
+        actions.push_back(std::move(action));
     }
 
     void clearActions() {
-        for (const auto action : actions) {
-            delete action;
-        }
         actions.clear();
     }
 
@@ -97,5 +81,3 @@ public:
 
     virtual void updateAI() = 0;
 };
-
-#endif //AI_HPP
