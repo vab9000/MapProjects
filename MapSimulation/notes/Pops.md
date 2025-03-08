@@ -1,4 +1,6 @@
 
+## Pop
+
 A pop has the following properties:
 * Size
 * Culture
@@ -10,5 +12,6 @@ A pop has the following properties:
   * Urban (Living in densely populated, developed, and built-up areas)
   * Affluent (Living in any developed area, with a high standard of living)
   * Religious (Living in a way that is entirely devoted to religion, such as being a monk)
-* Wealth
-* Literacy
+* Wealth (The total amount of money the pop has)
+* Literacy (What percent of the population is literate)
+
