@@ -41,8 +41,8 @@ void Unit::move() {
 Army::Army(const Tag &tag) {
 	this->tag = &const_cast<Tag &>(tag);
 	units = std::vector<std::unique_ptr<Unit>>();
-	ai = AI();
 	directive = {.type = ArmyDirectiveType::ATTACK, .target = nullptr};
+	commander = nullptr;
 }
 
 void setUnitDestination(void* sParam, void* oParam) {
@@ -52,22 +52,9 @@ void setUnitDestination(void* sParam, void* oParam) {
 }
 
 int getSetUnitDestinationWeight(void* sParam, void* oParam) {
-    const auto unit = static_cast<Unit *>(sParam);
-    const auto province = static_cast<Province*>(oParam);
+    // const auto unit = static_cast<Unit *>(sParam);
+    // const auto province = static_cast<Province*>(oParam);
     return 100;
-}
-
-void Army::updateAI() {
-	ai.clearActions();
-	switch (directive.type) {
-        case ArmyDirectiveType::ATTACK:
-            for (const auto &unit: units) {
-            	auto action = std::make_unique<Action>(setUnitDestination, unit.get(), directive.target, getSetUnitDestinationWeight);
-            	ai.addAction(std::move(action));
-            }
-            break;
-    }
-    ai.performActions();
 }
 
 [[nodiscard]] Unit *Army::newUnit(const Province &location) {

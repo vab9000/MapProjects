@@ -2,7 +2,7 @@
 
 #include "../Base/AI.hpp"
 
-class Tag : public HasAI {
+class Tag {
 public:
 	std::string name;
 	unsigned int color;
@@ -10,7 +10,6 @@ public:
 	int gold;
 
 	Tag() {
-		ai = AI();
 		name = "";
 		color = 0;
 		armies = std::vector<std::unique_ptr<Army>>();
@@ -18,12 +17,13 @@ public:
 	}
 
 	Tag(const std::string &name, const unsigned int color) {
-		ai = AI();
 		this->name = name;
 		this->color = color;
 		armies = std::vector<std::unique_ptr<Army>>();
 		gold = 0;
 	}
+
+	virtual ~Tag() = default;
 
 	[[nodiscard]] virtual bool hasArmyAccess(const Province &province) const {
 		return true;
@@ -33,9 +33,5 @@ public:
 		auto army = std::make_unique<Army>(*this);
 		armies.emplace_back(std::move(army));
 		return armies.back().get();
-	}
-
-	void updateAI() override {
-
 	}
 };

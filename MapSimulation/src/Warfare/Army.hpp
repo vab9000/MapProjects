@@ -34,16 +34,15 @@ public:
 	void move();
 };
 
-class Army : public HasAI {
+class Army {
 	ArmyDirective directive{};
+	Character *commander;
 
 public:
 	std::vector<std::unique_ptr<Unit>> units;
 	Tag *tag;
 
 	explicit Army(const Tag &tag);
-
-	void updateAI() override;
 
 	[[nodiscard]] Unit *newUnit(const Province &location);
 };

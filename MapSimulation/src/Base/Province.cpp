@@ -90,7 +90,7 @@ void Province::finalize() {
 
 void Province::processDistances() {
 	for (const auto neighbor: neighbors | std::views::keys) {
-		neighbors.operator[](neighbor) = this->distance(*neighbor);
+		neighbors[neighbor] = this->distance(*neighbor);
 	}
 	distancesProcessed = true;
 }

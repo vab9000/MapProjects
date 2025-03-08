@@ -1,28 +1,13 @@
 #pragma once
 
+#include <string>
+
 enum class MapMode {
 	PROVINCES,
 	OWNER,
 };
 
-class Date {
-	[[nodiscard]] unsigned int absoluteDays() const {
-		unsigned int totalDays = 0;
-
-		for (unsigned int y = 0; y < year; ++y) {
-			totalDays += (y % 4 == 0 && (y % 100 != 0 || y % 400 == 0)) ? 366 : 365;
-		}
-
-		for (unsigned int m = 1; m < month; ++m) {
-			totalDays += daysInMonth(static_cast<Month>(m), year);
-		}
-
-		totalDays += day;
-
-		return totalDays;
-	}
-
-public:
+struct Date {
 	enum class Month {
 		JANUARY = 1,
 		FEBRUARY = 2,
@@ -57,7 +42,7 @@ public:
 				if (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) {
 					return 29;
 				}
-				return 28;
+			return 28;
 		}
 		return 0;
 	}
@@ -68,55 +53,65 @@ public:
 
 	Date() : Date(0, 1, 1) {}
 
-	Date(const unsigned int year, const unsigned int month, const unsigned int day) {
-		this->year = year;
-		this->month = month;
-		this->day = day;
-	}
+	Date(const unsigned int year, const unsigned int month, const unsigned int day) : year(year), month(month), day(day) {}
 
-	explicit Date(const Date *other) {
-		this->year = other->year;
-		this->month = other->month;
-		this->day = other->day;
-	}
+	explicit Date(const Date *other) : Date(other->year, other->month, other->day) {}
 
 	[[nodiscard]] Date clone() const { return Date(this); }
+
+	[[nodiscard]] unsigned int absoluteDays() const {
+		unsigned int totalDays = 0;
+
+		for (unsigned int y = 0; y < year; ++y) {
+			totalDays += (y % 4 == 0 && (y % 100 != 0 || y % 400 == 0)) ? 366 : 365;
+		}
+
+		for (unsigned int m = 1; m < month; ++m) {
+			totalDays += daysInMonth(static_cast<Month>(m), year);
+		}
+
+		totalDays += day;
+
+		return totalDays;
+	}
+
+	[[nodiscard]] std::string toString() const {
+		return std::to_string(day) + '/' + std::to_string(month) + '/' + std::to_string(year);
+	}
 
 	bool operator==(const Date &other) const { return year == other.year && month == other.month && day == other.day; }
 
 	Date operator+(const int days) const {
-		auto newDate = Date(this);
+		unsigned int newDay = day;
+		unsigned int newMonth = month;
+		unsigned int newYear = year;
 		if (days < 0) {
-			newDate.day -= days;
-			while (newDate.day < 1) {
-				newDate.month -= 1;
-				if (newDate.month < 1) {
-					newDate.year -= 1;
-					newDate.month = 12;
+			newDay -= days;
+			while (newDay < 1) {
+				newMonth -= 1;
+				if (newMonth < 1) {
+					newYear -= 1;
+					newMonth = 12;
 				}
-				newDate.day += daysInMonth(static_cast<Month>(newDate.month), newDate.year);
+				newDay += daysInMonth(static_cast<Month>(newMonth), newYear);
 			}
 		} else if (days > 0) {
-			newDate.day += days;
-			while (newDate.day > daysInMonth(static_cast<Month>(newDate.month), newDate.year)) {
-				newDate.day -= daysInMonth(static_cast<Month>(newDate.month), newDate.year);
-				newDate.month += 1;
-				if (newDate.month > 12) {
-					newDate.year += 1;
-					newDate.month = 1;
+			newDay += days;
+			while (newDay > daysInMonth(static_cast<Month>(newMonth), newYear)) {
+				newDay -= daysInMonth(static_cast<Month>(newMonth), newYear);
+				newMonth += 1;
+				if (newMonth > 12) {
+					newYear += 1;
+					newMonth = 1;
 				}
 			}
 		}
-		return newDate;
+		return { newYear, newMonth, newDay };
 	}
 
 	Date operator-(const int days) const { return *this + -days; }
 
 	int operator-(const Date &other) const {
 		return static_cast<int>(absoluteDays()) - static_cast<int>(other.absoluteDays());
-	}
-
-	[[nodiscard]] std::string toString() const {
-		return std::to_string(day) + '/' + std::to_string(month) + '/' + std::to_string(year);
 	}
 };

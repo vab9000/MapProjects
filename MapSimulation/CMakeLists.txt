@@ -11,7 +11,15 @@ find_package(OpenCV REQUIRED PATHS libs/opencv/ NO_DEFAULT_PATH)
 
 find_package(OpenGL REQUIRED)
 
-add_executable(MapSimulation WIN32 src/main.cpp src/Base/Province.cpp src/Warfare/Army.cpp libs/glad/src/glad.c)
+add_executable(MapSimulation WIN32)
+
+file(GLOB_RECURSE Sources src/*.cpp)
+
+file(GLOB_RECURSE Libs libs/*.c libs/*.cpp)
+
+target_sources(MapSimulation PRIVATE ${Sources})
+
+target_sources(MapSimulation PRIVATE ${Libs})
 
 target_link_libraries(MapSimulation PRIVATE comctl32)
 

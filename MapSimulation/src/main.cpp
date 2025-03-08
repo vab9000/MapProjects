@@ -41,48 +41,6 @@ Province *selectedProvince = nullptr;
 auto mapMode = MapMode::OWNER;
 auto date = Date();
 
-void changeMapMode(MapMode mode);
-
-void selectProvince(Province *province);
-
-void reloadBitmapProvince(const Province &province);
-
-void reloadBitmap();
-
-void loadImage();
-
-DWORD startGameLoop(LPVOID);
-
-LRESULT CALLBACK guiWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-LRESULT CALLBACK mapWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-HWND createDisplay();
-
-void startMessageLoop();
-
-void changeMapMode(const MapMode mode) {
-	mapMode = mode;
-
-	const auto provinceValues = provinces | std::views::values;
-
-	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(),
-	              [](const std::unique_ptr<Province> &province) { province->recolor(mapMode); });
-
-	reloadBitmap();
-}
-
-void selectProvince(Province *province) {
-	const auto oldSelectedProvince = selectedProvince;
-	selectedProvince = province;
-	if (oldSelectedProvince != nullptr) {
-		reloadBitmapProvince(*oldSelectedProvince);
-	}
-	if (selectedProvince != nullptr) {
-		reloadBitmapProvince(*selectedProvince);
-	}
-}
-
 inline void setPixel(std::vector<BYTE> &bytes, const int index, const BYTE r, const BYTE g, const BYTE b) {
 	bytes[index] = r;
 	bytes[index + 1] = g;
@@ -203,7 +161,7 @@ void reloadBitmap() {
 	}
 }
 
-void loadImage() {
+inline void loadImage() {
 	auto processPixel = [](const Pixel &pixel, const int *position) {
 		const auto i = position[1];
 		const auto j = position[0];
@@ -271,7 +229,29 @@ void loadImage() {
 	              [](const std::unique_ptr<Province> &province) { province->processDistances(); });
 }
 
-[[noreturn]] DWORD startGameLoop(LPVOID) {
+inline void changeMapMode(const MapMode mode) {
+	mapMode = mode;
+
+	const auto provinceValues = provinces | std::views::values;
+
+	std::for_each(std::execution::par, provinceValues.begin(), provinceValues.end(),
+	              [](const std::unique_ptr<Province> &province) { province->recolor(mapMode); });
+
+	reloadBitmap();
+}
+
+inline void selectProvince(Province *province) {
+	const auto oldSelectedProvince = selectedProvince;
+	selectedProvince = province;
+	if (oldSelectedProvince != nullptr) {
+		reloadBitmapProvince(*oldSelectedProvince);
+	}
+	if (selectedProvince != nullptr) {
+		reloadBitmapProvince(*selectedProvince);
+	}
+}
+
+[[noreturn]] inline DWORD startGameLoop(LPVOID) {
 	while (open) {
 		for (const auto provinceValues = provinces | std::views::values; const auto &province: provinceValues) {
 			province->tick();
@@ -466,42 +446,28 @@ LRESULT CALLBACK mapWindowProc(const HWND hwnd, const UINT uMsg, const WPARAM wP
 	}
 }
 
-HWND createDisplay() {
+inline HWND createWindow(const char *title, const WNDPROC windowProc, const DWORD style) {
 	const auto wc = WNDCLASS{.style = CS_HREDRAW | CS_VREDRAW,
-	                         .lpfnWndProc = mapWindowProc,
+	                         .lpfnWndProc = windowProc,
 	                         .hInstance = GetModuleHandle(nullptr),
 	                         .hCursor = LoadCursor(nullptr, IDC_ARROW),
 	                         .hbrBackground = reinterpret_cast<HBRUSH>((COLOR_WINDOW + 1)),
-	                         .lpszClassName = "Map"};
-
-	const auto wc1 = WNDCLASS{.style = CS_HREDRAW | CS_VREDRAW,
-	                          .lpfnWndProc = guiWindowProc,
-	                          .hInstance = GetModuleHandle(nullptr),
-	                          .hCursor = LoadCursor(nullptr, IDC_ARROW),
-	                          .hbrBackground = reinterpret_cast<HBRUSH>((COLOR_WINDOW + 1)),
-	                          .lpszClassName = "GUI"};
+	                         .lpszClassName = title};
 
 	if (RegisterClass(&wc) == 0) {
 		MessageBox(nullptr, "Failed to register window class", "Error", MB_ICONERROR);
 		return nullptr;
 	}
 
-	if (RegisterClass(&wc1) == 0) {
-		MessageBox(nullptr, "Failed to register window class", "Error", MB_ICONERROR);
-		return nullptr;
-	}
+	const auto hwnd = CreateWindowEx(0, wc.lpszClassName, title, style, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+	                                 CW_USEDEFAULT, nullptr, nullptr, GetModuleHandle(nullptr), nullptr);
 
-	mapHwnd = CreateWindowEx(0, wc.lpszClassName, "Map Simulation", WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT,
-	                         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr, GetModuleHandle(nullptr),
-	                         nullptr);
+	ShowWindow(hwnd, SW_SHOW);
 
-	guiHwnd = CreateWindowEx(0, wc1.lpszClassName, "GUI", WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_CLIPCHILDREN,
-	                         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr,
-	                         GetModuleHandle(nullptr), nullptr);
+	return hwnd;
+}
 
-	ShowWindow(mapHwnd, SW_SHOWDEFAULT);
-	ShowWindow(guiHwnd, SW_SHOWDEFAULT);
-
+inline void initializeOpenGL() {
 	const HDC hdc = GetDC(mapHwnd);
 	constexpr DWORD pixelFormatFlags = PFD_SUPPORT_OPENGL | PFD_SUPPORT_COMPOSITION | PFD_GENERIC_ACCELERATED |
 	                                   PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER;
@@ -533,12 +499,10 @@ HWND createDisplay() {
 
 	wglMakeCurrent(hdc, openglHdc);
 
-	wglUseFontBitmaps(hdc, 0, 256, 1000);
-
-	auto getAnyGLFuncAddress = [](const char *name) {
+	const auto getAnyGLFuncAddress = [](const char *name) {
 		auto p = reinterpret_cast<void *>(wglGetProcAddress(name));
-		if (p == nullptr || (p == reinterpret_cast<void *>(0x1)) || (p == reinterpret_cast<void *>(0x2)) ||
-		    (p == reinterpret_cast<void *>(0x3)) || (p == reinterpret_cast<void *>(-1))) {
+		if (p == nullptr || (p == reinterpret_cast<void *>(1)) || (p == reinterpret_cast<void *>(2)) ||
+		    (p == reinterpret_cast<void *>(3)) || (p == reinterpret_cast<void *>(-1))) {
 			const HMODULE module = LoadLibraryA("opengl32.dll");
 			p = reinterpret_cast<void *>(GetProcAddress(module, name));
 		}
@@ -547,7 +511,7 @@ HWND createDisplay() {
 
 	if (!gladLoadGLLoader(getAnyGLFuncAddress)) {
 		std::cout << "Failed to initialize GLAD" << std::endl;
-		return nullptr;
+		return;
 	}
 
 	glGenTextures(1, &texture);
@@ -561,11 +525,16 @@ HWND createDisplay() {
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 
 	ReleaseDC(mapHwnd, hdc);
-
-	return mapHwnd;
 }
 
-void startMessageLoop() {
+inline void createDisplay() {
+	mapHwnd = createWindow("Map", mapWindowProc, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
+	guiHwnd = createWindow("GUI", guiWindowProc, WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_CLIPCHILDREN);
+
+	initializeOpenGL();
+}
+
+inline void startMessageLoop() {
 	auto msg = MSG{.hwnd = nullptr, .message = WM_NULL, .wParam = 0, .lParam = 0, .time = 0, .pt = POINT{0, 0}};
 
 	while (GetMessage(&msg, nullptr, 0, 0) == 1) {

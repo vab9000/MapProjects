@@ -8,18 +8,25 @@ enum class PersonalityTrait {
 	AMBITIOUS,
 };
 
+class Army;
+
 class Character : public HasAI {
+	Date birthday{};
+	bool commander{};
+	Army* army;
+
 public:
 	std::unordered_set<PersonalityTrait> traits;
-	Date birthday{};
 
-	explicit Character() {
-		traits = std::unordered_set<PersonalityTrait>();
-		birthday = Date(0, 0, 0);
-		ai = AI();
-	}
+	explicit Character(Date birthday);
 
-	[[nodiscard]] int age(const Date currentDate) const {
-		return static_cast<int>(currentDate.year) - static_cast<int>(birthday.year);
-	}
+	[[nodiscard]] int age(Date currentDate) const;
+
+	void updateAI() override;
+
+	void makeCommander(Army *army);
+
+	void removeCommander();
+
+	[[nodiscard]] bool isCommander() const;
 };
