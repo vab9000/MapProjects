@@ -8,65 +8,66 @@
 #include "Utils.hpp"
 
 
-class Country;
-enum class MapMode;
-class Pop;
+class country;
+enum class map_mode;
+class pop;
 
-class Province {
-	std::vector<std::array<int, 2>> pixels;
-	std::vector<std::pair<Province *, std::array<int, 2>>> outline;
-	std::vector<Pop *> pops;
-	bool distancesProcessed{};
-	Country *owner;
-	std::unordered_map<Province *, double> neighbors;
-	unsigned int numPixels;
-	unsigned int numOutline;
-	int bounds[4]{};
-	int center[2]{};
+class province {
+    std::vector<std::array<int, 2> > pixels_;
+    std::vector<std::pair<province *, std::array<int, 2> > > outline_;
+    std::vector<pop *> pops_;
+    bool distances_processed_{};
+    country *owner_;
+    std::unordered_map<province *, double> neighbors_;
+    unsigned int num_pixels_;
+    unsigned int num_outline_;
+    int bounds_[4]{};
+    int center_[2]{};
 
 public:
-	unsigned int color;
-	unsigned int baseColor;
-	std::string name;
+    unsigned int color;
+    unsigned int base_color;
+    std::string name;
 
-	Province(const std::string &name, unsigned int color, int i, int j);
+    province(const std::string &name, unsigned int color, int i, int j);
 
-	void finalize();
+    void finalize();
 
-	void processDistances();
+    void process_distances();
 
-	void setOwner(const Country &newOwner);
+    void set_owner(const country &new_owner);
 
-	[[nodiscard]] Country *getOwner() const;
+    [[nodiscard]] country *get_owner() const;
 
-	void addPixel(int x, int y);
+    void add_pixel(int x, int y);
 
-	void addOutline(int x, int y, const Province &other);
+    void add_outline(int x, int y, const province &other);
 
-	[[nodiscard]] const std::array<int, 2> *getPixels() const;
+    [[nodiscard]] const std::array<int, 2> *get_pixels() const;
 
-	[[nodiscard]] const std::pair<Province *, std::array<int, 2>> *getOutline() const;
+    [[nodiscard]] const std::pair<province *, std::array<int, 2> > *get_outline() const;
 
-	void expandBounds(int x, int y);
+    void expand_bounds(int x, int y);
 
-	void recolor(MapMode mode);
+    void recolor(map_mode mode);
 
-	[[nodiscard]] double distance(const Province &other) const;
+    [[nodiscard]] double distance(const province &other) const;
 
-	[[nodiscard]] std::vector<Province *> getPathTo(const Province &destination, bool (*accessible)(const Province &, void *),
-	                                                double (*costModifier)(const Province &, void *), void *param);
+    [[nodiscard]] std::vector<province *> get_path_to(const province &destination,
+                                                      bool (*accessible)(const province &, void *),
+                                                      double (*cost_modifier)(const province &, void *), void *param);
 
-	[[nodiscard]] unsigned int getNumPixels() const;
+    [[nodiscard]] unsigned int get_num_pixels() const;
 
-	[[nodiscard]] unsigned int getNumOutline() const;
+    [[nodiscard]] unsigned int get_num_outline() const;
 
-	[[nodiscard]] const int *getBounds() const;
+    [[nodiscard]] const int *get_bounds() const;
 
-    [[nodiscard]] const int *getCenter() const;
+    [[nodiscard]] const int *get_center() const;
 
-    [[nodiscard]] const std::vector<Pop *> &getPops() const;
+    [[nodiscard]] const std::vector<pop *> &get_pops() const;
 
-    [[nodiscard]] const std::unordered_map<Province *, double> &getNeighbors() const;
+    [[nodiscard]] const std::unordered_map<province *, double> &get_neighbors() const;
 
-	void tick();
+    void tick();
 };

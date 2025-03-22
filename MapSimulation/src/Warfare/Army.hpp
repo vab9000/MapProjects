@@ -6,43 +6,43 @@
 #include "../Populations/Character.hpp"
 
 
-class Tag;
-class Army;
+class tag;
+class army;
 
-enum class ArmyDirectiveType { ATTACK };
+enum class army_directive_type { attack };
 
-struct ArmyDirective {
-	ArmyDirectiveType type;
-	void *target;
+struct army_directive {
+    army_directive_type type;
+    void *target;
 };
 
-class Unit {
+class unit {
 public:
-	unsigned int size;
-	Province *location;
-	Army *army;
-	std::vector<Province *> path;
-	double travelProgress;
-	Character *general;
-	bool retreating;
-	double speed;
+    unsigned int size;
+    province *location;
+    army *army;
+    std::vector<province *> path;
+    double travel_progress;
+    character *general;
+    bool retreating;
+    double speed;
 
-	Unit(const Army &army, const Province &location);
+    unit(const class army &army, const province &location);
 
-	void setDestination(const Province &destination);
+    void set_destination(const province &destination);
 
-	void move();
+    void move();
 };
 
-class Army {
-	ArmyDirective directive{};
-	Character *commander;
+class army {
+    army_directive directive_{};
+    character *commander_;
 
 public:
-	std::vector<std::unique_ptr<Unit>> units;
-	Tag *tag;
+    std::vector<std::unique_ptr<unit> > units;
+    tag *tag;
 
-	explicit Army(const Tag &tag);
+    explicit army(const class tag &tag);
 
-	[[nodiscard]] Unit *newUnit(const Province &location);
+    [[nodiscard]] unit *new_unit(const province &location);
 };

@@ -1,37 +1,38 @@
 #pragma once
 
-#include "../Base/AI.hpp"
-
-class Tag {
+class tag {
 public:
-	std::string name;
-	unsigned int color;
-	std::vector<std::unique_ptr<Army>> armies;
-	int gold;
+    std::string name;
+    unsigned int color;
+    std::vector<std::unique_ptr<army> > armies;
+    int gold;
 
-	Tag() {
-		name = "";
-		color = 0;
-		armies = std::vector<std::unique_ptr<Army>>();
-		gold = 0;
-	}
+    tag() {
+        name = "";
+        color = 0;
+        armies = std::vector<std::unique_ptr<army> >();
+        gold = 0;
+    }
 
-	Tag(const std::string &name, const unsigned int color) {
-		this->name = name;
-		this->color = color;
-		armies = std::vector<std::unique_ptr<Army>>();
-		gold = 0;
-	}
+    tag(const std::string &name, const unsigned int color) {
+        this->name = name;
+        this->color = color;
+        armies = std::vector<std::unique_ptr<army> >();
+        gold = 0;
+    }
 
-	virtual ~Tag() = default;
+    virtual ~tag() = default;
 
-	[[nodiscard]] virtual bool hasArmyAccess(const Province &province) const {
-		return true;
-	}
+    [[nodiscard]] virtual bool has_army_access(const province &province) const {
+        return true;
+    }
 
-	[[nodiscard]] Army *newArmy() {
-		auto army = std::make_unique<Army>(*this);
-		armies.emplace_back(std::move(army));
-		return armies.back().get();
-	}
+    [[nodiscard]] army *new_army() {
+        auto army = std::make_unique<class army>(*this);
+        armies.emplace_back(std::move(army));
+        return armies.back().get();
+    }
+
+    void tick() {
+    }
 };

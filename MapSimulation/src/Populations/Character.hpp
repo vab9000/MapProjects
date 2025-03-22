@@ -4,29 +4,29 @@
 #include "../Base/Utils.hpp"
 #include "../Base/AI.hpp"
 
-enum class PersonalityTrait {
-	AMBITIOUS,
+enum class personality_trait {
+    ambitious,
 };
 
-class Army;
+class army;
 
-class Character : public HasAI {
-	Date birthday{};
-	bool commander{};
-	Army* army;
+class character final : public has_ai {
+    date birthday_{};
+    bool commander_{};
+    army *army_;
 
 public:
-	std::unordered_set<PersonalityTrait> traits;
+    std::unordered_set<personality_trait> traits;
 
-	explicit Character(Date birthday);
+    explicit character(date birthday);
 
-	[[nodiscard]] int age(Date currentDate) const;
+    [[nodiscard]] int age(date current_date) const;
 
-	void updateAI() override;
+    void update_ai() override;
 
-	void makeCommander(Army *army);
+    void make_commander(army *army);
 
-	void removeCommander();
+    void remove_commander();
 
-	[[nodiscard]] bool isCommander() const;
+    [[nodiscard]] bool is_commander() const;
 };

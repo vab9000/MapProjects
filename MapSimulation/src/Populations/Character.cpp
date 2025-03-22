@@ -1,31 +1,29 @@
 #include "Character.hpp"
 
-Character::Character(const Date birthday) {
-	traits = std::unordered_set<PersonalityTrait>();
-	this->birthday = birthday;
-	commander = false;
-	army = nullptr;
-	ai = AI();
+character::character(const date birthday) {
+    traits = std::unordered_set<personality_trait>();
+    this->birthday_ = birthday;
+    commander_ = false;
+    army_ = nullptr;
 }
 
-[[nodiscard]] int Character::age(const Date currentDate) const {
-	return static_cast<int>(currentDate.year) - static_cast<int>(birthday.year);
+[[nodiscard]] int character::age(const date current_date) const {
+    return static_cast<int>(current_date.year) - static_cast<int>(birthday_.year);
 }
 
-void Character::updateAI() {
-
+void character::update_ai() {
 }
 
-void Character::makeCommander(Army *army) {
-	commander = true;
-	this->army = army;
+void character::make_commander(army *army) {
+    commander_ = true;
+    this->army_ = army;
 }
 
-void Character::removeCommander() {
-	commander = false;
-	army = nullptr;
+void character::remove_commander() {
+    commander_ = false;
+    army_ = nullptr;
 }
 
-[[nodiscard]] bool Character::isCommander() const {
-	return commander;
+[[nodiscard]] bool character::is_commander() const {
+    return commander_;
 }

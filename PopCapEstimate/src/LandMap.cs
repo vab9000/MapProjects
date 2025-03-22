@@ -1,6 +1,4 @@
-﻿using OpenCvSharp;
-
-namespace PopCapEstimate;
+﻿namespace PopCapEstimate;
 
 public class LandMap : Map
 {

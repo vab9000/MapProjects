@@ -5,33 +5,33 @@
 #include "../Warfare/Army.hpp"
 #include "Tag.hpp"
 
-class Province;
+class province;
 
-class Country final : public Tag {
-	std::vector<Province *> provinces;
+class country final : public tag {
+    std::vector<province *> provinces_;
 
 public:
-	Country() {
-		provinces = std::vector<Province *>();
-	}
+    country() {
+        provinces_ = std::vector<province *>();
+    }
 
-	explicit Country(const std::string &name, const unsigned int color) : Tag(name, color) {
-		provinces = std::vector<Province *>();
-	}
+    explicit country(const std::string &name, const unsigned int color) : tag(name, color) {
+        provinces_ = std::vector<province *>();
+    }
 
-	~Country() override = default;
+    ~country() override = default;
 
-	void addProvince(Province *province) { provinces.emplace_back(province); }
+    void add_province(province *province) { provinces_.emplace_back(province); }
 
-	void removeProvince(Province *province) { std::erase(provinces, province); }
+    void remove_province(province *province) { std::erase(provinces_, province); }
 
-	bool hasProvince(const Province *province) const {
-		return std::ranges::find(provinces, province) != provinces.end();
-	}
+    bool has_province(const province *province) const {
+        return std::ranges::find(provinces_, province) != provinces_.end();
+    }
 
-	[[nodiscard]] std::vector<Province *> getProvinces() const { return provinces; }
+    [[nodiscard]] std::vector<province *> get_provinces() const { return provinces_; }
 
-	[[nodiscard]] bool hasArmyAccess(const Province &province) const override {
-		return true;
-	}
+    [[nodiscard]] bool has_army_access(const province &province) const override {
+        return true;
+    }
 };

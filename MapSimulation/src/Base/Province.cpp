@@ -10,212 +10,212 @@
 #include "../Tags/Country.hpp"
 #include "Utils.hpp"
 
-Province::Province(const std::string &name, const unsigned int color, const int i, const int j) {
-	distancesProcessed = false;
-	this->name = name;
-	this->color = color;
-	baseColor = color;
-	bounds[0] = i;
-	bounds[1] = j;
-	bounds[2] = i;
-	bounds[3] = j;
-	numPixels = 0;
-	numOutline = 0;
-	pixels = std::vector<std::array<int, 2>>();
-	outline = std::vector<std::pair<Province *, std::array<int, 2>>>();
-	center[0] = -1;
-	center[1] = -1;
-	owner = nullptr;
-	pops = std::vector<Pop *>();
-	neighbors = std::unordered_map<Province *, double>();
+province::province(const std::string &name, const unsigned int color, const int i, const int j) {
+    distances_processed_ = false;
+    this->name = name;
+    this->color = color;
+    base_color = color;
+    bounds_[0] = i;
+    bounds_[1] = j;
+    bounds_[2] = i;
+    bounds_[3] = j;
+    num_pixels_ = 0;
+    num_outline_ = 0;
+    pixels_ = std::vector<std::array<int, 2> >();
+    outline_ = std::vector<std::pair<province *, std::array<int, 2> > >();
+    center_[0] = -1;
+    center_[1] = -1;
+    owner_ = nullptr;
+    pops_ = std::vector<pop *>();
+    neighbors_ = std::unordered_map<province *, double>();
 }
 
-void Province::finalize() {
-	const auto totalPixels = numPixels + numOutline;
+void province::finalize() {
+    const auto total_pixels = num_pixels_ + num_outline_;
 
-	auto x = std::vector<int>(totalPixels);
-	auto y = std::vector<int>(totalPixels);
+    auto x = std::vector<int>(total_pixels);
+    auto y = std::vector<int>(total_pixels);
 
-	std::ranges::sort(x);
-	std::ranges::sort(y);
+    std::ranges::sort(x);
+    std::ranges::sort(y);
 
-	int testCenter[2] = {0, 0};
+    int test_center[2] = {0, 0};
 
-	if (totalPixels % 2 == 0) {
-		testCenter[0] = (x[totalPixels / 2] + x[totalPixels / 2 - 1]) / 2;
-		testCenter[1] = (y[totalPixels / 2] + y[totalPixels / 2 - 1]) / 2;
-	} else {
-		testCenter[0] = x[totalPixels / 2];
-		testCenter[1] = y[totalPixels / 2];
-	}
+    if (total_pixels % 2 == 0) {
+        test_center[0] = (x[total_pixels / 2] + x[total_pixels / 2 - 1]) / 2;
+        test_center[1] = (y[total_pixels / 2] + y[total_pixels / 2 - 1]) / 2;
+    } else {
+        test_center[0] = x[total_pixels / 2];
+        test_center[1] = y[total_pixels / 2];
+    }
 
-	for (int i = 0; i < numPixels; ++i) {
-		if (pixels[i][0] == testCenter[0] && pixels[i][1] == testCenter[1]) {
-			center[0] = testCenter[0];
-			center[1] = testCenter[1];
-			break;
-		}
-	}
+    for (int i = 0; i < num_pixels_; ++i) {
+        if (pixels_[i][0] == test_center[0] && pixels_[i][1] == test_center[1]) {
+            center_[0] = test_center[0];
+            center_[1] = test_center[1];
+            break;
+        }
+    }
 
-	for (int i = 0; i < numOutline; ++i) {
-		if (outline[i].second[0] == testCenter[0] && outline[i].second[1] == testCenter[1]) {
-			center[0] = testCenter[0];
-			center[1] = testCenter[1];
-			break;
-		}
-	}
+    for (int i = 0; i < num_outline_; ++i) {
+        if (outline_[i].second[0] == test_center[0] && outline_[i].second[1] == test_center[1]) {
+            center_[0] = test_center[0];
+            center_[1] = test_center[1];
+            break;
+        }
+    }
 
-	auto distance = [](const std::array<int, 2> &a, const std::array<int, 2> &b) {
-		return sqrt((a[0] - b[0]) * (a[0] - b[0]) + (a[1] - b[1]) * (a[1] - b[1]));
-	};
+    auto distance = [](const std::array<int, 2> &a, const std::array<int, 2> &b) {
+        return sqrt((a[0] - b[0]) * (a[0] - b[0]) + (a[1] - b[1]) * (a[1] - b[1]));
+    };
 
-	if (center[0] == -1) {
-		double minDistance = (std::numeric_limits<double>::max)();
-		for (int i = 0; i < numPixels; ++i) {
-			if (const auto dist = distance(pixels[i], {testCenter[0], testCenter[1]}); dist < minDistance) {
-				minDistance = dist;
-				center[0] = pixels[i][0];
-				center[1] = pixels[i][1];
-			}
-		}
-		for (int i = 0; i < numOutline; ++i) {
-			if (const auto dist = distance(outline[i].second, {testCenter[0], testCenter[1]}); dist < minDistance) {
-				minDistance = dist;
-				center[0] = outline[i].second[0];
-				center[1] = outline[i].second[1];
-			}
-		}
-	}
+    if (center_[0] == -1) {
+        double min_distance = (std::numeric_limits<double>::max)();
+        for (int i = 0; i < num_pixels_; ++i) {
+            if (const auto dist = distance(pixels_[i], {test_center[0], test_center[1]}); dist < min_distance) {
+                min_distance = dist;
+                center_[0] = pixels_[i][0];
+                center_[1] = pixels_[i][1];
+            }
+        }
+        for (int i = 0; i < num_outline_; ++i) {
+            if (const auto dist = distance(outline_[i].second, {test_center[0], test_center[1]}); dist < min_distance) {
+                min_distance = dist;
+                center_[0] = outline_[i].second[0];
+                center_[1] = outline_[i].second[1];
+            }
+        }
+    }
 }
 
-void Province::processDistances() {
-	for (const auto neighbor: neighbors | std::views::keys) {
-		neighbors[neighbor] = this->distance(*neighbor);
-	}
-	distancesProcessed = true;
+void province::process_distances() {
+    for (const auto neighbor: neighbors_ | std::views::keys) {
+        neighbors_[neighbor] = this->distance(*neighbor);
+    }
+    distances_processed_ = true;
 }
 
-void Province::setOwner(const Country &newOwner) {
-	if (owner != nullptr && owner->hasProvince(this)) {
-		owner->removeProvince(this);
-	}
-	owner = &const_cast<Country &>(newOwner);
+void province::set_owner(const country &new_owner) {
+    if (owner_ != nullptr && owner_->has_province(this)) {
+        owner_->remove_province(this);
+    }
+    owner_ = &const_cast<country &>(new_owner);
 }
 
-[[nodiscard]] Country *Province::getOwner() const { return owner; }
+[[nodiscard]] country *province::get_owner() const { return owner_; }
 
-void Province::addPixel(const int x, const int y) {
-	pixels.push_back({x, y});
-	numPixels += 1;
+void province::add_pixel(const int x, const int y) {
+    pixels_.push_back({x, y});
+    num_pixels_ += 1;
 }
 
-void Province::addOutline(const int x, const int y, const Province &other) {
-	outline.emplace_back(&const_cast<Province &>(other), std::array{x, y});
-	numOutline += 1;
-	neighbors.emplace(&const_cast<Province &>(other), 0.0);
+void province::add_outline(const int x, const int y, const province &other) {
+    outline_.emplace_back(&const_cast<province &>(other), std::array{x, y});
+    num_outline_ += 1;
+    neighbors_.emplace(&const_cast<province &>(other), 0.0);
 }
 
-[[nodiscard]] const std::array<int, 2> *Province::getPixels() const { return pixels.data(); }
+[[nodiscard]] const std::array<int, 2> *province::get_pixels() const { return pixels_.data(); }
 
-[[nodiscard]] const std::pair<Province *, std::array<int, 2>> *Province::getOutline() const { return outline.data(); }
+[[nodiscard]] const std::pair<province *, std::array<int, 2> > *province::get_outline() const { return outline_.data(); }
 
-void Province::expandBounds(const int x, const int y) {
-	if (x < bounds[0]) {
-		bounds[0] = x;
-	} else if (x > bounds[2]) {
-		bounds[2] = x;
-	} else if (y < bounds[1]) {
-		bounds[1] = y;
-	}
-	if (y > bounds[3]) {
-		bounds[3] = y;
-	}
+void province::expand_bounds(const int x, const int y) {
+    if (x < bounds_[0]) {
+        bounds_[0] = x;
+    } else if (x > bounds_[2]) {
+        bounds_[2] = x;
+    } else if (y < bounds_[1]) {
+        bounds_[1] = y;
+    }
+    if (y > bounds_[3]) {
+        bounds_[3] = y;
+    }
 }
 
-void Province::recolor(const MapMode mode) {
-	if (mode == MapMode::PROVINCES) {
-		color = baseColor;
-	} else if (mode == MapMode::OWNER) {
-		if (owner != nullptr) {
-			color = owner->color;
-		} else {
-			color = 0xFFFFFFFF;
-		}
-	}
+void province::recolor(const map_mode mode) {
+    if (mode == map_mode::provinces) {
+        color = base_color;
+    } else if (mode == map_mode::owner) {
+        if (owner_ != nullptr) {
+            color = owner_->color;
+        } else {
+            color = 0xFFFFFFFF;
+        }
+    }
 }
 
-[[nodiscard]] double Province::distance(const Province &other) const {
-	if (distancesProcessed && neighbors.contains(&const_cast<Province &>(other))) {
-		return neighbors.at(&const_cast<Province &>(other));
-	}
-	return sqrt((center[0] - other.center[0]) * (center[0] - other.center[0]) +
-	            (center[1] - other.center[1]) * (center[1] - other.center[1]));
+[[nodiscard]] double province::distance(const province &other) const {
+    if (distances_processed_ && neighbors_.contains(&const_cast<province &>(other))) {
+        return neighbors_.at(&const_cast<province &>(other));
+    }
+    return sqrt((center_[0] - other.center_[0]) * (center_[0] - other.center_[0]) +
+                (center_[1] - other.center_[1]) * (center_[1] - other.center_[1]));
 }
 
-[[nodiscard]] std::vector<Province *> Province::getPathTo(const Province &destination,
-                                                          bool (*accessible)(const Province &, void *),
-                                                          double (*costModifier)(const Province &, void *),
+[[nodiscard]] std::vector<province *> province::get_path_to(const province &destination,
+                                                          bool (*accessible)(const province &, void *),
+                                                          double (*cost_modifier)(const province &, void *),
                                                           void *param) {
-	std::unordered_map<Province *, double> distances;
-	std::unordered_map<Province *, Province *> previous;
-	std::priority_queue<std::pair<double, Province *>, std::vector<std::pair<double, Province *>>, std::greater<>>
-	        queue;
+    std::unordered_map<province *, double> distances;
+    std::unordered_map<province *, province *> previous;
+    std::priority_queue<std::pair<double, province *>, std::vector<std::pair<double, province *> >, std::greater<> >
+            queue;
 
-	distances[this] = 0;
-	queue.emplace(0, this);
+    distances[this] = 0;
+    queue.emplace(0, this);
 
-	auto reached = false;
+    auto reached = false;
 
-	while (!queue.empty()) {
-		auto [currentDistance, currentProvince] = queue.top();
-		queue.pop();
+    while (!queue.empty()) {
+        auto [currentDistance, currentProvince] = queue.top();
+        queue.pop();
 
-		if (currentProvince == &const_cast<Province &>(destination)) {
-			reached = true;
-			break;
-		}
+        if (currentProvince == &const_cast<province &>(destination)) {
+            reached = true;
+            break;
+        }
 
-		for (const auto &[neighborProvince, neighborDistance]: currentProvince->neighbors) {
-			if (neighborProvince == nullptr || !accessible(*neighborProvince, param) ||
-			    costModifier(*neighborProvince, param) < 0) {
-				continue;
-			}
+        for (const auto &[neighborProvince, neighborDistance]: currentProvince->neighbors_) {
+            if (neighborProvince == nullptr || !accessible(*neighborProvince, param) ||
+                cost_modifier(*neighborProvince, param) < 0) {
+                continue;
+            }
 
-			if (double newDistance = currentDistance + costModifier(*neighborProvince, param) * neighborDistance;
-			    !distances.contains(neighborProvince) || newDistance < distances[neighborProvince]) {
-				distances[neighborProvince] = newDistance;
-				previous[neighborProvince] = currentProvince;
-				queue.emplace(newDistance, neighborProvince);
-			}
-		}
-	}
+            if (double new_distance = currentDistance + cost_modifier(*neighborProvince, param) * neighborDistance;
+                !distances.contains(neighborProvince) || new_distance < distances[neighborProvince]) {
+                distances[neighborProvince] = new_distance;
+                previous[neighborProvince] = currentProvince;
+                queue.emplace(new_distance, neighborProvince);
+            }
+        }
+    }
 
-	if (!reached) {
-		return {};
-	}
+    if (!reached) {
+        return {};
+    }
 
-	std::vector<Province *> path;
-	for (Province *at = &const_cast<Province &>(destination); at != nullptr; at = previous[at]) {
-		path.insert(path.begin(), at);
-	}
+    std::vector<province *> path;
+    for (province *at = &const_cast<province &>(destination); at != nullptr; at = previous[at]) {
+        path.insert(path.begin(), at);
+    }
 
-	return path;
+    return path;
 }
 
-void Province::tick() {
-	if (owner != nullptr) {
-		owner->gold += 1;
-	}
+void province::tick() {
+    if (owner_ != nullptr) {
+        owner_->gold += 1;
+    }
 }
 
-[[nodiscard]] unsigned int Province::getNumPixels() const { return numPixels; }
+[[nodiscard]] unsigned int province::get_num_pixels() const { return num_pixels_; }
 
-[[nodiscard]] unsigned int Province::getNumOutline() const { return numOutline; }
+[[nodiscard]] unsigned int province::get_num_outline() const { return num_outline_; }
 
-[[nodiscard]] const int *Province::getBounds() const { return bounds; }
+[[nodiscard]] const int *province::get_bounds() const { return bounds_; }
 
-[[nodiscard]] const int *Province::getCenter() const { return center; }
+[[nodiscard]] const int *province::get_center() const { return center_; }
 
-[[nodiscard]] const std::vector<Pop *> &Province::getPops() const { return pops; }
+[[nodiscard]] const std::vector<pop *> &province::get_pops() const { return pops_; }
 
-[[nodiscard]] const std::unordered_map<Province *, double> &Province::getNeighbors() const { return neighbors; }
+[[nodiscard]] const std::unordered_map<province *, double> &province::get_neighbors() const { return neighbors_; }

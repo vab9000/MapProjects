@@ -1,11 +1,11 @@
 #pragma once
 
-enum class Lifestyle {
-	TRIBAL,
+enum class lifestyle {
+    tribal,
 };
 
-class Pop {
+class pop {
 public:
     unsigned int size;
-    Lifestyle lifestyle;
+    lifestyle lifestyle;
 };

@@ -4,68 +4,71 @@
 #include <random>
 
 // How unlikely the AI is to perform an action
-constexpr double INERTIA = 10.0;
+constexpr double inertia = 10.0;
 
-class Action {
-    int weightCache;
-    int numCache = 0;
+class action {
+    int weight_cache_;
+    int num_cache_ = 0;
+
 public:
-    void (*action)(void *, void *);
-    void *sParam;
-    void *oParam;
-    int (*weightFunc)(void *, void *);
+    void (*action_func)(void *, void *);
 
-    Action(void (*action)(void *, void *), void(*sParam), void(*oParam), int (*getWeight)(void *, void *)) {
-        this->action = action;
-        this->sParam = sParam;
-        this->oParam = oParam;
-        this->weightFunc = getWeight;
-        weightCache = this->getWeight();
+    void *s_param;
+    void *o_param;
+
+    int (*weight_func)(void *, void *);
+
+    action(void (*action)(void *, void *), void (*s_param), void (*o_param), int (*get_weight)(void *, void *)) {
+        this->action_func = action;
+        this->s_param = s_param;
+        this->o_param = o_param;
+        this->weight_func = get_weight;
+        weight_cache_ = this->get_weight();
     }
 
-    ~Action() = default;
+    ~action() = default;
 
     void perform() const {
-        action(sParam, oParam);
+        action_func(s_param, o_param);
     }
 
-    [[nodiscard]] int getWeight() {
-        if (numCache != 0) {
-            numCache--;
-            return weightCache;
+    [[nodiscard]] int get_weight() {
+        if (num_cache_ != 0) {
+            num_cache_--;
+            return weight_cache_;
         }
-        numCache = 30;
-        return weightFunc(sParam, oParam);
+        num_cache_ = 30;
+        return weight_func(s_param, o_param);
     }
 };
 
-class AI {
-    std::vector<std::unique_ptr<Action>> actions;
-    std::default_random_engine gen;
+class ai {
+    std::vector<std::unique_ptr<action> > actions_;
+    std::default_random_engine gen_;
 
 public:
-    AI() {
-        actions = std::vector<std::unique_ptr<Action>>();
+    ai() {
+        actions_ = std::vector<std::unique_ptr<action> >();
         std::random_device rd;
-        gen = std::default_random_engine(rd());
+        gen_ = std::default_random_engine(rd());
     }
 
-    void addAction(std::unique_ptr<Action> &&action) {
-        actions.push_back(std::move(action));
+    void add_action(std::unique_ptr<action> &&action) {
+        actions_.push_back(std::move(action));
     }
 
-    void clearActions() {
-        actions.clear();
+    void clear_actions() {
+        actions_.clear();
     }
 
-    void performActions() {
+    void perform_actions() {
         auto dis = std::uniform_real_distribution(0.0, 1.0);
 
-        const auto random = dis(gen);
+        const auto random = dis(gen_);
 
-        for (const auto &action : actions) {
-			if (const int weight = action->getWeight(); weight >= 1) {
-                if (const auto chance = 1.0 - (1 / ((weight * weight) / INERTIA + 1)); random < chance) {
+        for (const auto &action: actions_) {
+            if (const int weight = action->get_weight(); weight >= 1) {
+                if (const auto chance = 1.0 - (1 / ((weight * weight) / inertia + 1)); random < chance) {
                     action->perform();
                 }
             }
@@ -73,11 +76,15 @@ public:
     }
 };
 
-class HasAI {
+class has_ai {
 public:
-    AI ai;
+    ai ai;
 
-    virtual ~HasAI() = default;
+    has_ai() {
+        ai = ai::ai();
+    }
 
-    virtual void updateAI() = 0;
+    virtual ~has_ai() = default;
+
+    virtual void update_ai() = 0;
 };
