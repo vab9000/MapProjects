@@ -28,8 +28,8 @@ public:
     }
 
     [[nodiscard]] army *new_army() {
-        auto army = std::make_unique<class army>(*this);
-        armies.emplace_back(std::move(army));
+        auto n_army = std::make_unique<army>(*this);
+        armies.emplace_back(std::move(n_army));
         return armies.back().get();
     }
 

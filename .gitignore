@@ -1,15 +1,1 @@
-# Build files
-cmake-build-debug/
-bin/
-obj/
-
-# Solution
-*.sln
-*.user
-
-# IDE
 .idea/
-
-# Libraries
-libs/
-

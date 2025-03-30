@@ -49,7 +49,7 @@ public:
 
     void expand_bounds(int x, int y);
 
-    void recolor(map_mode mode);
+    void recolor(map_modes mode);
 
     [[nodiscard]] double distance(const province &other) const;
 

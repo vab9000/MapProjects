@@ -44,13 +44,11 @@ public:
 
 class ai {
     std::vector<std::unique_ptr<action> > actions_;
-    std::default_random_engine gen_;
+    std::default_random_engine gen_ = std::default_random_engine(std::random_device{}());
 
 public:
     ai() {
         actions_ = std::vector<std::unique_ptr<action> >();
-        std::random_device rd;
-        gen_ = std::default_random_engine(rd());
     }
 
     void add_action(std::unique_ptr<action> &&action) {
@@ -78,10 +76,10 @@ public:
 
 class has_ai {
 public:
-    ai ai;
+    ai ai_instance;
 
     has_ai() {
-        ai = ai::ai();
+        ai_instance = ai();
     }
 
     virtual ~has_ai() = default;

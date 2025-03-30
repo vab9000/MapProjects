@@ -2,7 +2,7 @@
 
 #include <string>
 
-enum class map_mode {
+enum class map_modes {
     provinces,
     owner,
 };

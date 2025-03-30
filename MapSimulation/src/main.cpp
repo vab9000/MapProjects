@@ -32,14 +32,14 @@ HGLRC opengl_hdc = nullptr;
 GLuint texture = 0;
 GLuint read_fbo_id = 0;
 std::vector<BYTE> bytes;
-auto image = image();
+image map_image;
 
 auto provinces = std::unordered_map<unsigned int, std::unique_ptr<province> >();
 auto tags = std::unordered_map<unsigned int, std::unique_ptr<tag> >();
 
 province *selected_province = nullptr;
-auto map_mode = map_mode::owner;
-auto date = date();
+auto map_mode = map_modes::owner;
+date date;
 
 inline void set_pixel(std::vector<BYTE> &bytes, const int index, const BYTE r, const BYTE g, const BYTE b) {
     bytes[index] = r;
@@ -48,27 +48,27 @@ inline void set_pixel(std::vector<BYTE> &bytes, const int index, const BYTE r, c
     bytes[index + 3] = 255;
 }
 
-void reload_bitmap_province(const province &province) {
-    const auto color = province.color;
-    const auto pixels = province.get_pixels();
+void reload_bitmap_province(const province &reload_province) {
+    const auto color = reload_province.color;
+    const auto pixels = reload_province.get_pixels();
 
-    std::vector<int> indices(province.get_num_pixels());
+    std::vector<int> indices(reload_province.get_num_pixels());
     std::iota(indices.begin(), indices.end(), 0);
 
     std::for_each(std::execution::par, indices.begin(), indices.end(), [pixels, color](const int i) {
         const auto pixel = pixels[i];
-        const auto index = (pixel[0] + pixel[1] * image.width) * 4;
+        const auto index = (pixel[0] + pixel[1] * map_image.width) * 4;
         set_pixel(bytes, index, static_cast<BYTE>(color), static_cast<BYTE>(color >> 8),
                   static_cast<BYTE>(color >> 16));
     });
 
-    const auto outline = province.get_outline();
+    const auto outline = reload_province.get_outline();
     auto updated_provinces = std::unordered_set<province *>();
-    for (auto i = 0; i < province.get_num_outline(); ++i) {
+    for (auto i = 0; i < reload_province.get_num_outline(); ++i) {
         const auto pixel = outline[i].second;
         const auto other_province = outline[i].first;
-        const auto index = (pixel[0] + pixel[1] * image.width) * 4;
-        if (selected_province != nullptr && province.base_color == selected_province->base_color) {
+        const auto index = (pixel[0] + pixel[1] * map_image.width) * 4;
+        if (selected_province != nullptr && reload_province.base_color == selected_province->base_color) {
             set_pixel(bytes, index, 255, 255, 255);
         } else {
             if (other_province != nullptr && other_province->color != color) {
@@ -86,8 +86,8 @@ void reload_bitmap_province(const province &province) {
             const auto other_outline = other_province->get_outline();
             for (unsigned int j = 0; j < other_province->get_num_outline(); ++j) {
                 const auto other_pixel = other_outline[j].second;
-                const auto other_index = (other_pixel[0] + other_pixel[1] * image.width) * 4;
-                if (other_outline[j].first == &const_cast<province &>(province)) {
+                const auto other_index = (other_pixel[0] + other_pixel[1] * map_image.width) * 4;
+                if (other_outline[j].first == &const_cast<province &>(reload_province)) {
                     if (other_province->color == color) {
                         set_pixel(bytes, other_index, static_cast<BYTE>(color), static_cast<BYTE>(color >> 8),
                                   static_cast<BYTE>(color >> 16));
@@ -103,9 +103,9 @@ void reload_bitmap_province(const province &province) {
 
     wglMakeCurrent(hdc, opengl_hdc);
 
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, province.get_bounds()[1], image.width,
-                    province.get_bounds()[3] - province.get_bounds()[1], GL_BGRA, GL_UNSIGNED_BYTE,
-                    bytes.data() + image.width * province.get_bounds()[1] * 4);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, reload_province.get_bounds()[1], map_image.width,
+                    reload_province.get_bounds()[3] - reload_province.get_bounds()[1], GL_BGRA, GL_UNSIGNED_BYTE,
+                    bytes.data() + map_image.width * reload_province.get_bounds()[1] * 4);
 
     ReleaseDC(map_hwnd, hdc);
 }
@@ -124,7 +124,7 @@ void reload_bitmap() {
             std::for_each(std::execution::par, indices.begin(), indices.end(), [pixels, &province](const int i) {
                 const auto pixel = pixels[i];
                 const auto color = province->color;
-                const auto index = (pixel[0] + pixel[1] * image.width) * 4;
+                const auto index = (pixel[0] + pixel[1] * map_image.width) * 4;
                 set_pixel(bytes, index, static_cast<BYTE>(color), static_cast<BYTE>(color >> 8),
                           static_cast<BYTE>(color >> 16));
             });
@@ -137,7 +137,7 @@ void reload_bitmap() {
                 const auto other_province = outline[i].first;
                 const auto pixel = outline[i].second;
                 const auto color = province->color;
-                const auto index = (pixel[0] + pixel[1] * image.width) * 4;
+                const auto index = (pixel[0] + pixel[1] * map_image.width) * 4;
                 if (selected_province != nullptr && color == selected_province->color) {
                     set_pixel(bytes, index, 255, 255, 255);
                 } else {
@@ -156,35 +156,45 @@ void reload_bitmap() {
 
         wglMakeCurrent(hdc, opengl_hdc);
 
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, image.width, image.height, GL_BGRA, GL_UNSIGNED_BYTE, bytes.data());
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, map_image.width, map_image.height, GL_BGRA, GL_UNSIGNED_BYTE, bytes.data());
 
         ReleaseDC(map_hwnd, hdc);
     }
 }
 
 inline void load_image() {
-    auto process_pixel = [](const pixel_t &pixel, const int *position) {
+    auto invert_color = [](const unsigned int color_to_change) {
+        return (color_to_change & 0xFF) << 16 | (color_to_change & 0xFF00) | (color_to_change & 0xFF0000) >> 16;
+    };
+
+    auto process_pixel = [invert_color](const pixel_t &pixel, const int *position) {
         const auto i = position[1];
         const auto j = position[0];
         if (const auto color = pixel.x + (pixel.y << 8) + (pixel.z << 16); provinces.contains(color)) {
             const auto province = provinces.at(color).get();
             province->expand_bounds(i, j);
         } else {
-            auto invert_color = [](const unsigned int color_to_change) {
-                return (color_to_change & 0xFF) << 16 | (color_to_change & 0xFF00) | (color_to_change & 0xFF0000) >> 16;
-            };
-            auto country = std::make_unique<country>("", invert_color(color));
-            auto province = std::make_unique<province>(std::string("Province ") + std::to_string(provinces.size()),
-                                                       color, i, j);
-            province->set_owner(*country);
-            tags.insert(std::make_pair(color, std::move(country)));
-            provinces.insert(std::make_pair(color, std::move(province)));
+            auto new_country = std::make_unique<country>("", invert_color(color));
+            auto new_province = std::make_unique<province>(
+                std::string("Province ") + std::to_string(provinces.size()),
+                color, i, j);
+            new_province->set_owner(*new_country);
+            tags.insert(std::make_pair(color, std::move(new_country)));
+            provinces.insert(std::make_pair(color, std::move(new_province)));
         }
     };
 
     auto is_border = [&](const int x, const int y, const unsigned int color, const province *&other_province) {
-        if (x >= 0 && x < image.width && y >= 0 && y < image.height && image.get_color(x, y) != color) {
-            other_province = provinces.at(image.get_color(x, y)).get();
+        if (x >= 0 && x < map_image.width && y >= 0 && y < map_image.height && map_image.get_color(x, y) != color) {
+            other_province = provinces.at(map_image.get_color(x, y)).get();
+            return true;
+        }
+        if (x == -1 && y >= 0 && y < map_image.height && map_image.get_color(map_image.width - 1, y) != color) {
+            other_province = provinces.at(map_image.get_color(map_image.width - 1, y)).get();
+            return true;
+        }
+        if (x == map_image.width && y >= 0 && y < map_image.height && map_image.get_color(0, y) != color) {
+            other_province = provinces.at(map_image.get_color(0, y)).get();
             return true;
         }
         return false;
@@ -194,30 +204,30 @@ inline void load_image() {
         const auto i = position[1];
         const auto j = position[0];
         const auto color = pixel.x + (pixel.y << 8) + (pixel.z << 16);
-        province *province = provinces.at(color).get();
+        province *province_at_pos = provinces.at(color).get();
 
         if (const province *other_province = nullptr;
             is_border(i - 1, j, color, other_province) || is_border(i + 1, j, color, other_province) ||
             is_border(i, j - 1, color, other_province) || is_border(i, j + 1, color, other_province)) {
-            province->add_outline(i, j, *other_province);
+            province_at_pos->add_outline(i, j, *other_province);
         } else {
-            province->add_pixel(i, j);
+            province_at_pos->add_pixel(i, j);
         }
     };
 
-    image = image("assets/small.png");
+    map_image = image("assets/provinces1.png");
 
-    for (int i = 0; i < image.cv_image.rows; ++i) {
-        for (int j = 0; j < image.cv_image.cols; ++j) {
+    for (int i = 0; i < map_image.cv_image.rows; ++i) {
+        for (int j = 0; j < map_image.cv_image.cols; ++j) {
             const int coords[2] = {i, j};
-            process_pixel(image.cv_image.at<pixel_t>(i, j), coords);
+            process_pixel(map_image.cv_image.at<pixel_t>(i, j), coords);
         }
     }
 
-    for (int i = 0; i < image.cv_image.rows; ++i) {
-        for (int j = 0; j < image.cv_image.cols; ++j) {
+    for (int i = 0; i < map_image.cv_image.rows; ++i) {
+        for (int j = 0; j < map_image.cv_image.cols; ++j) {
             const int coords[2] = {i, j};
-            process_pixel_borders(image.cv_image.at<pixel_t>(i, j), coords);
+            process_pixel_borders(map_image.cv_image.at<pixel_t>(i, j), coords);
         }
     }
 
@@ -230,7 +240,7 @@ inline void load_image() {
                   [](const std::unique_ptr<province> &province) { province->process_distances(); });
 }
 
-inline void change_map_mode(const map_mode mode) {
+inline void change_map_mode(const map_modes mode) {
     map_mode = mode;
 
     const auto province_values = provinces | std::views::values;
@@ -292,10 +302,10 @@ LRESULT CALLBACK gui_window_proc(const HWND hwnd, const UINT u_msg, const WPARAM
                 switch (const auto map_mode_selector = reinterpret_cast<HWND>(l_param);
                     SendMessage(map_mode_selector, CB_GETCURSEL, 0, 0)) {
                     case 0:
-                        change_map_mode(map_mode::provinces);
+                        change_map_mode(map_modes::provinces);
                         break;
                     case 1:
-                        change_map_mode(map_mode::owner);
+                        change_map_mode(map_modes::owner);
                         break;
                     default: ;
                 }
@@ -356,16 +366,16 @@ LRESULT CALLBACK map_window_proc(const HWND hwnd, const UINT u_msg, const WPARAM
                 zoom /= 1.1;
             }
             if (offset[0] > 0) {
-                offset[0] = 0;
+                offset[0] -= static_cast<int>(map_image.width * zoom);
             }
             if (offset[1] > 0) {
                 offset[1] = 0;
             }
-            if (offset[0] < -(image.width * zoom - client_rect.right)) {
-                offset[0] = static_cast<int>(-(image.width * zoom - client_rect.right));
+            if (offset[0] < -(map_image.width * zoom)) {
+                offset[0] += static_cast<int>(map_image.width * zoom);
             }
-            if (offset[1] < -(image.height * zoom - client_rect.bottom)) {
-                offset[1] = static_cast<int>(-(image.height * zoom - client_rect.bottom));
+            if (offset[1] < -(map_image.height * zoom - client_rect.bottom)) {
+                offset[1] = static_cast<int>(-(map_image.height * zoom - client_rect.bottom));
             }
             InvalidateRect(hwnd, nullptr, false);
         }
@@ -374,7 +384,7 @@ LRESULT CALLBACK map_window_proc(const HWND hwnd, const UINT u_msg, const WPARAM
             const auto x = static_cast<int>((LOWORD(l_param) - offset[0]) / zoom);
             const auto y = static_cast<int>((HIWORD(l_param) - offset[1]) / zoom);
             if (!mouse_moved) {
-                const auto color = image.get_color(x, y);
+                const auto color = map_image.get_color(x % map_image.width, y);
                 const auto province = provinces.at(color).get();
                 select_province(province);
                 InvalidateRect(hwnd, nullptr, false);
@@ -399,16 +409,16 @@ LRESULT CALLBACK map_window_proc(const HWND hwnd, const UINT u_msg, const WPARAM
                 auto client_rect = RECT{};
                 GetClientRect(hwnd, &client_rect);
                 if (offset[0] > 0) {
-                    offset[0] = 0;
+                    offset[0] -= static_cast<int>(map_image.width * zoom);
                 }
                 if (offset[1] > 0) {
                     offset[1] = 0;
                 }
-                if (offset[0] < -(image.width * zoom - client_rect.right)) {
-                    offset[0] = static_cast<int>(-(image.width * zoom - client_rect.right));
+                if (offset[0] < -(map_image.width * zoom)) {
+                    offset[0] += static_cast<int>(map_image.width * zoom);
                 }
-                if (offset[1] < -(image.height * zoom - client_rect.bottom)) {
-                    offset[1] = static_cast<int>(-(image.height * zoom - client_rect.bottom));
+                if (offset[1] < -(map_image.height * zoom - client_rect.bottom)) {
+                    offset[1] = static_cast<int>(-(map_image.height * zoom - client_rect.bottom));
                 }
                 InvalidateRect(hwnd, nullptr, false);
                 previous_mouse[0] = x;
@@ -429,9 +439,14 @@ LRESULT CALLBACK map_window_proc(const HWND hwnd, const UINT u_msg, const WPARAM
             wglMakeCurrent(hdc, opengl_hdc);
 
             glBindFramebuffer(GL_READ_FRAMEBUFFER, read_fbo_id);
-            glBlitFramebuffer(0, 0, image.width, image.height, offset[0], ps.rcPaint.bottom - offset[1],
-                              static_cast<int>(image.width * zoom) + offset[0],
-                              ps.rcPaint.bottom - static_cast<int>(image.height * zoom) - offset[1],
+            glBlitFramebuffer(0, 0, map_image.width, map_image.height, offset[0], ps.rcPaint.bottom - offset[1],
+                              static_cast<int>(map_image.width * zoom) + offset[0],
+                              ps.rcPaint.bottom - static_cast<int>(map_image.height * zoom) - offset[1],
+                              GL_COLOR_BUFFER_BIT, GL_NEAREST);
+            glBlitFramebuffer(0, 0, map_image.width, map_image.height, static_cast<int>(map_image.width * zoom) + offset[0],
+                              ps.rcPaint.bottom - offset[1],
+                              static_cast<int>(map_image.width * zoom) * 2 + offset[0],
+                              ps.rcPaint.bottom - static_cast<int>(map_image.height * zoom) - offset[1],
                               GL_COLOR_BUFFER_BIT, GL_NEAREST);
             glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 
@@ -473,7 +488,7 @@ inline HWND create_window(const char *title, const WNDPROC window_proc, const DW
 inline void initialize_open_gl() {
     const HDC hdc = GetDC(map_hwnd);
     constexpr DWORD pixel_format_flags = PFD_SUPPORT_OPENGL | PFD_SUPPORT_COMPOSITION | PFD_GENERIC_ACCELERATED |
-                                       PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER;
+                                         PFD_DRAW_TO_WINDOW | PFD_DOUBLEBUFFER;
     constexpr PIXELFORMATDESCRIPTOR pfd = {
         sizeof(PIXELFORMATDESCRIPTOR),
         1,
@@ -522,7 +537,7 @@ inline void initialize_open_gl() {
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.width, image.height, 0, GL_BGRA, GL_UNSIGNED_BYTE, bytes.data());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, map_image.width, map_image.height, 0, GL_BGRA, GL_UNSIGNED_BYTE, bytes.data());
 
     glGenFramebuffers(1, &read_fbo_id);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, read_fbo_id);
@@ -551,7 +566,7 @@ inline void start_message_loop() {
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     load_image();
 
-    bytes = std::vector<BYTE>(image.width * image.height * 4);
+    bytes = std::vector<BYTE>(map_image.width * map_image.height * 4);
 
     reload_bitmap();
 

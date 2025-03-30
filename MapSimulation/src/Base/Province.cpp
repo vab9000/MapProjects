@@ -132,10 +132,10 @@ void province::expand_bounds(const int x, const int y) {
     }
 }
 
-void province::recolor(const map_mode mode) {
-    if (mode == map_mode::provinces) {
+void province::recolor(const map_modes mode) {
+    if (mode == map_modes::provinces) {
         color = base_color;
-    } else if (mode == map_mode::owner) {
+    } else if (mode == map_modes::owner) {
         if (owner_ != nullptr) {
             color = owner_->color;
         } else {

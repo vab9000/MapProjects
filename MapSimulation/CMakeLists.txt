@@ -33,9 +33,15 @@ target_include_directories(MapSimulation PUBLIC ${OpenCV_INCLUDE_DIRS})
 
 target_include_directories(MapSimulation PUBLIC libs/glad/include)
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/assets/small.png DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Debug/assets)
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/assets/provinces.png DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Debug/assets)
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/assets/provinces1.png DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Debug/assets)
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(BUILD_TYPE "Debug")
+else()
+    set(BUILD_TYPE "Release")
+endif()
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/libs/opencv/x64/vc16/bin/opencv_world4100.dll DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Debug)
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/libs/opencv/x64/vc16/bin/opencv_world4100d.dll DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Debug)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/assets/small.png DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/${BUILD_TYPE}/assets)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/assets/provinces.png DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/${BUILD_TYPE}/assets)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/assets/provinces1.png DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/${BUILD_TYPE}/assets)
+
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/libs/opencv/x64/vc16/bin/opencv_world4100.dll DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/${BUILD_TYPE})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/libs/opencv/x64/vc16/bin/opencv_world4100d.dll DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/${BUILD_TYPE})

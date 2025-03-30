@@ -20,14 +20,14 @@ class unit {
 public:
     unsigned int size;
     province *location;
-    army *army;
+    army *parent_army;
     std::vector<province *> path;
     double travel_progress;
     character *general;
     bool retreating;
     double speed;
 
-    unit(const class army &army, const province &location);
+    unit(const army &parent_army, const province &location);
 
     void set_destination(const province &destination);
 
@@ -40,9 +40,9 @@ class army {
 
 public:
     std::vector<std::unique_ptr<unit> > units;
-    tag *tag;
+    tag *parent_tag;
 
-    explicit army(const class tag &tag);
+    explicit army(const tag &parent_tag);
 
     [[nodiscard]] unit *new_unit(const province &location);
 };
