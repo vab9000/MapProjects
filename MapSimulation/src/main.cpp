@@ -25,6 +25,7 @@ int previous_mouse[2] = {0, 0};
 bool mouse_down = false;
 bool mouse_moved = false;
 bool open = true;
+double progress = 0.0;
 
 HWND map_hwnd = nullptr;
 HWND gui_hwnd = nullptr;
@@ -156,13 +157,15 @@ void reload_bitmap() {
 
         wglMakeCurrent(hdc, opengl_hdc);
 
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, map_image.width, map_image.height, GL_BGRA, GL_UNSIGNED_BYTE, bytes.data());
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, map_image.width, map_image.height, GL_BGRA, GL_UNSIGNED_BYTE,
+                        bytes.data());
 
         ReleaseDC(map_hwnd, hdc);
     }
 }
 
-inline void load_image() {
+[[noreturn]] DWORD WINAPI load_image(const LPVOID lp_parameter) {
+    const auto hwnd = static_cast<HWND>(lp_parameter);
     auto invert_color = [](const unsigned int color_to_change) {
         return (color_to_change & 0xFF) << 16 | (color_to_change & 0xFF00) | (color_to_change & 0xFF0000) >> 16;
     };
@@ -222,6 +225,8 @@ inline void load_image() {
             const int coords[2] = {i, j};
             process_pixel(map_image.cv_image.at<pixel_t>(i, j), coords);
         }
+        progress = static_cast<double>(i) / map_image.cv_image.rows / 2;
+        InvalidateRect(hwnd, nullptr, true);
     }
 
     for (int i = 0; i < map_image.cv_image.rows; ++i) {
@@ -229,6 +234,8 @@ inline void load_image() {
             const int coords[2] = {i, j};
             process_pixel_borders(map_image.cv_image.at<pixel_t>(i, j), coords);
         }
+        progress = static_cast<double>(i) / map_image.cv_image.rows / 2 + 0.5;
+        InvalidateRect(hwnd, nullptr, true);
     }
 
     auto province_values = provinces | std::views::values;
@@ -238,6 +245,9 @@ inline void load_image() {
 
     std::for_each(std::execution::par, province_values.begin(), province_values.end(),
                   [](const std::unique_ptr<province> &province) { province->process_distances(); });
+
+    PostMessage(hwnd, WM_CLOSE, 0, 0);
+    ExitThread(0);
 }
 
 inline void change_map_mode(const map_modes mode) {
@@ -262,7 +272,7 @@ inline void select_province(province *province) {
     }
 }
 
-[[noreturn]] inline DWORD start_game_loop(LPVOID) {
+[[noreturn]] DWORD start_game_loop(LPVOID) {
     while (open) {
         for (const auto province_values = provinces | std::views::values; const auto &province: province_values) {
             province->tick();
@@ -443,7 +453,8 @@ LRESULT CALLBACK map_window_proc(const HWND hwnd, const UINT u_msg, const WPARAM
                               static_cast<int>(map_image.width * zoom) + offset[0],
                               ps.rcPaint.bottom - static_cast<int>(map_image.height * zoom) - offset[1],
                               GL_COLOR_BUFFER_BIT, GL_NEAREST);
-            glBlitFramebuffer(0, 0, map_image.width, map_image.height, static_cast<int>(map_image.width * zoom) + offset[0],
+            glBlitFramebuffer(0, 0, map_image.width, map_image.height,
+                              static_cast<int>(map_image.width * zoom) + offset[0],
                               ps.rcPaint.bottom - offset[1],
                               static_cast<int>(map_image.width * zoom) * 2 + offset[0],
                               ps.rcPaint.bottom - static_cast<int>(map_image.height * zoom) - offset[1],
@@ -453,6 +464,31 @@ LRESULT CALLBACK map_window_proc(const HWND hwnd, const UINT u_msg, const WPARAM
             SwapBuffers(hdc);
 
             wglMakeCurrent(nullptr, nullptr);
+
+            EndPaint(hwnd, &ps);
+        }
+            return 0;
+        default:
+            return DefWindowProc(hwnd, u_msg, w_param, l_param);
+    }
+}
+
+LRESULT CALLBACK load_window_proc(const HWND hwnd, const UINT u_msg, const WPARAM w_param, const LPARAM l_param) {
+    switch (u_msg) {
+        case WM_CREATE:
+            CreateThread(nullptr, 0, load_image, hwnd, 0, nullptr);
+            return 0;
+        case WM_DESTROY:
+            PostQuitMessage(0);
+            return 0;
+        case WM_PAINT: {
+            PAINTSTRUCT ps;
+            const auto hdc = BeginPaint(hwnd, &ps);
+
+            constexpr RECT progress_bar = {10, 60, 210, 80}; // Bar dimensions
+            FillRect(hdc, &progress_bar, reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1)); // Background
+            const RECT progress_fill = {10, 60, 10 + static_cast<int>(200 * progress), 80}; // Filled portion
+            FillRect(hdc, &progress_fill, reinterpret_cast<HBRUSH>(COLOR_HIGHLIGHT));
 
             EndPaint(hwnd, &ps);
         }
@@ -537,7 +573,8 @@ inline void initialize_open_gl() {
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, map_image.width, map_image.height, 0, GL_BGRA, GL_UNSIGNED_BYTE, bytes.data());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, map_image.width, map_image.height, 0, GL_BGRA, GL_UNSIGNED_BYTE,
+                 bytes.data());
 
     glGenFramebuffers(1, &read_fbo_id);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, read_fbo_id);
@@ -564,7 +601,12 @@ inline void start_message_loop() {
 }
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
-    load_image();
+    if (const auto loading_window = create_window("Loading", load_window_proc, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
+        loading_window == nullptr) {
+        return -1;
+    }
+
+    start_message_loop();
 
     bytes = std::vector<BYTE>(map_image.width * map_image.height * 4);
 
