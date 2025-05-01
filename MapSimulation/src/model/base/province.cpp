@@ -1,4 +1,4 @@
-#include "Province.hpp"
+#include "province.hpp"
 #include <algorithm>
 #include <array>
 #include <queue>
@@ -6,9 +6,9 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include "../Populations/Pop.hpp"
-#include "../Tags/Country.hpp"
-#include "Utils.hpp"
+#include "../populations/pop.hpp"
+#include "../tags/country.hpp"
+#include "utils.hpp"
 
 province::province(const std::string &name, const unsigned int color, const int i, const int j) {
     distances_processed_ = false;
@@ -105,7 +105,7 @@ void province::set_owner(const country &new_owner) {
 [[nodiscard]] country *province::get_owner() const { return owner_; }
 
 void province::add_pixel(const int x, const int y) {
-    pixels_.push_back({x, y});
+    pixels_.emplace_back(std::array{x, y});
     num_pixels_ += 1;
 }
 
@@ -117,7 +117,9 @@ void province::add_outline(const int x, const int y, const province &other) {
 
 [[nodiscard]] const std::array<int, 2> *province::get_pixels() const { return pixels_.data(); }
 
-[[nodiscard]] const std::pair<province *, std::array<int, 2> > *province::get_outline() const { return outline_.data(); }
+[[nodiscard]] const std::pair<province *, std::array<int, 2> > *province::get_outline() const {
+    return outline_.data();
+}
 
 void province::expand_bounds(const int x, const int y) {
     if (x < bounds_[0]) {
@@ -153,9 +155,9 @@ void province::recolor(const map_modes mode) {
 }
 
 [[nodiscard]] std::vector<province *> province::get_path_to(const province &destination,
-                                                          bool (*accessible)(const province &, void *),
-                                                          double (*cost_modifier)(const province &, void *),
-                                                          void *param) {
+                                                            bool (*accessible)(const province &, void *),
+                                                            double (*cost_modifier)(const province &, void *),
+                                                            void *param) {
     std::unordered_map<province *, double> distances;
     std::unordered_map<province *, province *> previous;
     std::priority_queue<std::pair<double, province *>, std::vector<std::pair<double, province *> >, std::greater<> >

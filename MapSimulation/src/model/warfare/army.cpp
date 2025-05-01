@@ -1,9 +1,9 @@
-#include "Army.hpp"
+#include "army.hpp"
 #include <vector>
-#include "../Base/AI.hpp"
-#include "../Base/Province.hpp"
-#include "../Populations/Character.hpp"
-#include "../Tags/Tag.hpp"
+#include "../base/ai.hpp"
+#include "../base/province.hpp"
+#include "../populations/character.hpp"
+#include "../tags/tag.hpp"
 
 unit::unit(const army &parent_army, const province &location) {
     size = 0;
@@ -59,6 +59,6 @@ int get_set_unit_destination_weight(void *s_param, void *o_param) {
 
 [[nodiscard]] unit *army::new_unit(const province &location) {
     auto new_unit = std::make_unique<unit>(*this, location);
-    units.push_back(std::move(new_unit));
+    units.emplace_back(std::move(new_unit));
     return units.back().get();
 }

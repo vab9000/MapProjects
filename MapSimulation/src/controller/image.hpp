@@ -20,6 +20,7 @@ public:
 
     [[nodiscard]] unsigned int get_color(const unsigned int i, const unsigned int j) const {
         const auto pixel = cv_image.at<pixel_t>(static_cast<int>(j), static_cast<int>(i));
-        return pixel.x + (pixel.y << 8) + (pixel.z << 16);
+        return static_cast<unsigned int>(pixel.x) << 16 | static_cast<unsigned int>(pixel.y) << 8 |
+               static_cast<unsigned int>(pixel.z);
     }
 };

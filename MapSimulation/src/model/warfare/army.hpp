@@ -1,9 +1,9 @@
 #pragma once
 
 #include <vector>
-#include "../Base/AI.hpp"
-#include "../Base/Province.hpp"
-#include "../Populations/Character.hpp"
+#include "../base/ai.hpp"
+#include "../base/province.hpp"
+#include "../populations/character.hpp"
 
 
 class tag;

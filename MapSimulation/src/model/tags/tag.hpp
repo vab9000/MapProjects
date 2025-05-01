@@ -1,4 +1,5 @@
 #pragma once
+#include "../warfare/army.hpp"
 
 class tag {
 public:

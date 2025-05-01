@@ -2,8 +2,8 @@
 
 #include <string>
 #include <vector>
-#include "../Warfare/Army.hpp"
-#include "Tag.hpp"
+#include "../warfare/army.hpp"
+#include "tag.hpp"
 
 class province;
 

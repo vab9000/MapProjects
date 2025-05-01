@@ -1,4 +1,6 @@
-#include "Character.hpp"
+#include "character.hpp"
+
+class army;
 
 character::character(const date birthday) {
     traits = std::unordered_set<personality_trait>();

@@ -1,8 +1,8 @@
 #pragma once
 
 #include <unordered_set>
-#include "../Base/Utils.hpp"
-#include "../Base/AI.hpp"
+#include "../base/utils.hpp"
+#include "../base/ai.hpp"
 
 enum class personality_trait {
     ambitious,

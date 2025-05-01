@@ -52,7 +52,7 @@ public:
     }
 
     void add_action(std::unique_ptr<action> &&action) {
-        actions_.push_back(std::move(action));
+        actions_.emplace_back(std::move(action));
     }
 
     void clear_actions() {
