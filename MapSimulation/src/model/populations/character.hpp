@@ -11,8 +11,8 @@ enum class personality_trait {
 class army;
 
 class character final : public has_ai {
-    date birthday_{};
-    bool commander_{};
+    date birthday_;
+    bool commander_;
     army *army_;
 
 public:
@@ -24,7 +24,7 @@ public:
 
     void update_ai() override;
 
-    void make_commander(army *army);
+    void make_commander(army &army);
 
     void remove_commander();
 

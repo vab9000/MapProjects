@@ -89,6 +89,7 @@ struct date {
         unsigned int new_day = day;
         unsigned int new_month = month;
         unsigned int new_year = year;
+
         if (days < 0) {
             new_day -= days;
             while (new_day < 1) {

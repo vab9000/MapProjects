@@ -1,12 +1,6 @@
 #include "character.hpp"
 
-class army;
-
-character::character(const date birthday) {
-    traits = std::unordered_set<personality_trait>();
-    this->birthday_ = birthday;
-    commander_ = false;
-    army_ = nullptr;
+character::character(const date birthday) : birthday_(birthday), commander_(false), army_(nullptr) {
 }
 
 [[nodiscard]] int character::age(const date current_date) const {
@@ -16,9 +10,9 @@ character::character(const date birthday) {
 void character::update_ai() {
 }
 
-void character::make_commander(army *army) {
+void character::make_commander(army &army) {
     commander_ = true;
-    this->army_ = army;
+    army_ = &army;
 }
 
 void character::remove_commander() {

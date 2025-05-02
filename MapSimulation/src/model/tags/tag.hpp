@@ -1,39 +1,50 @@
 #pragma once
+
+#include <string>
+#include <vector>
 #include "../warfare/army.hpp"
 
+class province;
+
 class tag {
+    std::vector<province *> provinces_;
+    std::string name_;
+    unsigned int color_;
+    std::vector<army> armies_;
+    int gold_ = 0;
+
 public:
-    std::string name;
-    unsigned int color;
-    std::vector<std::unique_ptr<army> > armies;
-    int gold;
+    tag();
 
-    tag() {
-        name = "";
-        color = 0;
-        armies = std::vector<std::unique_ptr<army> >();
-        gold = 0;
-    }
+    tag(std::string name, unsigned int color);
 
-    tag(const std::string &name, const unsigned int color) {
-        this->name = name;
-        this->color = color;
-        armies = std::vector<std::unique_ptr<army> >();
-        gold = 0;
-    }
+    ~tag();
 
-    virtual ~tag() = default;
+    [[nodiscard]] unsigned int get_color() const;
 
-    [[nodiscard]] virtual bool has_army_access(const province &province) const {
-        return true;
-    }
+    void set_color(unsigned int color);
 
-    [[nodiscard]] army *new_army() {
-        auto n_army = std::make_unique<army>(*this);
-        armies.emplace_back(std::move(n_army));
-        return armies.back().get();
-    }
+    [[nodiscard]] int get_gold() const;
 
-    void tick() {
-    }
+    void add_gold(int amount);
+
+    void remove_gold(int amount);
+
+    [[nodiscard]] std::string_view get_name() const;
+
+    void set_name(const std::string &name);
+
+    [[nodiscard]] army &new_army();
+
+    void add_province(province &added_province);
+
+    void remove_province(const province &removed_province);
+
+    [[nodiscard]] bool has_province(const province &found_province) const;
+
+    [[nodiscard]] const std::vector<province *> &get_provinces() const;
+
+    [[nodiscard]] bool has_army_access(const province &access_province) const;
+
+    void tick();
 };

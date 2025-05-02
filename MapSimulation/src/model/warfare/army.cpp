@@ -1,19 +1,13 @@
 #include "army.hpp"
 #include <vector>
-#include "../base/ai.hpp"
 #include "../base/province.hpp"
 #include "../populations/character.hpp"
 #include "../tags/tag.hpp"
 
-unit::unit(const army &parent_army, const province &location) {
-    size = 0;
-    this->location = &const_cast<province &>(location);
-    this->parent_army = &const_cast<army &>(parent_army);
-    path = std::vector<province *>();
-    travel_progress = 0;
-    general = nullptr;
-    retreating = false;
-    speed = 1.0;
+unit::unit(army &parent_army, province &location) : size(0), location(&location),
+                                                    parent_army(&parent_army),
+                                                    travel_progress(0), general(nullptr), retreating(false),
+                                                    speed(0.0) {
 }
 
 void unit::set_destination(const province &destination) {
@@ -24,9 +18,7 @@ void unit::set_destination(const province &destination) {
             return this_unit->parent_army->parent_tag->has_army_access(province);
         },
         [](const province &, void *) { return 1.0; }, this);
-    for (const auto &province: generated_path) {
-        path.emplace_back(province);
-    }
+    path = generated_path;
 }
 
 void unit::move() {
@@ -38,11 +30,7 @@ void unit::move() {
     }
 }
 
-army::army(const tag &parent_tag) {
-    this->parent_tag = &const_cast<tag &>(parent_tag);
-    units = std::vector<std::unique_ptr<unit> >();
-    directive_ = {.type = army_directive_type::attack, .target = nullptr};
-    commander_ = nullptr;
+army::army(tag &parent_tag) : commander_(nullptr), parent_tag(&parent_tag) {
 }
 
 void set_unit_destination(void *s_param, void *o_param) {
@@ -57,8 +45,7 @@ int get_set_unit_destination_weight(void *s_param, void *o_param) {
     return 100;
 }
 
-[[nodiscard]] unit *army::new_unit(const province &location) {
-    auto new_unit = std::make_unique<unit>(*this, location);
-    units.emplace_back(std::move(new_unit));
-    return units.back().get();
+[[nodiscard]] unit &army::new_unit(province &location) {
+    units.emplace_back(unit(*this, location));
+    return units.back();
 }

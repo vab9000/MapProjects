@@ -1,11 +1,10 @@
 #pragma once
 
 #include <vector>
-#include "../base/ai.hpp"
-#include "../base/province.hpp"
-#include "../populations/character.hpp"
 
-
+class ai;
+class province;
+class character;
 class tag;
 class army;
 
@@ -27,7 +26,7 @@ public:
     bool retreating;
     double speed;
 
-    unit(const army &parent_army, const province &location);
+    unit(army &parent_army, province &location);
 
     void set_destination(const province &destination);
 
@@ -39,10 +38,10 @@ class army {
     character *commander_;
 
 public:
-    std::vector<std::unique_ptr<unit> > units;
+    std::vector<unit> units;
     tag *parent_tag;
 
-    explicit army(const tag &parent_tag);
+    explicit army(tag &parent_tag);
 
-    [[nodiscard]] unit *new_unit(const province &location);
+    [[nodiscard]] unit &new_unit(province &location);
 };

@@ -6,50 +6,58 @@
 #include <utility>
 #include <vector>
 #include "utils.hpp"
+#include "../populations/pop.hpp"
 
 
-class country;
+class tag;
 enum class map_mode;
-class pop;
 
 class province {
     std::vector<std::array<int, 2> > pixels_;
     std::vector<std::pair<province *, std::array<int, 2> > > outline_;
-    std::vector<pop *> pops_;
-    bool distances_processed_{};
-    country *owner_;
+    std::vector<pop> pops_;
+    bool distances_processed_ = false;
+    tag *owner_;
     std::unordered_map<province *, double> neighbors_;
     unsigned int num_pixels_;
     unsigned int num_outline_;
-    int bounds_[4]{};
-    int center_[2]{};
+    std::array<int, 4> bounds_;
+    std::array<int, 2> center_;
+    unsigned int base_color_;
+    std::string name_;
 
 public:
     unsigned int color;
-    unsigned int base_color;
-    std::string name;
 
-    province(const std::string &name, unsigned int color, int i, int j);
+    province();
+
+    province(std::string name, unsigned int color, int i, int j);
 
     void finalize();
 
     void process_distances();
 
-    void set_owner(const country &new_owner);
+    std::string_view name();
 
-    [[nodiscard]] country *get_owner() const;
+    void set_owner(tag &new_owner);
+
+    [[nodiscard]] tag &get_owner() const;
+
+    [[nodiscard]] bool has_owner() const;
 
     void add_pixel(int x, int y);
 
-    void add_outline(int x, int y, const province &other);
+    void add_outline(int x, int y, province &other);
 
-    [[nodiscard]] const std::array<int, 2> *get_pixels() const;
+    [[nodiscard]] const std::vector<std::array<int, 2>> &get_pixels() const;
 
-    [[nodiscard]] const std::pair<province *, std::array<int, 2> > *get_outline() const;
+    [[nodiscard]] const std::vector<std::pair<province *, std::array<int, 2> >> &get_outline() const;
 
     void expand_bounds(int x, int y);
 
     void recolor(map_modes mode);
+
+    [[nodiscard]] unsigned int get_base_color() const;
 
     [[nodiscard]] double distance(const province &other) const;
 
@@ -61,11 +69,11 @@ public:
 
     [[nodiscard]] unsigned int get_num_outline() const;
 
-    [[nodiscard]] const int *get_bounds() const;
+    [[nodiscard]] const std::array<int, 4> &get_bounds() const;
 
-    [[nodiscard]] const int *get_center() const;
+    [[nodiscard]] const std::array<int, 2> &get_center() const;
 
-    [[nodiscard]] const std::vector<pop *> &get_pops() const;
+    [[nodiscard]] const std::vector<pop> &get_pops() const;
 
     [[nodiscard]] const std::unordered_map<province *, double> &get_neighbors() const;
 

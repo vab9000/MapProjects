@@ -1,7 +1,7 @@
 #include "controller/simulation.hpp"
 
-int WinMain() {
-    simulation sim{};
+int main() {
+    simulation sim;
 
     sim.start_simulation();
 

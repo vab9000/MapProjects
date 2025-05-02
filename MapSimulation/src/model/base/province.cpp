@@ -6,28 +6,17 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include "../populations/pop.hpp"
-#include "../tags/country.hpp"
+#include "../tags/tag.hpp"
 #include "utils.hpp"
 
-province::province(const std::string &name, const unsigned int color, const int i, const int j) {
-    distances_processed_ = false;
-    this->name = name;
-    this->color = color;
-    base_color = color;
-    bounds_[0] = i;
-    bounds_[1] = j;
-    bounds_[2] = i;
-    bounds_[3] = j;
-    num_pixels_ = 0;
-    num_outline_ = 0;
-    pixels_ = std::vector<std::array<int, 2> >();
-    outline_ = std::vector<std::pair<province *, std::array<int, 2> > >();
-    center_[0] = -1;
-    center_[1] = -1;
-    owner_ = nullptr;
-    pops_ = std::vector<pop *>();
-    neighbors_ = std::unordered_map<province *, double>();
+province::province() : owner_(nullptr), num_pixels_(0), num_outline_(0), bounds_({0, 0, 0, 0}), center_({-1, -1}),
+                       base_color_(0), name_(""), color(0) {
+}
+
+province::province(std::string name, const unsigned int color, const int i,
+                   const int j) : owner_(nullptr), num_pixels_(0), num_outline_(0),
+                                  bounds_({i, j, i, j}), center_{-1, -1}, base_color_(color),
+                                  name_(std::move(name)), color(color) {
 }
 
 void province::finalize() {
@@ -95,30 +84,43 @@ void province::process_distances() {
     distances_processed_ = true;
 }
 
-void province::set_owner(const country &new_owner) {
-    if (owner_ != nullptr && owner_->has_province(this)) {
-        owner_->remove_province(this);
-    }
-    owner_ = &const_cast<country &>(new_owner);
+std::string_view province::name() {
+    return name_;
 }
 
-[[nodiscard]] country *province::get_owner() const { return owner_; }
+void province::set_owner(tag &new_owner) {
+    if (has_owner() && owner_->has_province(*this)) {
+        owner_->remove_province(*this);
+    }
+    owner_ = &new_owner;
+}
+
+[[nodiscard]] tag &province::get_owner() const {
+    return *owner_;
+}
+
+bool province::has_owner() const {
+    return owner_ != nullptr;
+}
 
 void province::add_pixel(const int x, const int y) {
     pixels_.emplace_back(std::array{x, y});
     num_pixels_ += 1;
 }
 
-void province::add_outline(const int x, const int y, const province &other) {
-    outline_.emplace_back(&const_cast<province &>(other), std::array{x, y});
+void province::add_outline(const int x, const int y, province &other) {
+    outline_.emplace_back(&other, std::array{x, y});
     num_outline_ += 1;
-    neighbors_.emplace(&const_cast<province &>(other), 0.0);
+    neighbors_.emplace(&other, 0.0);
 }
 
-[[nodiscard]] const std::array<int, 2> *province::get_pixels() const { return pixels_.data(); }
+[[nodiscard]] const std::vector<std::array<int, 2> > &province::get_pixels() const {
+    return pixels_;
+}
 
-[[nodiscard]] const std::pair<province *, std::array<int, 2> > *province::get_outline() const {
-    return outline_.data();
+[[nodiscard]] const std::vector<std::pair<province *, std::array<int, 2> > > &
+province::get_outline() const {
+    return outline_;
 }
 
 void province::expand_bounds(const int x, const int y) {
@@ -136,14 +138,18 @@ void province::expand_bounds(const int x, const int y) {
 
 void province::recolor(const map_modes mode) {
     if (mode == map_modes::provinces) {
-        color = base_color;
+        color = base_color_;
     } else if (mode == map_modes::owner) {
-        if (owner_ != nullptr) {
-            color = owner_->color;
+        if (has_owner()) {
+            color = owner_->get_color();
         } else {
             color = 0xFFFFFFFF;
         }
     }
+}
+
+[[nodiscard]] unsigned int province::get_base_color() const {
+    return base_color_;
 }
 
 [[nodiscard]] double province::distance(const province &other) const {
@@ -160,7 +166,8 @@ void province::recolor(const map_modes mode) {
                                                             void *param) {
     std::unordered_map<province *, double> distances;
     std::unordered_map<province *, province *> previous;
-    std::priority_queue<std::pair<double, province *>, std::vector<std::pair<double, province *> >, std::greater<> >
+    std::priority_queue<std::pair<double, province *>, std::vector<std::pair<double,
+                province *> >, std::greater<> >
             queue;
 
     distances[this] = 0;
@@ -177,8 +184,8 @@ void province::recolor(const map_modes mode) {
             break;
         }
 
-        for (const auto &[neighborProvince, neighborDistance]: currentProvince->neighbors_) {
-            if (neighborProvince == nullptr || !accessible(*neighborProvince, param) ||
+        for (const auto &[neighborProvince, neighborDistance]: currentProvince->get_neighbors()) {
+            if (!accessible(*neighborProvince, param) ||
                 cost_modifier(*neighborProvince, param) < 0) {
                 continue;
             }
@@ -205,19 +212,32 @@ void province::recolor(const map_modes mode) {
 }
 
 void province::tick() {
-    if (owner_ != nullptr) {
-        owner_->gold += 1;
+    if (has_owner()) {
+        owner_->add_gold(1);
     }
 }
 
-[[nodiscard]] unsigned int province::get_num_pixels() const { return num_pixels_; }
+[[nodiscard]] unsigned int province::get_num_pixels() const {
+    return num_pixels_;
+}
 
-[[nodiscard]] unsigned int province::get_num_outline() const { return num_outline_; }
+[[nodiscard]] unsigned int province::get_num_outline() const {
+    return
+            num_outline_;
+}
 
-[[nodiscard]] const int *province::get_bounds() const { return bounds_; }
+[[nodiscard]] const std::array<int, 4> &province::get_bounds() const {
+    return bounds_;
+}
 
-[[nodiscard]] const int *province::get_center() const { return center_; }
+[[nodiscard]] const std::array<int, 2> &province::get_center() const {
+    return center_;
+}
 
-[[nodiscard]] const std::vector<pop *> &province::get_pops() const { return pops_; }
+[[nodiscard]] const std::vector<pop> &province::get_pops() const {
+    return pops_;
+}
 
-[[nodiscard]] const std::unordered_map<province *, double> &province::get_neighbors() const { return neighbors_; }
+[[nodiscard]] const std::unordered_map<province *, double> &province::get_neighbors() const {
+    return neighbors_;
+}
