@@ -26,27 +26,23 @@ void action::perform() const {
     return weight_func_(s_param_, o_param_);
 }
 
-ai::ai() {
-    actions_ = std::vector<std::unique_ptr<action> >();
-}
-
-void ai::add_action(std::unique_ptr<action> &&action) {
-    actions_.emplace_back(std::move(action));
+void ai::add_action(const action& act) {
+    actions_.emplace_back(act);
 }
 
 void ai::clear_actions() {
     actions_.clear();
 }
 
-void ai::perform_actions() const {
+void ai::perform_actions() {
     auto dis = std::uniform_real_distribution(0.0, 1.0);
 
     const auto random = dis(rng);
 
-    for (const auto &action: actions_) {
-        if (const int weight = action->get_weight(); weight >= 1) {
+    for (auto &action: actions_) {
+        if (const int weight = action.get_weight(); weight >= 1) {
             if (const auto chance = 1.0 - 1 / (weight * weight / inertia + 1); random < chance) {
-                action->perform();
+                action.perform();
             }
         }
     }

@@ -1,7 +1,9 @@
 #include "army.hpp"
 #include <vector>
 #include "../base/province.hpp"
+
 #include "../populations/character.hpp"
+
 #include "../tags/tag.hpp"
 
 unit::unit(army &parent_army, province &location) : size(0), location(&location),
@@ -46,6 +48,27 @@ int get_set_unit_destination_weight(void *s_param, void *o_param) {
 }
 
 [[nodiscard]] unit &army::new_unit(province &location) {
-    units.emplace_back(unit(*this, location));
-    return units.back();
+    units.emplace_back(std::make_unique<unit>(*this, location));
+    return *units.back();
+}
+
+void army::remove_commander() {
+    if (commander_ != nullptr) {
+        commander_->remove_commander();
+    }
+    commander_ = nullptr;
+}
+
+
+void army::set_commander(character &commander) {
+    commander_ = &commander;
+    commander_->make_commander(*this);
+}
+
+character &army::get_commander() const {
+    return *commander_;
+}
+
+army_directive army::get_directive() const {
+    return directive_;
 }

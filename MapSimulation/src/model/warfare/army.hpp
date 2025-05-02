@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <memory>
 
 class ai;
 class province;
@@ -38,10 +39,18 @@ class army {
     character *commander_;
 
 public:
-    std::vector<unit> units;
+    std::vector<std::unique_ptr<unit>> units;
     tag *parent_tag;
 
     explicit army(tag &parent_tag);
 
     [[nodiscard]] unit &new_unit(province &location);
+
+    void remove_commander();
+
+    void set_commander(character &commander);
+
+    [[nodiscard]] character &get_commander() const;
+
+    [[nodiscard]] army_directive get_directive() const;
 };

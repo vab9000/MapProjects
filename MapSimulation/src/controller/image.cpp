@@ -3,7 +3,7 @@
 image::image() : cv_image_(cv::Mat()), width_(0), height_(0) {
 }
 
-image::image(const std::string &path) : cv_image_(cv::imread(path, cv::IMREAD_COLOR)), width_(cv_image_.cols),
+image::image(const std::string &path) : cv_image_(cv::imread(path)), width_(cv_image_.cols),
                                           height_(cv_image_.rows) {
 }
 

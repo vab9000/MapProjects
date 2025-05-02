@@ -26,7 +26,7 @@ class simulation {
     drawing drawer_ = drawing(data_, progress_);
     window window_ = window(*this, drawer_, &simulation::handle_event);
 
-    void change_map_mode(const map_modes mode);
+    void change_map_mode(map_modes mode);
 
     void select_province(province *province);
 

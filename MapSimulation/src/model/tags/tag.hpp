@@ -2,18 +2,22 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 #include "../warfare/army.hpp"
 
 class province;
+struct data;
 
 class tag {
     std::vector<province *> provinces_;
     std::string name_;
     unsigned int color_;
-    std::vector<army> armies_;
+    std::vector<std::unique_ptr<army> > armies_;
     int gold_ = 0;
 
 public:
+    const unsigned long long id;
+
     tag();
 
     tag(std::string name, unsigned int color);

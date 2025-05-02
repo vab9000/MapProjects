@@ -1,5 +1,6 @@
 #include "load_image.hpp"
 
+#include <memory>
 #include <execution>
 #include "image.hpp"
 #include "simulation.hpp"
@@ -16,10 +17,12 @@ void load_image(data &data, image &map_image, double &progress) {
             const auto province = &data.provinces.at(color);
             province->expand_bounds(i, j);
         } else {
-            data.tags.emplace(std::make_pair(color, tag("", color)));
+            auto new_tag = std::make_unique<tag>(std::string("Tag ") + std::to_string(data.tags.size()), color);
+            auto id = new_tag->id;
+            data.tags.emplace(std::make_pair(id, std::move(new_tag)));
             data.provinces.emplace(std::make_pair(color, province(std::string("Province ") + std::to_string(data.provinces.size()),
                 color, i, j)));
-            data.provinces[color].set_owner(data.tags[color]);
+            data.provinces[color].set_owner(*data.tags[id]);
         }
     };
 

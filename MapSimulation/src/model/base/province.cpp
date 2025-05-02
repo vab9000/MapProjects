@@ -10,7 +10,7 @@
 #include "utils.hpp"
 
 province::province() : owner_(nullptr), num_pixels_(0), num_outline_(0), bounds_({0, 0, 0, 0}), center_({-1, -1}),
-                       base_color_(0), name_(""), color(0) {
+                       base_color_(0), color(0) {
 }
 
 province::province(std::string name, const unsigned int color, const int i,
@@ -95,12 +95,19 @@ void province::set_owner(tag &new_owner) {
     owner_ = &new_owner;
 }
 
+void province::remove_owner() {
+    if (has_owner()) {
+        owner_->remove_province(*this);
+    }
+    owner_ = nullptr;
+}
+
 [[nodiscard]] tag &province::get_owner() const {
     return *owner_;
 }
 
 bool province::has_owner() const {
-    return owner_ != nullptr;
+    return owner_;
 }
 
 void province::add_pixel(const int x, const int y) {
@@ -128,10 +135,9 @@ void province::expand_bounds(const int x, const int y) {
         bounds_[0] = x;
     } else if (x > bounds_[2]) {
         bounds_[2] = x;
-    } else if (y < bounds_[1]) {
+    } if (y < bounds_[1]) {
         bounds_[1] = y;
-    }
-    if (y > bounds_[3]) {
+    } else if (y > bounds_[3]) {
         bounds_[3] = y;
     }
 }
@@ -234,7 +240,7 @@ void province::tick() {
     return center_;
 }
 
-[[nodiscard]] const std::vector<pop> &province::get_pops() const {
+[[nodiscard]] const std::vector<std::unique_ptr<pop> > &province::get_pops() const {
     return pops_;
 }
 

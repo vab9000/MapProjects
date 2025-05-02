@@ -2,6 +2,7 @@
 
 #include <array>
 #include <string>
+#include <memory>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -15,7 +16,7 @@ enum class map_mode;
 class province {
     std::vector<std::array<int, 2> > pixels_;
     std::vector<std::pair<province *, std::array<int, 2> > > outline_;
-    std::vector<pop> pops_;
+    std::vector<std::unique_ptr<pop> > pops_;
     bool distances_processed_ = false;
     tag *owner_;
     std::unordered_map<province *, double> neighbors_;
@@ -41,6 +42,8 @@ public:
 
     void set_owner(tag &new_owner);
 
+    void remove_owner();
+
     [[nodiscard]] tag &get_owner() const;
 
     [[nodiscard]] bool has_owner() const;
@@ -49,9 +52,9 @@ public:
 
     void add_outline(int x, int y, province &other);
 
-    [[nodiscard]] const std::vector<std::array<int, 2>> &get_pixels() const;
+    [[nodiscard]] const std::vector<std::array<int, 2> > &get_pixels() const;
 
-    [[nodiscard]] const std::vector<std::pair<province *, std::array<int, 2> >> &get_outline() const;
+    [[nodiscard]] const std::vector<std::pair<province *, std::array<int, 2> > > &get_outline() const;
 
     void expand_bounds(int x, int y);
 
@@ -73,7 +76,7 @@ public:
 
     [[nodiscard]] const std::array<int, 2> &get_center() const;
 
-    [[nodiscard]] const std::vector<pop> &get_pops() const;
+    [[nodiscard]] const std::vector<std::unique_ptr<pop> > &get_pops() const;
 
     [[nodiscard]] const std::unordered_map<province *, double> &get_neighbors() const;
 

@@ -1,16 +1,33 @@
 #include "tag.hpp"
-
+#include <stack>
 #include <utility>
 #include "../base/province.hpp"
 #include "../warfare/army.hpp"
 
+static unsigned long long id_counter = 0;
+
+static std::stack<unsigned long long> id_stack = {};
+
+static unsigned long long get_id() {
+    unsigned long long id;
+    if (id_stack.empty()) {
+        id = id_counter++;
+    } else {
+        id = id_stack.top();
+        id_stack.pop();
+    }
+    return id;
+}
+
 tag::tag() : tag("", 0) {
 }
 
-tag::tag(std::string name, const unsigned int color) : name_(std::move(name)), color_(color) {
+tag::tag(std::string name, const unsigned int color) : name_(std::move(name)), color_(color), id(get_id()) {
 }
 
-tag::~tag() = default;
+tag::~tag() {
+    id_stack.push(id);
+}
 
 unsigned int tag::get_color() const {
     return color_;
@@ -41,8 +58,8 @@ void tag::set_name(const std::string &name) {
 }
 
 [[nodiscard]] army &tag::new_army() {
-    armies_.emplace_back(army(*this));
-    return armies_.back();
+    armies_.emplace_back(std::make_unique<army>(*this));
+    return *armies_.back();
 }
 
 void tag::add_province(province &added_province) {
