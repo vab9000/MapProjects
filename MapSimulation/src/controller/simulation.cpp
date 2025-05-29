@@ -1,6 +1,7 @@
 #include "simulation.hpp"
 #include <thread>
 #include <algorithm>
+#include <numeric>
 #include <unordered_set>
 #include <execution>
 #include <ranges>
@@ -19,8 +20,12 @@ void simulation::change_map_mode(const map_modes mode) {
 
     const auto province_values = data_.provinces | std::views::values;
 
+#ifdef __cpp_lib_execution
     std::for_each(std::execution::par, province_values.begin(), province_values.end(),
                   [&](province &province) { province.recolor(data_.map_mode); });
+#else
+    std::ranges::for_each(province_values, [&](province &province) { province.recolor(data_.map_mode); });
+#endif
 
     reload_bitmap();
 }
@@ -45,12 +50,21 @@ void simulation::reload_bitmap_province(const province &reload_province) {
     std::vector<int> indices(reload_province.get_num_pixels());
     std::iota(indices.begin(), indices.end(), 0);
 
+#ifdef __cpp_lib_execution
     std::for_each(std::execution::par, indices.begin(), indices.end(), [&](const int i) {
         const auto pixel = pixels[i];
         const auto index = (pixel[0] + pixel[1] * map_image_.get_width()) * 4;
         set_pixel(bytes_, index, static_cast<unsigned char>(color), static_cast<unsigned char>(color >> 8),
                   static_cast<unsigned char>(color >> 16));
     });
+#else
+    std::ranges::for_each(indices, [&](const int i) {
+        const auto pixel = pixels[i];
+        const auto index = (pixel[0] + pixel[1] * map_image_.get_width()) * 4;
+        set_pixel(bytes_, index, static_cast<unsigned char>(color), static_cast<unsigned char>(color >> 8),
+                  static_cast<unsigned char>(color >> 16));
+    });
+#endif
 
     const auto &outline = reload_province.get_outline();
     auto updated_provinces = std::unordered_set<province *>();
@@ -106,6 +120,7 @@ void simulation::reload_bitmap_province(const province &reload_province) {
 void simulation::reload_bitmap() {
     const auto province_values = data_.provinces | std::views::values;
 
+#ifdef __cpp_lib_execution
     std::for_each(
         std::execution::par, province_values.begin(), province_values.end(),
         [&](const province &province) {
@@ -145,6 +160,48 @@ void simulation::reload_bitmap() {
                 }
             });
         });
+#else
+    std::ranges::for_each(province_values
+                          ,
+                          [&](const province &province) {
+                              const auto &pixels = province.get_pixels();
+
+                              std::vector<int> indices(province.get_num_pixels());
+                              std::iota(indices.begin(), indices.end(), 0);
+
+                              std::ranges::for_each(indices, [&](const int i) {
+                                  const auto pixel = pixels[i];
+                                  const auto color = province.color;
+                                  const auto index = (pixel[0] + pixel[1] * map_image_.get_width()) * 4;
+                                  set_pixel(bytes_, index, static_cast<unsigned char>(color),
+                                            static_cast<unsigned char>(color >> 8),
+                                            static_cast<unsigned char>(color >> 16));
+                              });
+
+                              const auto &outline = province.get_outline();
+
+                              indices = std::vector<int>(province.get_num_outline());
+                              std::iota(indices.begin(), indices.end(), 0);
+
+                              std::ranges::for_each(indices, [&](const int i) {
+                                  const auto other_province = outline[i].first;
+                                  const auto pixel = outline[i].second;
+                                  const auto color = province.color;
+                                  const auto index = (pixel[0] + pixel[1] * map_image_.get_width()) * 4;
+                                  if (data_.selected_province != nullptr && color == data_.selected_province->color) {
+                                      set_pixel(bytes_, index, 255, 255, 255);
+                                  } else {
+                                      if (other_province != nullptr && other_province->color != color) {
+                                          set_pixel(bytes_, index, 0, 0, 0);
+                                      } else {
+                                          set_pixel(bytes_, index, static_cast<unsigned char>(color),
+                                                    static_cast<unsigned char>(color >> 8),
+                                                    static_cast<unsigned char>(color >> 16));
+                                      }
+                                  }
+                              });
+                          });
+#endif
 
     drawer_.update_map_texture(bytes_.data());
 }

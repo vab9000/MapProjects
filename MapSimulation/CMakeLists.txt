@@ -1,3 +1,13 @@
+include(FetchContent)
+
+FetchContent_Declare(
+        sfml
+        GIT_REPOSITORY https://github.com/SFML/SFML.git
+        GIT_TAG 3.0.0
+)
+
+FetchContent_MakeAvailable(sfml)
+
 cmake_minimum_required(VERSION 3.27)
 project(MapSimulation)
 
@@ -6,9 +16,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(MapSimulation)
 
+target_include_directories(MapSimulation PRIVATE libs/stb_image)
+
 set_target_properties(MapSimulation PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/bin
         RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/bin
+        RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL ${CMAKE_BINARY_DIR}/bin
+        RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${CMAKE_BINARY_DIR}/bin
 )
 
 file(GLOB_RECURSE Sources src/*.cpp)
@@ -18,18 +32,6 @@ file(GLOB_RECURSE Sources src/*.cpp)
 target_sources(MapSimulation PRIVATE ${Sources})
 
 #target_sources(MapSimulation PRIVATE ${Libs})
-
-target_include_directories(MapSimulation PRIVATE libs/stb_image)
-
-include(FetchContent)
-
-FetchContent_Declare(
-        sfml
-        GIT_REPOSITORY https://github.com/SFML/SFML.git
-        GIT_TAG 3.0.x   # Change this to the desired version
-)
-
-FetchContent_MakeAvailable(sfml)
 
 target_link_libraries(MapSimulation PRIVATE SFML::Graphics SFML::Audio SFML::Network SFML::System SFML::Window)
 

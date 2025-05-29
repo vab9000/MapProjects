@@ -18,7 +18,7 @@ public:
 
     bool init_sprites(const image &map_image, const std::vector<unsigned char> &bytes);
 
-    void recalculate_sprite_coords(const std::array<int, 2> offset, const double zoom, const unsigned int map_width);
+    void recalculate_sprite_coords(std::array<int, 2> offset, double zoom, unsigned int map_width);
 
     void draw_loading_screen(sf::RenderWindow &window) const;
 

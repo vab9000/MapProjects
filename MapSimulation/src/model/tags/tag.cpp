@@ -1,6 +1,8 @@
 #include "tag.hpp"
 #include <stack>
 #include <utility>
+#include <algorithm>
+
 #include "../base/province.hpp"
 #include "../warfare/army.hpp"
 

@@ -1,10 +1,12 @@
 #include "load_image.hpp"
 
+#include <algorithm>
 #include <memory>
 #include <ranges>
+#ifdef __cpp_lib_execution
 #include <execution>
+#endif
 #include "image.hpp"
-#include "simulation.hpp"
 #include "../model/base/province.hpp"
 #include "../model/tags/tag.hpp"
 #include "data.hpp"
@@ -20,9 +22,9 @@ void load_image(data &data, image &map_image, double &progress) {
         } else {
             auto new_tag = std::make_unique<tag>(std::string("Tag ") + std::to_string(data.tags.size()), color);
             auto id = new_tag->id;
-            data.tags.emplace(std::make_pair(id, std::move(new_tag)));
-            data.provinces.emplace(std::make_pair(color, province(std::string("Province ") + std::to_string(data.provinces.size()),
-                color, i, j)));
+            data.tags.emplace(id, std::move(new_tag));
+            data.provinces.emplace(color, province(std::string("Province ") + std::to_string(data.provinces.size()),
+                color, i, j));
             data.provinces[color].set_owner(*data.tags[id]);
         }
     };
@@ -81,9 +83,15 @@ void load_image(data &data, image &map_image, double &progress) {
 
     auto province_values = data.provinces | std::views::values;
 
+#ifdef __cpp_lib_execution
     std::for_each(std::execution::par, province_values.begin(), province_values.end(),
                   [](province &province) { province.finalize(); });
-
     std::for_each(std::execution::par, province_values.begin(), province_values.end(),
                   [](province &province) { province.process_distances(); });
+#else
+    std::ranges::for_each(province_values,
+                          [](province &province) { province.finalize(); });
+    std::ranges::for_each(province_values,
+                          [](province &province) { province.process_distances(); });
+#endif
 }
