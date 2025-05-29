@@ -1,17 +1,41 @@
-#include "image.hpp"
+#pragma once
 
-image::image() : cv_image_(cv::Mat()), width_(0), height_(0) {
+#include "image.hpp"
+// #define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+#include <stdexcept>
+
+image::image() : data_(nullptr), width_(0), height_(0) {
 }
 
-image::image(const std::string &path) : cv_image_(cv::imread(path)), width_(cv_image_.cols),
-                                          height_(cv_image_.rows) {
+image::image(const std::string &path) : data_(nullptr), width_(0), height_(0) {
+    data_ = stbi_load(path.c_str(), &width_, &height_, nullptr, 3);
+    if (data_ == nullptr) {
+        throw std::runtime_error("Failed to load image: " + path);
+    }
+}
+
+image::~image() {
+    if (data_) {
+        stbi_image_free(data_);
+    }
+}
+
+image& image::operator=(image &&other) noexcept {
+    data_ = other.data_;
+    width_ = other.width_;
+    height_ = other.height_;
+    other.data_ = nullptr;
+    return *this;
 }
 
 [[nodiscard]] unsigned int image::get_color(const unsigned int i, const unsigned int j) const {
-    const auto pixel = cv_image_.at<pixel_t>(static_cast<int>(j), static_cast<int>(i));
+    unsigned int pixel = 0;
+    pixel += data_[(i + j * width_) * 3];
+    pixel += data_[(i + j * width_) * 3 + 1] << 8;
+    pixel += data_[(i + j * width_) * 3 + 2] << 16;
 
-    return static_cast<unsigned int>(pixel.x) << 16 | static_cast<unsigned int>(pixel.y) << 8 |
-           static_cast<unsigned int>(pixel.z);
+    return pixel;
 }
 
 int image::get_width() const {

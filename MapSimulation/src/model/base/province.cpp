@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <array>
 #include <queue>
+#include <ranges>
 #include <string>
 #include <unordered_map>
 #include <utility>

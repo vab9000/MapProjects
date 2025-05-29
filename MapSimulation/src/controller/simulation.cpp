@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <unordered_set>
 #include <execution>
+#include <ranges>
 #include "load_image.hpp"
 
 inline void set_pixel(std::vector<unsigned char> &bytes, const int index, const unsigned char r,

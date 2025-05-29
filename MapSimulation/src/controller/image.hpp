@@ -1,11 +1,9 @@
 #pragma once
 
-#include <opencv2/opencv.hpp>
-
-using pixel_t = cv::Point3_<uint8_t>;
+#include <string>
 
 class image {
-    cv::Mat cv_image_;
+    unsigned char *data_;
     int width_;
     int height_;
 
@@ -13,6 +11,12 @@ public:
     image();
 
     explicit image(const std::string &path);
+
+    ~image();
+
+    image &operator=(image &&other) noexcept;
+
+    image &operator=(const image &other) = delete;
 
     [[nodiscard]] unsigned int get_color(unsigned int i, unsigned int j) const;
 

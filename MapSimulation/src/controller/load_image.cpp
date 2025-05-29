@@ -1,6 +1,7 @@
 #include "load_image.hpp"
 
 #include <memory>
+#include <ranges>
 #include <execution>
 #include "image.hpp"
 #include "simulation.hpp"
@@ -58,7 +59,7 @@ void load_image(data &data, image &map_image, double &progress) {
         }
     };
 
-    map_image = image("assets/provinces.png");
+    map_image = image{"assets/provinces.png"};
 
     for (int i = 0; i < map_image.get_width(); ++i) {
         for (int j = 0; j < map_image.get_height(); ++j) {

@@ -2,16 +2,9 @@
 
 ## Instructions
 
-### Dependencies
+### Building
 
-1. Download OpenCV for C++ and put the include and x64 folders, and the OpenCVConfig.cmake and OpenCVConfig-version.cmake
-files in a folder called libs/opencv in the main directory.
-
-2. Download the glad library and put the include and src folders in a folder called libs/glad in the main directory.
-
-## Building
-
-Use the cmake CMakeLists.txt to build the project.
+Use cmake to build the project. You will need to have an internet connection to download the required dependencies.
 
 ## Goals
 
