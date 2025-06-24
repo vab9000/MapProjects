@@ -1,4 +1,4 @@
-#include "controller/simulation.hpp"
+#include "logic/simulation.hpp"
 
 int main() {
     simulation sim;

@@ -1,12 +1,40 @@
 include(FetchContent)
 
+set(SFML_VERSION 3.0.0)
+set(IMGUI_VERSION 1.91.1)
+set(IMGUI_SFML_VERSION 3.0)
+
 FetchContent_Declare(
-        sfml
-        GIT_REPOSITORY https://github.com/SFML/SFML.git
-        GIT_TAG 3.0.0
+        SFML
+#        URL "https://github.com/SFML/SFML/archive/${SFML_VERSION}.zip"
+        GIT_REPOSITORY "https://github.com/SFML/SFML.git"
+        GIT_TAG "${SFML_VERSION}"
 )
 
+FetchContent_Declare(
+        imgui
+#        URL "https://github.com/ocornut/imgui/archive/v${IMGUI_VERSION}.zip"
+        GIT_REPOSITORY "https://github.com/ocornut/imgui.git"
+        GIT_TAG "v${IMGUI_VERSION}"
+)
+
+FetchContent_Declare(
+        imgui-sfml
+        GIT_REPOSITORY "https://github.com/SFML/imgui-sfml.git"
+        GIT_TAG "v${IMGUI_SFML_VERSION}"
+)
+
+option(SFML_BUILD_AUDIO "Build audio" OFF)
+option(SFML_BUILD_NETWORK "Build network" OFF)
 FetchContent_MakeAvailable(sfml)
+
+FetchContent_MakeAvailable(imgui)
+
+set(IMGUI_DIR ${imgui_SOURCE_DIR})
+option(IMGUI_SFML_FIND_SFML "Use find_package to find SFML" OFF)
+#option(IMGUI_SFML_IMGUI_DEMO "Build imgui_demo.cpp" ON)
+
+FetchContent_MakeAvailable(imgui-sfml)
 
 cmake_minimum_required(VERSION 3.27)
 project(MapSimulation)
@@ -33,7 +61,7 @@ target_sources(MapSimulation PRIVATE ${Sources})
 
 #target_sources(MapSimulation PRIVATE ${Libs})
 
-target_link_libraries(MapSimulation PRIVATE SFML::Graphics SFML::Audio SFML::Network SFML::System SFML::Window)
+target_link_libraries(MapSimulation PRIVATE SFML::Graphics SFML::System SFML::Window)
 
 #set(SFML_DIR libs/SFML-3.0.0/lib/cmake/SFML)
 #find_package(SFML 3 COMPONENTS Audio Graphics Network Main System Window REQUIRED)
@@ -48,7 +76,9 @@ target_link_libraries(MapSimulation PRIVATE SFML::Graphics SFML::Audio SFML::Net
 #    target_link_libraries(MapSimulation PRIVATE ${OpenCV_LIBS})
 #endif ()
 
-file(GLOB_RECURSE Images assets/*.png)
+target_link_libraries(MapSimulation PUBLIC ImGui-SFML::ImGui-SFML)
+
+file(GLOB_RECURSE Images assets/*)
 
 file(COPY ${Images} DESTINATION ${CMAKE_BINARY_DIR}/bin/assets)
 
