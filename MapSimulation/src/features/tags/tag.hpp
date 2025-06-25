@@ -24,17 +24,17 @@ public:
 
     ~tag();
 
-    [[nodiscard]] unsigned int get_color() const;
+    [[nodiscard]] unsigned int color() const;
 
     void set_color(unsigned int color);
 
-    [[nodiscard]] int get_gold() const;
+    [[nodiscard]] int gold() const;
 
     void add_gold(int amount);
 
     void remove_gold(int amount);
 
-    [[nodiscard]] std::string_view get_name() const;
+    [[nodiscard]] std::string_view name() const;
 
     void set_name(const std::string &name);
 
@@ -46,7 +46,7 @@ public:
 
     [[nodiscard]] bool has_province(const province &found_province) const;
 
-    [[nodiscard]] const std::vector<province *> &get_provinces() const;
+    [[nodiscard]] const std::vector<province *> &provinces() const;
 
     [[nodiscard]] bool has_army_access(const province &access_province) const;
 

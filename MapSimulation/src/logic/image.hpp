@@ -18,9 +18,9 @@ public:
 
     image &operator=(const image &other) = delete;
 
-    [[nodiscard]] unsigned int get_color(unsigned int i, unsigned int j) const;
+    [[nodiscard]] unsigned int color(unsigned int i, unsigned int j) const;
 
-    [[nodiscard]] int get_width() const;
+    [[nodiscard]] int width() const;
 
-    [[nodiscard]] int get_height() const;
+    [[nodiscard]] int height() const;
 };

@@ -31,7 +31,5 @@ public:
     void update_map_texture(const unsigned char *bytes, const sf::Vector2u &dimensions,
                             const sf::Vector2u &position);
 
-    void draw_selected_province_gui(sf::RenderWindow &window) const;
-
-    void draw_map_mode_selector(sf::RenderWindow &window) const;
+    void draw_gui(sf::RenderWindow &window) const;
 };

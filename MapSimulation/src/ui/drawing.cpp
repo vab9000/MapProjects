@@ -15,15 +15,15 @@ drawing::drawing(data &data, const double &progress, simulation *const simulatio
 
 bool drawing::init_sprites(const image &map_image, const std::vector<unsigned char> &bytes) {
     if (!texture_.loadFromImage(
-        sf::Image(sf::Vector2u(map_image.get_width(), map_image.get_height()), bytes.data()))) {
+        sf::Image(sf::Vector2u(map_image.width(), map_image.height()), bytes.data()))) {
         return false;
     }
     map_sprite_one_.setTexture(texture_);
     map_sprite_one_.setTextureRect(sf::IntRect(sf::Vector2(0, 0),
-                                               sf::Vector2(map_image.get_width(), map_image.get_height())));
+                                               sf::Vector2(map_image.width(), map_image.height())));
     map_sprite_two_.setTexture(texture_);
     map_sprite_two_.setTextureRect(sf::IntRect(sf::Vector2(0, 0),
-                                               sf::Vector2(map_image.get_width(), map_image.get_height())));
+                                               sf::Vector2(map_image.width(), map_image.height())));
     return true;
 }
 
@@ -61,38 +61,55 @@ void drawing::update_map_texture(const unsigned char *bytes, const sf::Vector2u 
     texture_.update(bytes, dimensions, position);
 }
 
-void drawing::draw_selected_province_gui(sf::RenderWindow &window) const {
-    if (data_.selected_province == nullptr) return;
-
-    auto bounds = data_.selected_province->get_bounds();
-    simulation_.transform_to_screen_coordinates(bounds);
-    ImGui::SetNextWindowPos(
-        ImVec2(static_cast<float>(bounds[0] + bounds[2]) / 2.0f,
-               static_cast<float>(bounds[1] + bounds[3]) / 2.0f));
-    if (ImGui::Begin(data_.selected_province->name().data())) {
-        ImGui::Text("Province Color: %06X", data_.selected_province->color);
-        ImGui::End();
-    }
-}
-
-void drawing::draw_map_mode_selector(sf::RenderWindow &window) const {
+inline void draw_map_mode_selection(simulation &sim, const data &d) {
     constexpr std::array<std::string, 5> map_mode_names = {
         "Provinces", "Owner", "Koppen", "Elevation", "Vegetation"
     };
     static int current_item = static_cast<int>(map_modes::provinces);
-    current_item = static_cast<int>(data_.map_mode);
-    ImGui::SetNextWindowPos(ImVec2(10, 10));
+    current_item = static_cast<int>(d.map_mode);
+    ImGui::SetNextWindowPos({0, 0});
+    ImGui::SetNextWindowSize({200, 50});
     if (ImGui::BeginCombo("Map Mode", map_mode_names[current_item].c_str())) {
         for (int i = 0; i < map_mode_names.size(); ++i) {
             const bool is_selected = (current_item == i);
             if (ImGui::Selectable(map_mode_names[i].c_str(), is_selected)) {
                 current_item = i;
-                simulation_.change_map_mode(static_cast<map_modes>(i));
+                sim.change_map_mode(static_cast<map_modes>(i));
             }
             if (is_selected) {
                 ImGui::SetItemDefaultFocus();
             }
         }
         ImGui::EndCombo();
+    }
+}
+
+inline void draw_selected_province_info(const simulation &sim, const data &d) {
+    if (d.selected_province == nullptr) return;
+    ImGui::SetNextWindowPos({0, 50});
+    ImGui::SetNextWindowSize({200, 100});
+    if (ImGui::Begin(d.selected_province->name().data())) {
+        ImGui::TextWrapped("Province Color: %06X\n"
+                    "Climate: %s\n"
+                    "Elevation: %s\n"
+                    "Vegetation: %s\n",
+                    d.selected_province->color,
+                    koppen_to_string(d.selected_province->koppen()).data(),
+                    elevation_to_string(d.selected_province->elevation()).data(),
+                    vegetation_to_string(d.selected_province->vegetation()).data());
+        ImGui::End();
+    }
+}
+
+void drawing::draw_gui(sf::RenderWindow &window) const {
+    ImGui::SetNextWindowPos({0, 0});
+    ImGui::SetNextWindowSize({200, static_cast<float>(window.getSize().y)});
+    if (ImGui::Begin("GUI")) {
+        if (ImGui::BeginChild("GUI")) {
+            draw_map_mode_selection(simulation_, data_);
+            draw_selected_province_info(simulation_, data_);
+            ImGui::EndChild();
+        }
+        ImGui::End();
     }
 }

@@ -16,6 +16,10 @@ enum class koppen : unsigned int;
 enum class elevation : unsigned int;
 enum class vegetation : unsigned int;
 
+std::string_view koppen_to_string(koppen value);
+std::string_view elevation_to_string(elevation value);
+std::string_view vegetation_to_string(vegetation value);
+
 class province {
     std::vector<std::array<int, 2> > pixels_;
     std::vector<std::pair<province *, std::array<int, 2> > > outline_;
@@ -50,7 +54,7 @@ public:
 
     void remove_owner();
 
-    [[nodiscard]] tag &get_owner() const;
+    [[nodiscard]] tag *owner() const;
 
     [[nodiscard]] bool has_owner() const;
 
@@ -58,33 +62,39 @@ public:
 
     void add_outline(int x, int y, province &other);
 
-    [[nodiscard]] const std::vector<std::array<int, 2> > &get_pixels() const;
+    [[nodiscard]] const std::vector<std::array<int, 2> > &pixels() const;
 
-    [[nodiscard]] const std::vector<std::pair<province *, std::array<int, 2> > > &get_outline() const;
+    [[nodiscard]] const std::vector<std::pair<province *, std::array<int, 2> > > &outline() const;
 
     void expand_bounds(int x, int y);
 
     void recolor(map_modes mode);
 
-    [[nodiscard]] unsigned int get_base_color() const;
+    [[nodiscard]] unsigned int base_color() const;
+
+    [[nodiscard]] koppen koppen() const;
+
+    [[nodiscard]] elevation elevation() const;
+
+    [[nodiscard]] vegetation vegetation() const;
 
     [[nodiscard]] double distance(const province &other) const;
 
-    [[nodiscard]] std::vector<province *> get_path_to(const province &destination,
+    [[nodiscard]] std::vector<province *> path_to(const province &destination,
                                                       bool (*accessible)(const province &, void *),
                                                       double (*cost_modifier)(const province &, void *), void *param);
 
-    [[nodiscard]] unsigned int get_num_pixels() const;
+    [[nodiscard]] unsigned int num_pixels() const;
 
-    [[nodiscard]] unsigned int get_num_outline() const;
+    [[nodiscard]] unsigned int num_outline() const;
 
-    [[nodiscard]] const std::array<int, 4> &get_bounds() const;
+    [[nodiscard]] const std::array<int, 4> &bounds() const;
 
-    [[nodiscard]] const std::array<int, 2> &get_center() const;
+    [[nodiscard]] const std::array<int, 2> &center() const;
 
-    [[nodiscard]] const std::vector<std::unique_ptr<pop> > &get_pops() const;
+    [[nodiscard]] const std::vector<std::unique_ptr<pop> > &pops() const;
 
-    [[nodiscard]] const std::unordered_map<province *, double> &get_neighbors() const;
+    [[nodiscard]] const std::unordered_map<province *, double> &neighbors() const;
 
     void tick();
 };

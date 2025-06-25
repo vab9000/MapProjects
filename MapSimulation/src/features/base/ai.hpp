@@ -23,7 +23,7 @@ public:
 
     void perform() const;
 
-    [[nodiscard]] int get_weight();
+    [[nodiscard]] int weight();
 };
 
 class ai {

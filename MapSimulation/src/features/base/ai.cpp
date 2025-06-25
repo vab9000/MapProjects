@@ -5,7 +5,7 @@
 static auto rng = std::default_random_engine(std::random_device{}());
 
 action::action(void (*action)(void *, void *), void (*s_param), void (*o_param),
-               int (*weight_func)(void *, void *)) : weight_cache_(get_weight()),
+               int (*weight_func)(void *, void *)) : weight_cache_(weight()),
                                                      action_func_(action),
                                                      s_param_(s_param),
                                                      o_param_(o_param), weight_func_(weight_func) {
@@ -17,7 +17,7 @@ void action::perform() const {
     action_func_(s_param_, o_param_);
 }
 
-[[nodiscard]] int action::get_weight() {
+[[nodiscard]] int action::weight() {
     if (num_cache_ != 0) {
         num_cache_--;
         return weight_cache_;
@@ -40,7 +40,7 @@ void ai::perform_actions() {
     const auto random = dis(rng);
 
     for (auto &action: actions_) {
-        if (const int weight = action.get_weight(); weight >= 1) {
+        if (const int weight = action.weight(); weight >= 1) {
             if (const auto chance = 1.0 - 1 / (weight * weight / inertia + 1); random < chance) {
                 action.perform();
             }

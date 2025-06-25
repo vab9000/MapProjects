@@ -50,7 +50,7 @@ public:
 
     void set_commander(character &commander);
 
-    [[nodiscard]] character &get_commander() const;
+    [[nodiscard]] character &commander() const;
 
-    [[nodiscard]] army_directive get_directive() const;
+    [[nodiscard]] army_directive directive() const;
 };

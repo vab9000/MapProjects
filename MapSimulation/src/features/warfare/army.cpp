@@ -13,7 +13,7 @@ unit::unit(army &parent_army, province &location) : size(0), location(&location)
 }
 
 void unit::set_destination(const province &destination) {
-    const auto generated_path = location->get_path_to(
+    const auto generated_path = location->path_to(
         destination,
         [](const province &province, void *param) {
             const auto this_unit = static_cast<unit *>(param);
@@ -41,7 +41,7 @@ void set_unit_destination(void *s_param, void *o_param) {
     c_unit->set_destination(*destination);
 }
 
-int get_set_unit_destination_weight(void *s_param, void *o_param) {
+int unit_destination_weight(void *s_param, void *o_param) {
     // const auto unit = static_cast<Unit *>(sParam);
     // const auto province = static_cast<Province*>(oParam);
     return 100;
@@ -65,10 +65,10 @@ void army::set_commander(character &commander) {
     commander_->make_commander(*this);
 }
 
-character &army::get_commander() const {
+character &army::commander() const {
     return *commander_;
 }
 
-army_directive army::get_directive() const {
+army_directive army::directive() const {
     return directive_;
 }

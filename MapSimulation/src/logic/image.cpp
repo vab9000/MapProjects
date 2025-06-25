@@ -27,7 +27,7 @@ image& image::operator=(image &&other) noexcept {
     return *this;
 }
 
-[[nodiscard]] unsigned int image::get_color(const unsigned int i, const unsigned int j) const {
+[[nodiscard]] unsigned int image::color(const unsigned int i, const unsigned int j) const {
     unsigned int pixel = 0;
     pixel += data_[(i + j * width_) * 3];
     pixel += data_[(i + j * width_) * 3 + 1] << 8;
@@ -36,10 +36,10 @@ image& image::operator=(image &&other) noexcept {
     return pixel;
 }
 
-int image::get_width() const {
+int image::width() const {
     return width_;
 }
 
-int image::get_height() const {
+int image::height() const {
     return height_;
 }

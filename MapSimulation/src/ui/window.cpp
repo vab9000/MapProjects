@@ -72,7 +72,7 @@ void window::start_event_loop() {
 
 const std::array<int, 4> & window::gui_area() {
     const auto dimensions = window_dimensions();
-    gui_area_[2] = dimensions.x / 8;
+    gui_area_[2] = 200;
     gui_area_[3] = dimensions.y;
     return gui_area_;
 }

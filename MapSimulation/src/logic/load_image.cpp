@@ -59,18 +59,18 @@ void load_image(data &data, image &map_image, double &progress, const std::strin
     };
 
     auto is_border = [&](const int x, const int y, const unsigned int color, province *&other_province) {
-        if (x >= 0 && x < map_image.get_width() && y >= 0 && y < map_image.get_height() && map_image.get_color(x, y) !=
+        if (x >= 0 && x < map_image.width() && y >= 0 && y < map_image.height() && map_image.color(x, y) !=
             color) {
-            other_province = &data.provinces.at(map_image.get_color(x, y));
+            other_province = &data.provinces.at(map_image.color(x, y));
             return true;
         }
-        if (x == -1 && y >= 0 && y < map_image.get_height() && map_image.get_color(map_image.get_width() - 1, y) !=
+        if (x == -1 && y >= 0 && y < map_image.height() && map_image.color(map_image.width() - 1, y) !=
             color) {
-            other_province = &data.provinces.at(map_image.get_color(map_image.get_width() - 1, y));
+            other_province = &data.provinces.at(map_image.color(map_image.width() - 1, y));
             return true;
         }
-        if (x == map_image.get_width() && y >= 0 && y < map_image.get_height() && map_image.get_color(0, y) != color) {
-            other_province = &data.provinces.at(map_image.get_color(0, y));
+        if (x == map_image.width() && y >= 0 && y < map_image.height() && map_image.color(0, y) != color) {
+            other_province = &data.provinces.at(map_image.color(0, y));
             return true;
         }
         return false;
@@ -92,22 +92,22 @@ void load_image(data &data, image &map_image, double &progress, const std::strin
 
     map_image = image{"assets/provinces_generated.png"};
 
-    for (int i = 0; i < map_image.get_width(); ++i) {
-        for (int j = 0; j < map_image.get_height(); ++j) {
+    for (int i = 0; i < map_image.width(); ++i) {
+        for (int j = 0; j < map_image.height(); ++j) {
             const std::array coords = {j, i};
-            process_pixel(map_image.get_color(i, j), coords);
+            process_pixel(map_image.color(i, j), coords);
         }
 
-        progress = static_cast<double>(i) / map_image.get_width() / 2;
+        progress = static_cast<double>(i) / map_image.width() / 2;
     }
 
-    for (int i = 0; i < map_image.get_width(); ++i) {
-        for (int j = 0; j < map_image.get_height(); ++j) {
+    for (int i = 0; i < map_image.width(); ++i) {
+        for (int j = 0; j < map_image.height(); ++j) {
             const std::array coords = {j, i};
-            process_pixel_borders(map_image.get_color(i, j), coords);
+            process_pixel_borders(map_image.color(i, j), coords);
         }
 
-        progress = static_cast<double>(i) / map_image.get_width() / 2 + 0.5;
+        progress = static_cast<double>(i) / map_image.width() / 2 + 0.5;
     }
 
     auto province_values = data.provinces | std::views::values;
