@@ -119,6 +119,32 @@ inline void load_vegetation(const image &base_map, provinces_map &provinces, con
     }
 }
 
+inline void load_soil(const image &base_map, provinces_map &provinces, const std::string &soil_file_path) {
+    const image soil_image(soil_file_path);
+    std::unordered_map<unsigned int, std::vector<unsigned int> > soil_data;
+
+    constexpr auto valid_soil_color = [](const image::image_color color) {
+        return static_cast<unsigned int>(color) != 0;
+    };
+
+    for (int i = 0; i < base_map.width(); i++) {
+        for (int j = 0; j < base_map.height(); j++) {
+            if (const auto color = static_cast<unsigned int>(base_map(i, j)); provinces.contains(color)) {
+                if (const auto soil_color = soil_image(i, j); !valid_soil_color(
+                    soil_color)) {
+                    const auto new_color = search_spiral(soil_image, i, j, valid_soil_color, 3);
+                    soil_data[color].push_back(static_cast<unsigned int>(new_color));
+                    } else {
+                        soil_data[color].push_back(static_cast<unsigned int>(soil_color));
+                    }
+            }
+        }
+    }
+    for (auto &[color, province]: provinces) {
+        province.set_soil(soil_data[color]);
+    }
+}
+
 inline void save_provinces(const provinces_map &provinces) {
     std::ofstream file{"provinces.txt"};
     for (const auto province: provinces | std::views::values) {
@@ -155,12 +181,14 @@ void generate_province_files() {
     load_koppen(province_image, provinces, "images/koppen.png");
     load_elevation(province_image, provinces, "images/elevation.png");
     load_vegetation(province_image, provinces, "images/vegetation.png");
+    load_soil(province_image, provinces, "images/soil.png");
 
     save_provinces(provinces);
 
     // draw_map(province_image, provinces, "koppen_generated.png", &province::koppen_color);
     // draw_map(province_image, provinces, "elevation_generated.png", &province::elevation_color);
     // draw_map(province_image, provinces, "vegetation_generated.png", &province::vegetation_color);
+    draw_map(province_image, provinces, "soil_generated.png", &province::soil_color);
 }
 
 int main() {
