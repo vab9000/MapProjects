@@ -3,8 +3,14 @@
 #include <array>
 #include <vector>
 #include <fstream>
+#include <unordered_map>
+#include <unordered_set>
 
-
+struct hash_coords {
+    std::size_t operator()(const std::pair<int, int> &p) const noexcept {
+        return std::hash<int>()(p.first) ^ (std::hash<int>()(p.second) << 1);
+    }
+};
 
 class province {
     enum class koppen : unsigned int;
@@ -17,6 +23,9 @@ class province {
     elevation elevation_;
     vegetation vegetation_;
     soil soil_;
+    std::unordered_set<province *> neighbors_;
+    std::unordered_map<province *, std::unordered_set<std::pair<int, int>, hash_coords>> outline_;
+    std::unordered_map<province *, int> rivers_;
 
 public:
     province();
@@ -44,4 +53,18 @@ public:
     [[nodiscard]] unsigned int soil_color() const;
 
     void write(std::ofstream &file) const;
+
+    void add_neighbor(province *neighbor);
+
+    [[nodiscard]] const std::unordered_set<province *> &neighbors() const;
+
+    void add_outline_point(province * neighbor, int x, int y);
+
+    [[nodiscard]] const std::unordered_map<province *, std::unordered_set<std::pair<int, int>, hash_coords>> &outline() const;
+
+    void add_river(province *neighbor, int size);
+
+    [[nodiscard]] const std::unordered_map<province *, int> &rivers() const;
+
+    [[nodiscard]] unsigned int river_color(int x, int y) const;
 };

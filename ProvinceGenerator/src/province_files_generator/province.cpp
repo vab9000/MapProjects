@@ -164,6 +164,11 @@ void province::set_elevation(const std::vector<unsigned int> &elevation_colors) 
         return ptr[1] + ptr[2] + ptr[3];
     };
 
+    if (elevation_colors.empty()) {
+        elevation_ = elevation::none;
+        return;
+    }
+
     std::vector<int> elevation;
     elevation.reserve(elevation_colors.size());
     for (const auto &color: elevation_colors) {
@@ -236,7 +241,7 @@ void province::set_soil(const std::vector<unsigned int> &soil_colors) {
         soil_ = soil::none;
     } else {
         const auto max_soil = std::max_element(soil_count.begin(), soil_count.end(),
-                                                     [](const auto &a, const auto &b) { return a.second < b.second; });
+                                               [](const auto &a, const auto &b) { return a.second < b.second; });
         soil_ = max_soil->first;
     }
 }
@@ -252,4 +257,39 @@ void province::write(std::ofstream &file) const {
     file << "vegetation: " << static_cast<unsigned int>(vegetation_) << "\n";
     file << "soil: " << static_cast<unsigned int>(soil_) << "\n";
     file << "\n";
+}
+
+void province::add_neighbor(province *neighbor) {
+    neighbors_.insert(neighbor);
+}
+
+const std::unordered_set<province *> &province::neighbors() const {
+    return neighbors_;
+}
+
+void province::add_outline_point(province *neighbor, int x, int y) {
+    outline_[neighbor].insert({x, y});
+}
+
+const std::unordered_map<province *, std::unordered_set<std::pair<int, int>, hash_coords> > &province::outline() const {
+    return outline_;
+}
+
+void province::add_river(province *neighbor, const int size) {
+    rivers_[neighbor] = size;
+}
+
+const std::unordered_map<province *, int> & province::rivers() const {
+    return rivers_;
+}
+
+unsigned int province::river_color(int x, int y) const {
+    for (const auto &[neighbor, outline_pixels] : outline_) {
+        if (outline_pixels.contains({x, y})) {
+            if (rivers_.contains(neighbor)) {
+                return rivers_.at(neighbor);
+            }
+        }
+    }
+    return 0xFFFFFF;
 }
