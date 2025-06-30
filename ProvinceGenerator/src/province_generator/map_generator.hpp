@@ -6,23 +6,49 @@
 #include <array>
 #include <iostream>
 #include <chrono>
-#include <map>
-#include <set>
+#include <functional>
+#include <unordered_set>
+
 #include "utils.hpp"
 
-inline void generate_provinces(const image &w_img, const image &base_map) {
-    constexpr int province_density = 10;
-    constexpr int null_province = 0;
+inline std::pair<int, int> search_spiral(const int x, const int y,
+                                         const std::function<bool(int, int)> &valid_pixel, const int max_radius = 10) {
+    int current_x = x, current_y = y - 1;
+    int current_radius = 1;
+    std::pair current_direction = {1, 1};
+    while (current_radius <= max_radius) {
+        if (valid_pixel(current_x, current_y)) {
+            return {current_x, current_y};
+        }
+        current_x += current_direction.first;
+        current_y += current_direction.second;
+        if (current_x - x > current_radius || current_y - y > current_radius || x - current_x > current_radius) {
+            current_x -= current_direction.first;
+            current_y -= current_direction.second;
+            current_direction = {-current_direction.second, current_direction.first};
+            current_x += current_direction.first;
+            current_y += current_direction.second;
+        } else if (y - current_y > current_radius) {
+            current_x -= 1;
+            current_direction = {-current_direction.second, current_direction.first};
+            current_radius++;
+        }
+    }
+    return {-1, -1};
+}
+
+static std::random_device rd;
+static std::default_random_engine rng(rd());
+static std::uniform_real_distribution dis(0.0, 1.0);
+
+constexpr int province_density = 10;
+constexpr int null_province = 0;
+
+using provinces_t = std::vector<std::vector<std::pair<int, std::pair<bool,
+    bool> > > >;
+
+inline int seed_provinces(int &filled_pixels, const image &base_map, provinces_t &provinces) {
     int next_id = 1;
-    int filled_pixels = 0;
-
-    std::random_device rd;
-    std::default_random_engine rng(rd());
-    std::uniform_real_distribution dis(0.0, 1.0);
-
-    std::vector provinces(base_map.width(),
-                          std::vector<std::pair<int, std::pair<bool, bool> > >(
-                              base_map.height(), {null_province, {false, false}}));
 
     for (int i = province_density / 2; i < base_map.width(); i += province_density) {
         for (int j = province_density / 2; j < base_map.height(); j += province_density) {
@@ -38,7 +64,7 @@ inline void generate_provinces(const image &w_img, const image &base_map) {
                             !is_water(base_map(position.first, position.second))) {
                             provinces[position.first][position.second].first = next_id;
                             filled_pixels++;
-                            goto increment;
+                            break;
                         }
                     }
                     if (std::abs(position.first - i + direction.first) > current_radius
@@ -59,10 +85,22 @@ inline void generate_provinces(const image &w_img, const image &base_map) {
                     }
 
                     if (current_radius > max_radius) {
+                        std::pair new_position = {
+                            i + static_cast<int>(dis(rng) * province_density / 2 - province_density / 4.0),
+                            j + static_cast<int>(dis(rng) * province_density / 2 - province_density / 4.0)
+                        };
+                        if (new_position.first < 0 || new_position.first >= base_map.width() ||
+                            new_position.second < 0 || new_position.second >= base_map.height()) {
+                            new_position = {i, j};
+                        }
+                        if (is_water(base_map(new_position.first, new_position.second))) {
+                            new_position = {i, j};
+                        }
+                        provinces[new_position.first][new_position.second].first = next_id;
                         break;
                     }
                 }
-            } {
+            } else {
                 std::pair new_position = {
                     i + static_cast<int>(dis(rng) * province_density / 2 - province_density / 4.0),
                     j + static_cast<int>(dis(rng) * province_density / 2 - province_density / 4.0)
@@ -76,30 +114,29 @@ inline void generate_provinces(const image &w_img, const image &base_map) {
                 }
                 provinces[new_position.first][new_position.second].first = next_id;
             }
-        increment:
             next_id++;
             filled_pixels++;
         }
     }
+    return next_id;
+}
 
-    enum class stage {
-        land,
-        rivers,
-        ocean,
-    };
+enum class stage {
+    land,
+    rivers,
+    ocean,
+};
 
-    auto current_stage = stage::land;
-    bool do_corners = false;
-loop:
-    // ReSharper disable once CppDFAEndlessLoop
-    std::pair recent_changed_pixel = {0, 0};
-    auto start = std::chrono::high_resolution_clock::now();
+inline void fill_provinces(int &filled_pixels, const image &base_map, provinces_t &provinces, const stage current_stage,
+                           const bool do_corners) {
+    bool changed = true;
     double nudge = 0.8;
 
-    bool changed = true;
+    std::pair recent_changed_pixel = {0, 0};
+    auto start = std::chrono::high_resolution_clock::now();
 
     while (changed) {
-        nudge += 0.005;
+        nudge += 0.05;
 
         changed = false;
 
@@ -184,34 +221,10 @@ loop:
             }
         }
     }
+}
 
-    // ReSharper disable once CppDFAConstantConditions
-    if (current_stage != stage::ocean) {
-        if (!do_corners && current_stage == stage::land) {
-            for (int i = 0; i < base_map.width(); ++i) {
-                for (int j = 0; j < base_map.height(); ++j) {
-                    provinces[i][j].second = {false, false};
-                }
-            }
-
-            do_corners = true;
-            goto loop;
-        }
-        do_corners = false;
-        current_stage = current_stage == stage::land ? stage::rivers : stage::ocean;
-        std::cout << "Water provinces generation started." << std::endl;
-
-        for (int i = 0; i < base_map.width(); ++i) {
-            for (int j = 0; j < base_map.height(); ++j) {
-                provinces[i][j].second = {false, false};
-            }
-        }
-
-        goto loop;
-    }
-
-    // ReSharper disable once CppDFAUnreachableCode
-    std::map<int, int> province_sizes;
+inline std::unordered_map<int, int> generate_province_sizes(const image &base_map, const provinces_t &provinces) {
+    std::unordered_map<int, int> province_sizes;
     for (int i = 0; i < base_map.width(); ++i) {
         for (int j = 0; j < base_map.height(); ++j) {
             if (!province_sizes.contains(provinces[i][j].first)) {
@@ -223,55 +236,124 @@ loop:
             province_sizes[provinces[i][j].first]++;
         }
     }
+    return province_sizes;
+}
 
-    std::map<int, int> province_merges;
+inline void merge_provinces(const image &base_map, std::unordered_map<int, int> &province_merges,
+                            const std::unordered_map<int, int> &province_sizes, const provinces_t &provinces,
+                            const int radius, const int min_province_size) {
     for (int i = 0; i < base_map.width(); ++i) {
         for (int j = 0; j < base_map.height(); ++j) {
-            if (constexpr int min_province_size = 25; !province_merges.contains(provinces[i][j].first) &&
-                                                      province_sizes[provinces[i][j].first] < min_province_size) {
+            if (!province_merges.contains(provinces[i][j].first) &&
+                                                      province_sizes.at(provinces[i][j].first) < min_province_size) {
                 if (is_water(base_map(i, j))) {
                     continue;
                 }
-                constexpr std::array directions = {
-                    std::make_pair(0, -1), std::make_pair(-1, 0), std::make_pair(1, 0), std::make_pair(0, 1)
+
+                const std::function is_valid_pixel = [&](const int x, const int y) {
+                    if (x < 0 || x >= base_map.width() ||
+                        y < 0 || y >= base_map.height()) {
+                        return false;
+                    }
+                    if (is_water(base_map(x, y))) {
+                        return false;
+                    }
+                    if (provinces[i][j].first == provinces[x][y].first) {
+                        return false;
+                    }
+                    if (province_merges.contains(provinces[x][y].first)) {
+                        auto nested_merge = province_merges.at(provinces[x][y].first);
+                        while (province_merges.contains(nested_merge)) {
+                            nested_merge = province_merges.at(nested_merge);
+                        }
+                        if (nested_merge == provinces[i][j].first) {
+                            return false;
+                        }
+                    }
+                    return true;
                 };
-                for (const auto &[x, y]: directions) {
-                    const std::pair neighbor = {i + x, j + y};
-                    if (neighbor.first < 0 || neighbor.first >= base_map.width() ||
-                        neighbor.second < 0 || neighbor.second >= base_map.height()) {
-                        continue;
+
+                const auto [x, y] = search_spiral(i, j, is_valid_pixel, radius);
+
+                if (x == -1) continue;
+
+                if (province_merges.contains(provinces[x][y].first)) {
+                    auto nested_merge = province_merges.at(provinces[x][y].first);
+                    while (province_merges.contains(nested_merge)) {
+                        nested_merge = province_merges.at(nested_merge);
                     }
-                    if (is_water(base_map(neighbor.first, neighbor.second))) {
-                        continue;
-                    }
-                    if (provinces[i][j].first == provinces[neighbor.first][neighbor.second].first) {
-                        continue;
-                    }
-                    if (province_merges.contains(provinces[neighbor.first][neighbor.second].first)) {
-                        province_merges[provinces[i][j].first] = province_merges[provinces[neighbor.first][neighbor.
-                            second].first];
-                        provinces[i][j].first = province_merges[provinces[neighbor.first][neighbor.second].first];
-                        break;
-                    }
-                    province_merges[provinces[i][j].first] = provinces[neighbor.first][neighbor.second].first;
-                    break;
+                    province_merges[provinces[i][j].first] = nested_merge;
+                }
+                else {
+                    province_merges[provinces[i][j].first] = provinces[x][y].first;
                 }
             }
         }
     }
+}
+
+inline void generate_provinces(const image &w_img, const image &base_map) {
+    int filled_pixels = 0;
+
+    provinces_t provinces(base_map.width(),
+                          std::vector<std::pair<int, std::pair<bool, bool> > >(
+                              base_map.height(), {null_province, {false, false}}));
+
+    int num_provinces = seed_provinces(filled_pixels, base_map, provinces);
+
+    auto current_stage = stage::land;
+    bool do_corners = false;
+
+    fill_provinces(filled_pixels, base_map, provinces, current_stage, do_corners);
+
+    while (current_stage != stage::ocean) {
+        if (!do_corners && current_stage == stage::land) {
+            for (int i = 0; i < base_map.width(); ++i) {
+                for (int j = 0; j < base_map.height(); ++j) {
+                    provinces[i][j].second = {false, false};
+                }
+            }
+
+            do_corners = true;
+        } else {
+            do_corners = false;
+            current_stage = current_stage == stage::land ? stage::rivers : stage::ocean;
+            std::cout << "Water provinces generation started." << std::endl;
+
+            for (int i = 0; i < base_map.width(); ++i) {
+                for (int j = 0; j < base_map.height(); ++j) {
+                    provinces[i][j].second = {false, false};
+                }
+            }
+        }
+
+        fill_provinces(filled_pixels, base_map, provinces, current_stage, do_corners);
+    }
+
+    std::unordered_map<int, int> province_sizes = generate_province_sizes(base_map, provinces);
+
+    std::unordered_map<int, int> province_merges;
+    merge_provinces(base_map, province_merges, province_sizes, provinces, 1, 25);
+    merge_provinces(base_map, province_merges, province_sizes, provinces, 15, 15);
 
     for (int i = 0; i < base_map.width(); ++i) {
         for (int j = 0; j < base_map.height(); ++j) {
             if (province_merges.contains(provinces[i][j].first)) {
-                provinces[i][j].first = province_merges[provinces[i][j].first];
+                auto merge_province = province_merges.at(provinces[i][j].first);
+                while (province_merges.contains(merge_province)) {
+                    if (merge_province == provinces[i][j].first) break;
+                    if (merge_province == province_merges.at(merge_province)) break;
+                    merge_province = province_merges.at(merge_province);
+                }
+                provinces[i][j].first = merge_province;
             }
         }
     }
 
-    std::map<int, int> province_colors;
-    std::set<int> used_colors;
+    std::unordered_map<int, int> province_colors;
+    std::unordered_set<int> used_colors;
     int id = 1;
-    while (province_colors.size() < next_id) {
+    while (province_colors.size() < num_provinces) {
         while (true) {
             const int random_value = static_cast<int>(dis(rng) * (256 * 256 * 256 - 1));
             if (used_colors.contains(random_value)) {
