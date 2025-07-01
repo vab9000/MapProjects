@@ -26,11 +26,13 @@ class province {
     std::unordered_set<province *> neighbors_;
     std::unordered_map<province *, std::unordered_set<std::pair<int, int>, hash_coords>> outline_;
     std::unordered_map<province *, int> rivers_;
+    std::unordered_set<unsigned int> river_lines_;
+    bool water_;
 
 public:
     province();
 
-    explicit province(unsigned int color);
+    explicit province(unsigned int color, bool water);
 
     [[nodiscard]] std::array<int, 2> dimensions() const;
 
@@ -67,4 +69,12 @@ public:
     [[nodiscard]] const std::unordered_map<province *, int> &rivers() const;
 
     [[nodiscard]] unsigned int river_color(int x, int y) const;
+
+    void add_river_line(unsigned int line_id);
+
+    [[nodiscard]] const std::unordered_set<unsigned int> &river_lines() const;
+
+    [[nodiscard]] unsigned int river_line_color() const;
+
+    [[nodiscard]] bool is_water() const;
 };

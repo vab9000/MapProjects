@@ -13,9 +13,15 @@ file (GLOB_RECURSE PROVINCE_FILES_GENERATOR_SOURCE_FILES src/province_files_gene
 
 add_executable(ProvinceFilesGenerator ${PROVINCE_FILES_GENERATOR_SOURCE_FILES} ${COMMON_SOURCE_FILES})
 
+file (GLOB_RECURSE SEA_TILE_GENERATOR_SOURCE_FILES src/sea_tile_generator/*.cpp)
+
+add_executable(SeaTileGenerator ${SEA_TILE_GENERATOR_SOURCE_FILES} ${COMMON_SOURCE_FILES})
+
 target_include_directories(ProvinceGenerator PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs/stb)
 
 target_include_directories(ProvinceFilesGenerator PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs/stb)
+
+target_include_directories(SeaTileGenerator PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs/stb)
 
 file(GLOB_RECURSE IMAGES "images/*")
 

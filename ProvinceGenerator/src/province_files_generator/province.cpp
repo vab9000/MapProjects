@@ -3,6 +3,7 @@
 #include <numeric>
 #include <iostream>
 #include <set>
+#include <random>
 
 constexpr unsigned int to_integer_color(const unsigned char r, const unsigned char g, const unsigned char b) {
     return (static_cast<unsigned int>(r) << 16) | (static_cast<unsigned int>(g) << 8) | static_cast<unsigned int>(b);
@@ -110,11 +111,11 @@ enum class province::soil : unsigned int {
 };
 
 province::province() : color_(0), koppen_(koppen::none), elevation_(elevation::none), vegetation_(vegetation::none),
-                       soil_(soil::none) {
+                       soil_(soil::none), water_(false) {
 }
 
-province::province(const unsigned int color) : color_(color), koppen_(koppen::none), elevation_(elevation::none),
-                                               vegetation_(vegetation::none), soil_(soil::none) {
+province::province(const unsigned int color, const bool water) : color_(color), koppen_(koppen::none), elevation_(elevation::none),
+                                               vegetation_(vegetation::none), soil_(soil::none), water_(water) {
 }
 
 unsigned int province::color() const {
@@ -251,6 +252,7 @@ unsigned int province::soil_color() const {
 }
 
 void province::write(std::ofstream &file) const {
+    if (water_) return;
     file << "color: " << color_ << "\n";
     file << "koppen: " << static_cast<unsigned int>(koppen_) << "\n";
     file << "elevation: " << static_cast<unsigned int>(elevation_) << "\n";
@@ -279,12 +281,12 @@ void province::add_river(province *neighbor, const int size) {
     rivers_[neighbor] = size;
 }
 
-const std::unordered_map<province *, int> & province::rivers() const {
+const std::unordered_map<province *, int> &province::rivers() const {
     return rivers_;
 }
 
 unsigned int province::river_color(int x, int y) const {
-    for (const auto &[neighbor, outline_pixels] : outline_) {
+    for (const auto &[neighbor, outline_pixels]: outline_) {
         if (outline_pixels.contains({x, y})) {
             if (rivers_.contains(neighbor)) {
                 return rivers_.at(neighbor);
@@ -293,3 +295,34 @@ unsigned int province::river_color(int x, int y) const {
     }
     return 0xFFFFFF;
 }
+
+void province::add_river_line(const unsigned int line_id) {
+    river_lines_.insert(line_id);
+}
+
+const std::unordered_set<unsigned> &province::river_lines() const {
+    return river_lines_;
+}
+
+unsigned int province::river_line_color() const {
+    static std::random_device rd;
+    static std::default_random_engine gen(rd());
+    static std::uniform_int_distribution<unsigned int> dist(1, 0xFFFFFE);
+    static std::unordered_map<unsigned int, unsigned int> line_colors;
+    if (river_lines_.empty())
+        return 0xFFFFFF;
+    if (river_lines_.size() > 1)
+        return 0;
+    if (line_colors.contains(*river_lines_.begin())) {
+        return line_colors.at(*river_lines_.begin());
+    }
+    const unsigned int color = dist(gen);
+    line_colors[*river_lines_.begin()] = color;
+    return color;
+}
+
+bool province::is_water() const {
+    return water_;
+}
+
+
