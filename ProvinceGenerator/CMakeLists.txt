@@ -15,7 +15,8 @@ add_executable(ProvinceFilesGenerator ${PROVINCE_FILES_GENERATOR_SOURCE_FILES} $
 
 file (GLOB_RECURSE SEA_TILE_GENERATOR_SOURCE_FILES src/sea_tile_generator/*.cpp)
 
-add_executable(SeaTileGenerator ${SEA_TILE_GENERATOR_SOURCE_FILES} ${COMMON_SOURCE_FILES})
+add_executable(SeaTileGenerator ${SEA_TILE_GENERATOR_SOURCE_FILES} ${COMMON_SOURCE_FILES}
+        src/sea_tile_generator/sea_tile_file_fix.hpp)
 
 target_include_directories(ProvinceGenerator PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs/stb)
 
