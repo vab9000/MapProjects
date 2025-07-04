@@ -13,14 +13,10 @@
 #include "../features/tags/tag.hpp"
 #include "data.hpp"
 
-constexpr unsigned int flip_rb(const unsigned int color) {
-    return (color & 0x00FF00) | ((color & 0xFF0000) >> 16) | ((color & 0x0000FF) << 16);
-}
-
-void load_image(data &data, image &map_image, double &progress, const std::string &province_filepath) {
-    std::ifstream province_file(province_filepath);
+void load_image(data &data, image &map_image, double &progress) {
+    std::ifstream province_file("assets/provinces.txt");
     if (!province_file.is_open()) {
-        throw std::runtime_error("Failed to open province file: " + province_filepath);
+        throw std::runtime_error("Failed to open province file: " "provinces.txt");
     }
     while (!province_file.eof()) {
         std::string ignore;
@@ -37,25 +33,48 @@ void load_image(data &data, image &map_image, double &progress, const std::strin
         std::getline(province_file, ignore, ':');
         unsigned int vegetation_value;
         province_file >> vegetation_value;
+        std::getline(province_file, ignore, ':');
+        unsigned int soil_value;
+        province_file >> soil_value;
         std::getline(province_file, ignore);
         color = flip_rb(color);
         auto new_tag = std::make_unique<tag>(std::string("Tag ") + std::to_string(data.tags.size()), color);
         auto id = new_tag->id;
         data.tags.emplace(id, std::move(new_tag));
-        data.provinces.emplace(color, province(std::string("Province ") + std::to_string(data.provinces.size()),
-                                               color, static_cast<koppen>(flip_rb(koppen_value)),
-                                               static_cast<elevation>(flip_rb(elevation_value)),
-                                               static_cast<vegetation>(flip_rb(vegetation_value))));
-        data.provinces[color].set_owner(*data.tags[id]);
+        data.provinces.emplace(std::piecewise_construct, std::forward_as_tuple(color), std::forward_as_tuple(std::string("Province ") + std::to_string(data.provinces.size()),
+                                               color, static_cast<koppen_t>(flip_rb(koppen_value)),
+                                               static_cast<elevation_t>(flip_rb(elevation_value)),
+                                               static_cast<vegetation_t>(flip_rb(vegetation_value)),
+                                               static_cast<soil_t>(flip_rb(soil_value)), sea_t::none));
+        data.provinces[color].set_owner(data.tags[id].get());
     }
     province_file.close();
 
-    auto process_pixel = [&](const unsigned int color, const std::array<int, 2> position) {
-        const auto i = position[1];
-        const auto j = position[0];
+    std::ifstream sea_file("assets/sea_tiles.txt");
+    if (!sea_file.is_open()) {
+        throw std::runtime_error("Failed to open sea tiles file: " "sea_tiles.txt");
+    }
+    while (!sea_file.eof()) {
+        std::string ignore;
+        std::getline(sea_file, ignore, ':');
+        if (ignore == "\n") break;
+        unsigned int color;
+        sea_file >> color;
+        std::getline(sea_file, ignore, ':');
+        unsigned int sea_value;
+        sea_file >> sea_value;
+        color = flip_rb(color);
+        data.provinces.emplace(std::piecewise_construct, std::forward_as_tuple(color), std::forward_as_tuple(std::string("Sea Province") + std::to_string(data.provinces.size()),
+                                               color, koppen_t::none, elevation_t::none, vegetation_t::none,
+                                               soil_t::none, static_cast<sea_t>(flip_rb(sea_value))));
+    }
 
-        const auto province = &data.provinces.at(color);
-        province->expand_bounds(i, j);
+    auto process_pixel = [&](const unsigned int color, const std::array<int, 2> position) {
+        const auto i = position[0];
+        const auto j = position[1];
+
+        auto &province = data.provinces.at(color);
+        province.expand_bounds(i, j);
     };
 
     auto is_border = [&](const int x, const int y, const unsigned int color, province *&other_province) {
@@ -76,25 +95,26 @@ void load_image(data &data, image &map_image, double &progress, const std::strin
         return false;
     };
 
+    std::unordered_map<province *, std::vector<std::array<int, 2> > > pixels_by_province;
+
     auto process_pixel_borders = [&](const unsigned int color, const std::array<int, 2> position) {
-        const auto i = position[1];
-        const auto j = position[0];
+        const auto i = position[0];
+        const auto j = position[1];
         province *province_at_pos = &data.provinces.at(color);
 
         if (province *other_province = nullptr;
             is_border(i - 1, j, color, other_province) || is_border(i + 1, j, color, other_province) ||
             is_border(i, j - 1, color, other_province) || is_border(i, j + 1, color, other_province)) {
-            province_at_pos->add_outline(i, j, *other_province);
-        } else {
-            province_at_pos->add_pixel(i, j);
+            province_at_pos->add_neighbor(other_province);
         }
+        pixels_by_province[province_at_pos].push_back(std::array{i, j});
     };
 
     map_image = image{"assets/provinces_generated.png"};
 
     for (int i = 0; i < map_image.width(); ++i) {
         for (int j = 0; j < map_image.height(); ++j) {
-            const std::array coords = {j, i};
+            const std::array coords = {i, j};
             process_pixel(map_image.color(i, j), coords);
         }
 
@@ -103,7 +123,7 @@ void load_image(data &data, image &map_image, double &progress, const std::strin
 
     for (int i = 0; i < map_image.width(); ++i) {
         for (int j = 0; j < map_image.height(); ++j) {
-            const std::array coords = {j, i};
+            const std::array coords = {i, j};
             process_pixel_borders(map_image.color(i, j), coords);
         }
 
@@ -114,12 +134,12 @@ void load_image(data &data, image &map_image, double &progress, const std::strin
 
 #ifdef __cpp_lib_execution
     std::for_each(std::execution::par_unseq, province_values.begin(), province_values.end(),
-                  [](province &province) { province.finalize(); });
+                  [&pixels_by_province](province &province) { province.finalize(pixels_by_province.at(&province)); });
     std::for_each(std::execution::par_unseq, province_values.begin(), province_values.end(),
                   [](province &province) { province.process_distances(); });
 #else
     std::ranges::for_each(province_values,
-                          [](province &province) { province.finalize(); });
+                          [&pixels_by_province](province &province) { province.finalize(pixels_by_province.at(&province)); });
     std::ranges::for_each(province_values,
                           [](province &province) { province.process_distances(); });
 #endif

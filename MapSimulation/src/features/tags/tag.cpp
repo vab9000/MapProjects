@@ -6,12 +6,12 @@
 #include "../base/province.hpp"
 #include "../warfare/army.hpp"
 
-static unsigned long long id_counter = 0;
+static unsigned int id_counter = 0;
 
-static std::stack<unsigned long long> id_stack = {};
+static std::stack<unsigned int> id_stack = {};
 
 static unsigned long long next_id() {
-    unsigned long long id;
+    unsigned int id;
     if (id_stack.empty()) {
         id = id_counter++;
     } else {

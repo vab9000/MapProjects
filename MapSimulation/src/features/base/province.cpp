@@ -10,263 +10,48 @@
 #include "../tags/tag.hpp"
 #include "utils.hpp"
 
-constexpr unsigned int flip_rb(const unsigned int color) {
-    return (color & 0x00FF00) | ((color & 0xFF0000) >> 16) | ((color & 0x0000FF) << 16);
+province::province() : owner_(nullptr), size_(0), bounds_({-1, -1, 0, 0}), center_({-1, -1}),
+                       koppen_(koppen_t::none), elevation_(elevation_t::none), vegetation_(vegetation_t::none),
+                       soil_(soil_t::none), sea_(sea_t::none), base_color_(0), color_(0) {
 }
 
-constexpr unsigned int to_integer_color(const unsigned char r, const unsigned char g, const unsigned char b) {
-    return flip_rb(
-        (static_cast<unsigned int>(r) << 16) | (static_cast<unsigned int>(g) << 8) | static_cast<unsigned int>(b));
+province::province(std::string name, const unsigned int color, const koppen_t koppen,
+                   const elevation_t elevation,
+                   const vegetation_t vegetation, const soil_t soil, const sea_t sea) : owner_(nullptr),
+    size_(0),
+    bounds_({-1, -1, 0, 0}), center_{-1, -1},
+    name_(std::move(name)),
+    koppen_(koppen), elevation_(elevation),
+    vegetation_(vegetation),
+    soil_(soil), sea_(sea), base_color_(color), color_(color) {
 }
 
-enum class koppen : unsigned int {
-    none = 0,
-    af = to_integer_color(0, 0, 255),
-    am = to_integer_color(0, 120, 255),
-    aw = to_integer_color(70, 170, 250),
-    bwh = to_integer_color(255, 0, 0),
-    bwk = to_integer_color(255, 150, 150),
-    bsh = to_integer_color(245, 165, 0),
-    bsk = to_integer_color(255, 220, 100),
-    csa = to_integer_color(255, 255, 0),
-    csb = to_integer_color(200, 200, 0),
-    csc = to_integer_color(150, 150, 0),
-    cwa = to_integer_color(150, 255, 150),
-    cwb = to_integer_color(100, 200, 100),
-    cwc = to_integer_color(50, 150, 50),
-    cfa = to_integer_color(200, 255, 80),
-    cfb = to_integer_color(100, 255, 80),
-    cfc = to_integer_color(50, 200, 0),
-    dsa = to_integer_color(255, 0, 255),
-    dsb = to_integer_color(200, 0, 200),
-    dsc = to_integer_color(150, 50, 150),
-    dsd = to_integer_color(150, 100, 150),
-    dwa = to_integer_color(170, 175, 255),
-    dwb = to_integer_color(90, 120, 220),
-    dwc = to_integer_color(78, 80, 180),
-    dwd = to_integer_color(50, 0, 135),
-    dfa = to_integer_color(0, 255, 255),
-    dfb = to_integer_color(55, 200, 255),
-    dfc = to_integer_color(0, 125, 125),
-    dfd = to_integer_color(0, 70, 95),
-    et = to_integer_color(178, 178, 178),
-    ef = to_integer_color(102, 102, 102),
-};
+void province::finalize(const std::vector<std::array<int, 2> > &pixels) {
+    size_ = pixels.size();
 
-enum class elevation : unsigned int {
-    none = 0,
-    flatland = to_integer_color(0, 255, 0),
-    hills = to_integer_color(30, 200, 200),
-    plateau = to_integer_color(200, 200, 10),
-    highlands = to_integer_color(200, 10, 10),
-    mountains = to_integer_color(50, 20, 20),
-};
+    auto x = std::vector<int>(size_);
+    auto y = std::vector<int>(size_);
 
-enum class vegetation : unsigned int {
-    none = 0,
-    tropical_evergreen_broadleaf_forest = to_integer_color(28, 85, 16),
-    tropical_semi_evergreen_broadleaf_forest = to_integer_color(101, 146, 8),
-    tropical_deciduous_broadleaf_forest_and_woodland = to_integer_color(174, 125, 32),
-    warm_temperate_evergreen_and_mixed_forest = to_integer_color(0, 0, 101),
-    cool_temperate_rainforest = to_integer_color(187, 203, 53),
-    cool_evergreen_needleleaf_forest = to_integer_color(0, 154, 24),
-    cool_mixed_forest = to_integer_color(202, 255, 202),
-    temperate_deciduous_broadleaf_forest = to_integer_color(85, 235, 73),
-    cold_deciduous_forest = to_integer_color(101, 178, 255),
-    cold_evergreen_needleleaf_forest = to_integer_color(0, 32, 202),
-    temperate_sclerophyll_woodland_and_shrubland = to_integer_color(142, 162, 40),
-    temperate_evergreen_needleleaf_open_woodland = to_integer_color(255, 154, 223),
-    tropical_savanna = to_integer_color(186, 255, 53),
-    xerophytic_woods_scrub = to_integer_color(255, 186, 154),
-    steppe = to_integer_color(255, 186, 53),
-    desert = to_integer_color(247, 255, 202),
-    graminoid_and_forb_tundra = to_integer_color(231, 231, 24),
-    erect_dwarf_shrub_tundra = to_integer_color(121, 134, 73),
-    low_and_high_shrub_tundra = to_integer_color(101, 255, 154),
-    prostrate_dwarf_shrub_tundra = to_integer_color(210, 158, 150),
-};
-
-std::string_view koppen_to_string(const koppen value) {
-    switch (value) {
-        case koppen::none:
-            return "None";
-        case koppen::af:
-            return "Af";
-        case koppen::am:
-            return "Am";
-        case koppen::aw:
-            return "Aw";
-        case koppen::bwh:
-            return "BWh";
-        case koppen::bwk:
-            return "BWk";
-        case koppen::bsh:
-            return "BSh";
-        case koppen::bsk:
-            return "BSk";
-        case koppen::csa:
-            return "Csa";
-        case koppen::csb:
-            return "Csb";
-        case koppen::csc:
-            return "Csc";
-        case koppen::cwa:
-            return "Cwa";
-        case koppen::cwb:
-            return "Cwb";
-        case koppen::cwc:
-            return "Cwc";
-        case koppen::cfa:
-            return "Cfa";
-        case koppen::cfb:
-            return "Cfb";
-        case koppen::cfc:
-            return "Cfc";
-        case koppen::dsa:
-            return "Dsa";
-        case koppen::dsb:
-            return "Dsb";
-        case koppen::dsc:
-            return "Dsc";
-        case koppen::dsd:
-            return "Dsd";
-        case koppen::dwa:
-            return "Dwa";
-        case koppen::dwb:
-            return "Dwb";
-        case koppen::dwc:
-            return "Dwc";
-        case koppen::dwd:
-            return "Dwd";
-        case koppen::dfa:
-            return "Dfa";
-        case koppen::dfb:
-            return "Dfb";
-        case koppen::dfc:
-            return "Dfc";
-        case koppen::dfd:
-            return "Dfd";
-        case koppen::et:
-            return "ET";
-        case koppen::ef:
-            return "EF";
-        default:
-            return "Unknown";
+    for (const auto &pixel: pixels) {
+        x.push_back(pixel[0]);
+        y.push_back(pixel[1]);
     }
-}
-
-std::string_view elevation_to_string(const elevation value) {
-    switch (value) {
-        case elevation::none:
-            return "None";
-        case elevation::flatland:
-            return "Flatland";
-        case elevation::hills:
-            return "Hills";
-        case elevation::plateau:
-            return "Plateau";
-        case elevation::highlands:
-            return "Highlands";
-        case elevation::mountains:
-            return "Mountains";
-        default:
-            return "Unknown";
-    }
-}
-
-std::string_view vegetation_to_string(const vegetation value) {
-    switch (value) {
-        case vegetation::none:
-            return "None";
-        case vegetation::tropical_evergreen_broadleaf_forest:
-            return "Tropical Evergreen Broadleaf Forest";
-        case vegetation::tropical_semi_evergreen_broadleaf_forest:
-            return "Tropical Semi-Evergreen Broadleaf Forest";
-        case vegetation::tropical_deciduous_broadleaf_forest_and_woodland:
-            return "Tropical Deciduous Broadleaf Forest and Woodland";
-        case vegetation::warm_temperate_evergreen_and_mixed_forest:
-            return "Warm Temperate Evergreen and Mixed Forest";
-        case vegetation::cool_temperate_rainforest:
-            return "Cool Temperate Rainforest";
-        case vegetation::cool_evergreen_needleleaf_forest:
-            return "Cool Evergreen Needleleaf Forest";
-        case vegetation::cool_mixed_forest:
-            return "Cool Mixed Forest";
-        case vegetation::temperate_deciduous_broadleaf_forest:
-            return "Temperate Deciduous Broadleaf Forest";
-        case vegetation::cold_deciduous_forest:
-            return "Cold Deciduous Forest";
-        case vegetation::cold_evergreen_needleleaf_forest:
-            return "Cold Evergreen Needleleaf Forest";
-        case vegetation::temperate_sclerophyll_woodland_and_shrubland:
-            return "Temperate Sclerophyll Woodland and Shrubland";
-        case vegetation::temperate_evergreen_needleleaf_open_woodland:
-            return "Temperate Evergreen Needleleaf Open Woodland";
-        case vegetation::tropical_savanna:
-            return "Tropical Savanna";
-        case vegetation::xerophytic_woods_scrub:
-            return "Xerophytic Woods Scrub";
-        case vegetation::steppe:
-            return "Steppe";
-        case vegetation::desert:
-            return "Desert";
-        case vegetation::graminoid_and_forb_tundra:
-            return "Graminoid and Forb Tundra";
-        case vegetation::erect_dwarf_shrub_tundra:
-            return "Erect Dwarf Shrub Tundra";
-        case vegetation::low_and_high_shrub_tundra:
-            return "Low and High Shrub Tundra";
-        case vegetation::prostrate_dwarf_shrub_tundra:
-            return "Prostrate Dwarf Shrub Tundra";
-        default:
-            return "Unknown Vegetation Type";
-    }
-}
-
-province::province() : owner_(nullptr), num_pixels_(0), num_outline_(0), bounds_({-1, -1, 0, 0}), center_({-1, -1}),
-                       base_color_(0), koppen_(koppen::none), elevation_(elevation::none),
-                       vegetation_(vegetation::none), color(0) {
-}
-
-province::province(std::string name, const unsigned int color, const enum class koppen koppen,
-                   const enum class elevation elevation,
-                   const enum class vegetation vegetation) : owner_(nullptr), num_pixels_(0), num_outline_(0),
-                                                             bounds_({-1, -1, 0, 0}), center_{-1, -1},
-                                                             base_color_(color),
-                                                             name_(std::move(name)), koppen_(koppen),
-                                                             elevation_(elevation),
-                                                             vegetation_(vegetation), color(color) {
-}
-
-void province::finalize() {
-    const auto total_pixels = num_pixels_ + num_outline_;
-
-    auto x = std::vector<int>(total_pixels);
-    auto y = std::vector<int>(total_pixels);
 
     std::ranges::sort(x);
     std::ranges::sort(y);
 
     int test_center[2] = {0, 0};
 
-    if (total_pixels % 2 == 0) {
-        test_center[0] = (x[total_pixels / 2] + x[total_pixels / 2 - 1]) / 2;
-        test_center[1] = (y[total_pixels / 2] + y[total_pixels / 2 - 1]) / 2;
+    if (size_ % 2 == 0) {
+        test_center[0] = (x[size_ / 2] + x[size_ / 2 - 1]) / 2;
+        test_center[1] = (y[size_ / 2] + y[size_ / 2 - 1]) / 2;
     } else {
-        test_center[0] = x[total_pixels / 2];
-        test_center[1] = y[total_pixels / 2];
+        test_center[0] = x[size_ / 2];
+        test_center[1] = y[size_ / 2];
     }
 
-    for (int i = 0; i < num_pixels_; ++i) {
-        if (pixels_[i][0] == test_center[0] && pixels_[i][1] == test_center[1]) {
-            center_[0] = test_center[0];
-            center_[1] = test_center[1];
-            break;
-        }
-    }
-
-    for (int i = 0; i < num_outline_; ++i) {
-        if (outline_[i].second[0] == test_center[0] && outline_[i].second[1] == test_center[1]) {
+    for (int i = 0; i < size_; ++i) {
+        if (pixels[i][0] == test_center[0] && pixels[i][1] == test_center[1]) {
             center_[0] = test_center[0];
             center_[1] = test_center[1];
             break;
@@ -279,18 +64,11 @@ void province::finalize() {
 
     if (center_[0] == -1) {
         double min_distance = (std::numeric_limits<double>::max)();
-        for (int i = 0; i < num_pixels_; ++i) {
-            if (const auto dist = distance(pixels_[i], {test_center[0], test_center[1]}); dist < min_distance) {
+        for (int i = 0; i < size_; ++i) {
+            if (const auto dist = distance(pixels[i], {test_center[0], test_center[1]}); dist < min_distance) {
                 min_distance = dist;
-                center_[0] = pixels_[i][0];
-                center_[1] = pixels_[i][1];
-            }
-        }
-        for (int i = 0; i < num_outline_; ++i) {
-            if (const auto dist = distance(outline_[i].second, {test_center[0], test_center[1]}); dist < min_distance) {
-                min_distance = dist;
-                center_[0] = outline_[i].second[0];
-                center_[1] = outline_[i].second[1];
+                center_[0] = pixels[i][0];
+                center_[1] = pixels[i][1];
             }
         }
     }
@@ -298,7 +76,7 @@ void province::finalize() {
 
 void province::process_distances() {
     for (const auto neighbor: neighbors_ | std::views::keys) {
-        neighbors_[neighbor] = this->distance(*neighbor);
+        neighbors_[neighbor] = distance(*neighbor);
     }
     distances_processed_ = true;
 }
@@ -307,11 +85,11 @@ std::string_view province::name() {
     return name_;
 }
 
-void province::set_owner(tag &new_owner) {
+void province::set_owner(tag *new_owner) {
     if (has_owner() && owner_->has_province(*this)) {
         owner_->remove_province(*this);
     }
-    owner_ = &new_owner;
+    owner_ = new_owner;
 }
 
 void province::remove_owner() {
@@ -321,7 +99,7 @@ void province::remove_owner() {
     owner_ = nullptr;
 }
 
-[[nodiscard]] tag *province::owner() const {
+tag *province::owner() const {
     return owner_;
 }
 
@@ -329,24 +107,16 @@ bool province::has_owner() const {
     return owner_ != nullptr;
 }
 
-void province::add_pixel(const int x, const int y) {
-    pixels_.emplace_back(std::array{x, y});
-    num_pixels_ += 1;
+void province::add_river_boundary(province *neighbor, const int size) {
+    river_boundaries_[neighbor] = size;
 }
 
-void province::add_outline(const int x, const int y, province &other) {
-    outline_.emplace_back(&other, std::array{x, y});
-    num_outline_ += 1;
-    neighbors_.emplace(&other, 0.0);
+void province::add_river(river *r) {
+    rivers_.emplace_back(r);
 }
 
-[[nodiscard]] const std::vector<std::array<int, 2> > &province::pixels() const {
-    return pixels_;
-}
-
-[[nodiscard]] const std::vector<std::pair<province *, std::array<int, 2> > > &
-province::outline() const {
-    return outline_;
+void province::add_neighbor(province *neighbor) {
+    neighbors_.emplace(neighbor, 0.0);
 }
 
 void province::expand_bounds(const int x, const int y) {
@@ -370,57 +140,72 @@ void province::expand_bounds(const int x, const int y) {
 
 void province::recolor(const map_modes mode) {
     if (mode == map_modes::provinces) {
-        color = base_color_;
+        color_ = base_color_;
     } else if (mode == map_modes::owner) {
         if (has_owner()) {
-            color = owner_->color();
+            color_ = owner_->color();
         } else {
-            color = 0xFFFFFFFF;
+            color_ = 0xFFFFFFFF;
         }
     }
     switch (mode) {
         case map_modes::provinces:
-            color = base_color_;
+            color_ = base_color_;
             break;
         case map_modes::owner:
             if (has_owner()) {
-                color = owner_->color();
+                color_ = owner_->color();
             } else {
-                color = 0xFFFFFFFF;
+                color_ = 0xFFFFFFFF;
             }
             break;
         case map_modes::koppen:
-            color = static_cast<unsigned int>(koppen_);
+            color_ = static_cast<unsigned int>(koppen_);
             break;
         case map_modes::elevation:
-            color = static_cast<unsigned int>(elevation_);
+            color_ = static_cast<unsigned int>(elevation_);
             break;
         case map_modes::vegetation:
-            color = static_cast<unsigned int>(vegetation_);
+            color_ = static_cast<unsigned int>(vegetation_);
             break;
-        default:
-            color = 0xFFFFFFFF; // Fallback color
+        case map_modes::soil:
+            color_ = static_cast<unsigned int>(soil_);
+            break;
+        case map_modes::sea:
+            color_ = static_cast<unsigned int>(sea_);
             break;
     }
 }
 
-[[nodiscard]] unsigned int province::base_color() const {
+unsigned int province::base_color() const {
     return base_color_;
 }
 
-koppen province::koppen() const {
+unsigned int province::color() const {
+    return color_;
+}
+
+koppen_t province::koppen() const {
     return koppen_;
 }
 
-elevation province::elevation() const {
+elevation_t province::elevation() const {
     return elevation_;
 }
 
-vegetation province::vegetation() const {
+vegetation_t province::vegetation() const {
     return vegetation_;
 }
 
-[[nodiscard]] double province::distance(const province &other) const {
+soil_t province::soil() const {
+    return soil_;
+}
+
+sea_t province::sea() const {
+    return sea_;
+}
+
+double province::distance(const province &other) const {
     if (distances_processed_ && neighbors_.contains(&const_cast<province &>(other))) {
         return neighbors_.at(&const_cast<province &>(other));
     }
@@ -428,10 +213,11 @@ vegetation province::vegetation() const {
                 (center_[1] - other.center_[1]) * (center_[1] - other.center_[1]));
 }
 
-[[nodiscard]] std::vector<province *> province::path_to(const province &destination,
-                                                        bool (*accessible)(const province &, void *),
-                                                        double (*cost_modifier)(const province &, void *),
-                                                        void *param) {
+std::vector<province *> province::path_to(const province &destination,
+                                          bool (*accessible)(const province &start, const province &end, void *param),
+                                          double (*cost_modifier)(const province &start, const province &end,
+                                                                  void *param),
+                                          void *param) {
     std::unordered_map<province *, double> distances;
     std::unordered_map<province *, province *> previous;
     std::priority_queue<std::pair<double, province *>, std::vector<std::pair<double,
@@ -453,12 +239,13 @@ vegetation province::vegetation() const {
         }
 
         for (const auto &[neighborProvince, neighborDistance]: currentProvince->neighbors()) {
-            if (!accessible(*neighborProvince, param) ||
-                cost_modifier(*neighborProvince, param) < 0) {
+            if (!accessible(*this, *neighborProvince, param) ||
+                cost_modifier(*this, *neighborProvince, param) < 0) {
                 continue;
             }
 
-            if (double new_distance = currentDistance + cost_modifier(*neighborProvince, param) * neighborDistance;
+            if (double new_distance = currentDistance + cost_modifier(*this, *neighborProvince, param) *
+                                      neighborDistance;
                 !distances.contains(neighborProvince) || new_distance < distances[neighborProvince]) {
                 distances[neighborProvince] = new_distance;
                 previous[neighborProvince] = currentProvince;
@@ -485,27 +272,26 @@ void province::tick() {
     }
 }
 
-[[nodiscard]] unsigned int province::num_pixels() const {
-    return num_pixels_;
-}
-
-[[nodiscard]] unsigned int province::num_outline() const {
-    return
-            num_outline_;
-}
-
-[[nodiscard]] const std::array<int, 4> &province::bounds() const {
+const std::array<int, 4> &province::bounds() const {
     return bounds_;
 }
 
-[[nodiscard]] const std::array<int, 2> &province::center() const {
+const std::array<int, 2> &province::center() const {
     return center_;
 }
 
-[[nodiscard]] const std::vector<std::unique_ptr<pop> > &province::pops() const {
+const std::list<std::unique_ptr<pop> > &province::pops() const {
     return pops_;
 }
 
-[[nodiscard]] const std::unordered_map<province *, double> &province::neighbors() const {
+const std::unordered_map<province *, double> &province::neighbors() const {
     return neighbors_;
+}
+
+const std::unordered_map<province *, int> &province::river_boundaries() const {
+    return river_boundaries_;
+}
+
+const std::vector<river *> &province::rivers() const {
+    return rivers_;
 }

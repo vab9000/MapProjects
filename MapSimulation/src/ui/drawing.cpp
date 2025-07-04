@@ -62,8 +62,8 @@ void drawing::update_map_texture(const unsigned char *bytes, const sf::Vector2u 
 }
 
 inline void draw_map_mode_selection(simulation &sim, const data &d) {
-    constexpr std::array<std::string, 5> map_mode_names = {
-        "Provinces", "Owner", "Koppen", "Elevation", "Vegetation"
+    constexpr static std::array<std::string, 7> map_mode_names = {
+        "Provinces", "Owner", "Koppen", "Elevation", "Vegetation", "Soil", "Sea"
     };
     static int current_item = static_cast<int>(map_modes::provinces);
     current_item = static_cast<int>(d.map_mode);
@@ -90,13 +90,17 @@ inline void draw_selected_province_info(const simulation &sim, const data &d) {
     ImGui::SetNextWindowSize({200, 100});
     if (ImGui::Begin(d.selected_province->name().data())) {
         ImGui::TextWrapped("Province Color: %06X\n"
-                    "Climate: %s\n"
-                    "Elevation: %s\n"
-                    "Vegetation: %s\n",
-                    d.selected_province->color,
-                    koppen_to_string(d.selected_province->koppen()).data(),
-                    elevation_to_string(d.selected_province->elevation()).data(),
-                    vegetation_to_string(d.selected_province->vegetation()).data());
+                           "Climate: %s\n"
+                           "Elevation: %s\n"
+                           "Vegetation: %s\n"
+                           "Soil: %s\n"
+                           "Sea: %s\n",
+                           d.selected_province->color(),
+                           koppen_to_string(d.selected_province->koppen()).data(),
+                           elevation_to_string(d.selected_province->elevation()).data(),
+                           vegetation_to_string(d.selected_province->vegetation()).data(),
+                           soil_to_string(d.selected_province->soil()).data(),
+                           sea_to_string(d.selected_province->sea()).data());
         ImGui::End();
     }
 }

@@ -8,6 +8,8 @@ enum class map_modes {
     koppen,
     elevation,
     vegetation,
+    soil,
+    sea,
 };
 
 struct date {

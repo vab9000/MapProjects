@@ -39,7 +39,7 @@ void simulation::select_province(province *province) {
 void simulation::start_processing() {
     window_.add_render_func(&drawing::draw_loading_screen);
 
-    load_image(data_, map_image_, progress_, "assets/provinces.txt");
+    load_image(data_, map_image_, progress_);
 
     bitmap_.init_bitmap(&map_image_, data_, drawer_);
 
@@ -71,7 +71,7 @@ void simulation::handle_event(const sf::Event &event) {
         offset_[1] += static_cast<int>(dimensions.y / 2 - scroll_data->position.y);
 
         if (scroll_data->delta > 0) {
-            if (zoom_ > 5) {
+            if (zoom_ > 10.0) {
                 return;
             }
             zoom_ *= 1.1;

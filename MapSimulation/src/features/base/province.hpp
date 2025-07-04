@@ -4,97 +4,132 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
-#include <utility>
 #include <vector>
+#include <list>
 #include "utils.hpp"
 #include "../populations/pop.hpp"
-
+#include "province_properties.hpp"
 
 class tag;
+class river;
+class unit;
 enum class map_mode;
-enum class koppen : unsigned int;
-enum class elevation : unsigned int;
-enum class vegetation : unsigned int;
-
-std::string_view koppen_to_string(koppen value);
-std::string_view elevation_to_string(elevation value);
-std::string_view vegetation_to_string(vegetation value);
 
 class province {
-    std::vector<std::array<int, 2> > pixels_;
-    std::vector<std::pair<province *, std::array<int, 2> > > outline_;
-    std::vector<std::unique_ptr<pop> > pops_;
+    std::list<std::unique_ptr<pop> > pops_;
     bool distances_processed_ = false;
     tag *owner_;
     std::unordered_map<province *, double> neighbors_;
-    unsigned int num_pixels_;
-    unsigned int num_outline_;
+    std::unordered_map<province *, int> river_boundaries_;
+    std::vector<river *> rivers_;
+    unsigned int size_;
     std::array<int, 4> bounds_;
     std::array<int, 2> center_;
-    unsigned int base_color_;
     std::string name_;
-    koppen koppen_;
-    elevation elevation_;
-    vegetation vegetation_;
+    koppen_t koppen_;
+    elevation_t elevation_;
+    vegetation_t vegetation_;
+    soil_t soil_;
+    sea_t sea_;
+    unsigned int base_color_;
+    unsigned int color_;
 
 public:
-    unsigned int color;
-
     province();
 
-    province(std::string name, unsigned int color, koppen koppen, elevation elevation, vegetation vegetation);
+    province(std::string name, unsigned int color, koppen_t koppen, elevation_t elevation, vegetation_t vegetation,
+             soil_t soil, sea_t sea);
 
-    void finalize();
+    province(const province &) = delete;
 
+    province &operator=(const province &) = delete;
+
+    // Do final calculations after all pixels have been added
+    void finalize(const std::vector<std::array<int, 2> > &pixels);
+
+    // Calculate the distances to all neighbor provinces
     void process_distances();
 
+    // Get the name of the province
     std::string_view name();
 
-    void set_owner(tag &new_owner);
+    // Change the owner of the province
+    void set_owner(tag *new_owner);
 
+    // Remove the owner of the province
     void remove_owner();
 
+    // Get the owner of the province
     [[nodiscard]] tag *owner() const;
 
+    // Check if the province has an owner
     [[nodiscard]] bool has_owner() const;
 
-    void add_pixel(int x, int y);
+    // Add a river boundary to the province with a specific size, linking it to a neighboring province
+    void add_river_boundary(province *neighbor, int size);
 
-    void add_outline(int x, int y, province &other);
+    // Add a river to the province
+    void add_river(river *r);
 
-    [[nodiscard]] const std::vector<std::array<int, 2> > &pixels() const;
+    // Add a neighboring province to this province
+    void add_neighbor(province *neighbor);
 
-    [[nodiscard]] const std::vector<std::pair<province *, std::array<int, 2> > > &outline() const;
-
+    // Expand the bounds of the province to include a new pixel
     void expand_bounds(int x, int y);
 
+    // Recolor the province based on the current map mode
     void recolor(map_modes mode);
 
+    // Get the base color of the province
     [[nodiscard]] unsigned int base_color() const;
 
-    [[nodiscard]] koppen koppen() const;
+    // Get the color of the province based on the current map mode
+    [[nodiscard]] unsigned int color() const;
 
-    [[nodiscard]] elevation elevation() const;
+    // Get the koppen climate classification of the province
+    [[nodiscard]] koppen_t koppen() const;
 
-    [[nodiscard]] vegetation vegetation() const;
+    // Get the elevation classification of the province
+    [[nodiscard]] elevation_t elevation() const;
 
+    // Get the vegetation classification of the province
+    [[nodiscard]] vegetation_t vegetation() const;
+
+    // Get the soil classification of the province
+    [[nodiscard]] soil_t soil() const;
+
+    // Get the sea classification of the province
+    [[nodiscard]] sea_t sea() const;
+
+    // Get the distance to another province
     [[nodiscard]] double distance(const province &other) const;
 
+    // Find the shortest path to another province using Dijkstra's algorithm
     [[nodiscard]] std::vector<province *> path_to(const province &destination,
-                                                      bool (*accessible)(const province &, void *),
-                                                      double (*cost_modifier)(const province &, void *), void *param);
+                                                  bool (*accessible)(const province &start, const province &end,
+                                                                     void *param),
+                                                  double (*cost_modifier)(
+                                                      const province &start, const province &end, void *param),
+                                                  void *param);
 
-    [[nodiscard]] unsigned int num_pixels() const;
-
-    [[nodiscard]] unsigned int num_outline() const;
-
+    // Get the bounds of the province as an array of [min_x, min_y, max_x, max_y]
     [[nodiscard]] const std::array<int, 4> &bounds() const;
 
+    // Get the center of the province as an array of [x, y]
     [[nodiscard]] const std::array<int, 2> &center() const;
 
-    [[nodiscard]] const std::vector<std::unique_ptr<pop> > &pops() const;
+    // List of pops that are in this province
+    [[nodiscard]] const std::list<std::unique_ptr<pop> > &pops() const;
 
+    // Get the neighbors of this province as a map of neighbor province pointers to distances
     [[nodiscard]] const std::unordered_map<province *, double> &neighbors() const;
 
+    // Get the rivers that flow through this province as a map of neighbor province pointers to river sizes
+    [[nodiscard]] const std::unordered_map<province *, int> &river_boundaries() const;
+
+    // Get the rivers that flow through this province as a vector of river pointers
+    [[nodiscard]] const std::vector<river *> &rivers() const;
+
+    // Tick function to update the province state
     void tick();
 };

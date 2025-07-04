@@ -16,7 +16,7 @@ class tag {
     int gold_ = 0;
 
 public:
-    const unsigned long long id;
+    const unsigned int id;
 
     tag();
 

@@ -15,11 +15,11 @@ unit::unit(army &parent_army, province &location) : size(0), location(&location)
 void unit::set_destination(const province &destination) {
     const auto generated_path = location->path_to(
         destination,
-        [](const province &province, void *param) {
+        [](const province &self, const province &other, void *param) {
             const auto this_unit = static_cast<unit *>(param);
-            return this_unit->parent_army->parent_tag->has_army_access(province);
+            return this_unit->parent_army->parent_tag->has_army_access(self);
         },
-        [](const province &, void *) { return 1.0; }, this);
+        [](const province &self, const province &other, void *) { return 1.0; }, this);
     path = generated_path;
 }
 
