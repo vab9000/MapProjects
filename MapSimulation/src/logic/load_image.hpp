@@ -4,4 +4,4 @@
 class image;
 struct data;
 
-void load_image(data &data, image &map_image, double_t &progress);
+void load_image(data &data, image &map_image, std::string &loading_text);

@@ -98,7 +98,7 @@ void bitmap::reload_bitmap(const data &data, drawing &drawer) {
 
                               const auto &outline = province.outline();
 
-                              indices = std::vector<int>(province.num_outline());
+                              indices = std::vector<uint_fast32_t>(province.num_outline());
                               std::iota(indices.begin(), indices.end(), 0);
 
                               std::ranges::for_each(indices, [&](const uint_fast32_t i) {

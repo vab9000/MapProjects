@@ -107,9 +107,11 @@ public:
     // Find the shortest path to another province using Dijkstra's algorithm
     template<typename T>
     [[nodiscard]] std::list<province *> path_to(const province &destination,
-        std::function<bool(const province &start, const province &end, T *param)> accessible,
-        std::function<double_t(const province &start, const province &end, T *param)> cost_modifier,
-                                                  T *param);
+                                                std::function<bool
+                                                    (const province &start, const province &end, T *param)> accessible,
+                                                std::function<double_t(const province &start, const province &end,
+                                                                       T *param)> cost_modifier,
+                                                T *param);
 
     // Get the bounds of the province as an array of [min_x, min_y, max_x, max_y]
     [[nodiscard]] const std::array<uint_fast32_t, 4> &bounds() const;

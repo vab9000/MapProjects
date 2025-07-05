@@ -7,9 +7,9 @@
 #include "../features/province.hpp"
 #include "../logic/simulation.hpp"
 
-drawing::drawing(data &data, const double_t &progress, simulation *const simulation) : data_(data),
-    progress_(progress),
-    simulation_(*simulation) {
+drawing::drawing(data &data, simulation &simulation, const std::string &loading_text) : data_(data),
+    simulation_(simulation),
+    loading_text_(loading_text) {
 }
 
 bool drawing::init_sprites(const image &map_image, const std::vector<uint8_t> &bytes) {
@@ -36,14 +36,13 @@ void drawing::recalculate_sprite_coords(const std::array<int_fast32_t, 2> offset
     map_sprite_two_.setScale(sf::Vector2f(zoom_f, zoom_f));
 }
 
-void drawing::draw_loading_screen(sf::RenderWindow &window) const {
-    sf::RectangleShape progress_bar(sf::Vector2f(800, 50));
-
-    progress_bar.setFillColor(sf::Color::Green);
-    progress_bar.setPosition(sf::Vector2f(0, 275));
-    progress_bar.setSize(sf::Vector2f(800 * static_cast<float_t>(progress_), 50));
-
-    window.draw(progress_bar);
+void drawing::draw_loading_message(sf::RenderWindow &window) const {
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::SetNextWindowSize(ImVec2(500, 100));
+    if (ImGui::Begin("Loading")) {
+        ImGui::TextWrapped("%s", loading_text_.c_str());
+        ImGui::End();
+    }
 }
 
 void drawing::draw_map(sf::RenderWindow &window) const {

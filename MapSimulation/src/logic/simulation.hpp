@@ -14,15 +14,16 @@ class simulation {
     std::array<int_fast32_t, 2> previous_mouse_{0, 0};
     bool mouse_down_ = false;
     bool mouse_moved_ = false;
-    double_t progress_ = 0.0;
     volatile bool open_ = true;
+
+    std::string loading_text_;
 
     bitmap bitmap_{};
     image map_image_{};
 
     data data_{};
 
-    drawing drawer_{data_, progress_, this};
+    drawing drawer_{data_, *this, loading_text_};
     window window_{[this](const sf::Event &event) { this->handle_event(event); }};
 
     void select_province(province *province);

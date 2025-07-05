@@ -6,7 +6,7 @@
 
 static std::stack<uint_fast32_t> id_stack = {};
 
-static unsigned long long next_id() {
+static uint_fast32_t next_id() {
     static uint_fast32_t id_counter = 0;
 
     uint_fast32_t id;

@@ -13,11 +13,12 @@
 #include "../features/tag.hpp"
 #include "data.hpp"
 
-void load_image(data &data, image &map_image, double &progress) {
+void load_image(data &data, image &map_image, std::string &loading_text) {
     std::ifstream province_file("assets/provinces.txt");
     if (!province_file.is_open()) {
         throw std::runtime_error("Failed to open province file: " "provinces.txt");
     }
+    loading_text = "Loading provinces file...";
     while (!province_file.eof()) {
         std::string ignore;
         std::getline(province_file, ignore, ':');
@@ -54,6 +55,7 @@ void load_image(data &data, image &map_image, double &progress) {
     if (!sea_file.is_open()) {
         throw std::runtime_error("Failed to open sea tiles file: " "sea_tiles.txt");
     }
+    loading_text = "Loading sea tiles file...";
     while (!sea_file.eof()) {
         std::string ignore;
         std::getline(sea_file, ignore, ':');
@@ -68,6 +70,58 @@ void load_image(data &data, image &map_image, double &progress) {
                                    color, koppen_t::none, elevation_t::none, vegetation_t::none,
                                    soil_t::none, static_cast<sea_t>(flip_rb(sea_value))));
     }
+    sea_file.close();
+
+    std::ifstream rivers_file("assets/rivers.txt");
+    if (!rivers_file.is_open()) {
+        throw std::runtime_error("Failed to open rivers file: " "rivers.txt");
+    }
+    loading_text = "Loading rivers file...";
+    while (!rivers_file.eof()) {
+        std::string ignore;
+        std::getline(rivers_file, ignore, ':');
+        if (ignore == "\n") break;
+        uint_fast32_t color;
+        rivers_file >> color;
+        std::getline(rivers_file, ignore, ':');
+        uint_fast32_t neighbor_color;
+        rivers_file >> neighbor_color;
+        std::getline(rivers_file, ignore, ':');
+        uint_fast32_t river_value;
+        rivers_file >> river_value;
+        color = flip_rb(color);
+        neighbor_color = flip_rb(neighbor_color);
+        data.provinces.at(color).add_river_boundary(&data.provinces.at(neighbor_color),
+                                                    static_cast<uint_fast8_t>(river_value));
+    }
+    rivers_file.close();
+
+    std::ifstream river_lines_file("assets/river_lines.txt");
+    if (!river_lines_file.is_open()) {
+        throw std::runtime_error("Failed to open river lines file: " "river_lines.txt");
+    }
+    loading_text = "Loading river lines file...";
+    data.rivers.emplace_back();
+    auto *current_river = &data.rivers.back();
+    while (!river_lines_file.eof()) {
+        std::string command;
+        std::getline(river_lines_file, command, ':');
+        if (command == "\n") break;
+        if (command == "River ID") {
+            data.rivers.emplace_back();
+            current_river = &data.rivers.back();
+            uint_fast32_t river_id;
+            river_lines_file >> river_id;
+        }
+        else if (command == "Province Color") {
+            uint_fast32_t province_color;
+            river_lines_file >> province_color;
+            province_color = flip_rb(province_color);
+            current_river->add_province(&data.provinces.at(province_color));
+        }
+        std::getline(river_lines_file, command, '\n');
+    }
+    river_lines_file.close();
 
     auto process_pixel = [&](const uint_fast32_t color, const std::array<uint_fast32_t, 2> position) {
         auto &province = data.provinces.at(color);
@@ -126,26 +180,25 @@ void load_image(data &data, image &map_image, double &progress) {
 
     map_image = image{"assets/provinces_generated.png"};
 
+    loading_text = "Processing pixels...";
     for (uint_fast32_t i = 0; i < map_image.width(); ++i) {
         for (uint_fast32_t j = 0; j < map_image.height(); ++j) {
             const std::array coords = {i, j};
             process_pixel(map_image.color(i, j), coords);
         }
-
-        progress = static_cast<double>(i) / map_image.width() / 2;
     }
 
+    loading_text = "Processing pixel borders...";
     for (uint_fast32_t i = 0; i < map_image.width(); ++i) {
         for (uint_fast32_t j = 0; j < map_image.height(); ++j) {
             const std::array coords = {i, j};
             process_pixel_borders(map_image.color(i, j), coords);
         }
-
-        progress = static_cast<double_t>(i) / map_image.width() / 2 + 0.5;
     }
 
     auto province_values = data.provinces | std::views::values;
 
+    loading_text = "Finalizing provinces...";
 #ifdef __cpp_lib_execution
     std::for_each(std::execution::par_unseq, province_values.begin(), province_values.end(),
                   [&pixels_by_province](province &province) { province.finalize(pixels_by_province.at(&province)); });
@@ -157,4 +210,5 @@ void load_image(data &data, image &map_image, double &progress) {
     std::ranges::for_each(province_values,
                           [](province &province) { province.process_distances(); });
 #endif
+    loading_text = "";
 }

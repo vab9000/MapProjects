@@ -6,12 +6,6 @@
 // How unlikely the AI is to perform an action
 constexpr double inertia = 10.0;
 
-template<typename Self, typename Other>
-std::unique_ptr<action_base> &&make_action(std::function<void(Self *, Other *)> &&action_func, Self *s_param,
-                                           Other *o_param, std::function<int_fast32_t(Self *, Other *)> &&weight_func) {
-    return std::make_unique<action<Self, Other> >(std::move(action_func), s_param, o_param, std::move(weight_func));
-}
-
 void ai::add_action(std::unique_ptr<action_base> &&act) {
     actions_.emplace_back(std::move(act));
 }

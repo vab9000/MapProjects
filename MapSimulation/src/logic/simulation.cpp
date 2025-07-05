@@ -38,10 +38,10 @@ void simulation::select_province(province *province) {
 
 void simulation::start_processing() {
     window_.add_render_func([this](sf::RenderWindow &window) {
-        this->drawer_.draw_loading_screen(window);
+        this->drawer_.draw_loading_message(window);
     });
 
-    load_image(data_, map_image_, progress_);
+    load_image(data_, map_image_, loading_text_);
 
     bitmap_.init_bitmap(&map_image_, data_, drawer_);
 
