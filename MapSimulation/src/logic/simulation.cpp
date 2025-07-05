@@ -37,7 +37,9 @@ void simulation::select_province(province *province) {
 }
 
 void simulation::start_processing() {
-    window_.add_render_func(&drawing::draw_loading_screen);
+    window_.add_render_func([this](sf::RenderWindow &window) {
+        this->drawer_.draw_loading_screen(window);
+    });
 
     load_image(data_, map_image_, progress_);
 
@@ -48,8 +50,12 @@ void simulation::start_processing() {
     }
 
     window_.clear_render_funcs();
-    window_.add_render_func(&drawing::draw_gui);
-    window_.add_render_func(&drawing::draw_map);
+    window_.add_render_func([this](sf::RenderWindow &window) {
+        this->drawer_.draw_map(window);
+    });
+    window_.add_render_func([this](sf::RenderWindow &window) {
+        this->drawer_.draw_gui(window);
+    });
 
     while (open_) {
     }
@@ -67,39 +73,39 @@ void simulation::handle_event(const sf::Event &event) {
             return;
         }
 
-        offset_[0] += static_cast<int>(dimensions.x / 2 - scroll_data->position.x);
-        offset_[1] += static_cast<int>(dimensions.y / 2 - scroll_data->position.y);
+        offset_[0] += static_cast<int_fast32_t>(dimensions.x / 2 - scroll_data->position.x);
+        offset_[1] += static_cast<int_fast32_t>(dimensions.y / 2 - scroll_data->position.y);
 
         if (scroll_data->delta > 0) {
             if (zoom_ > 10.0) {
                 return;
             }
             zoom_ *= 1.1;
-            offset_[0] -= static_cast<int>((dimensions.x / 2.0 - offset_[0]) * 0.1);
-            offset_[1] -= static_cast<int>((dimensions.y / 2.0 - offset_[1]) * 0.1);
+            offset_[0] -= static_cast<int_fast32_t>((dimensions.x / 2.0 - offset_[0]) * 0.1);
+            offset_[1] -= static_cast<int_fast32_t>((dimensions.y / 2.0 - offset_[1]) * 0.1);
         } else {
             if (zoom_ / 1.1 < static_cast<double>(dimensions.y) / map_image_.height()) {
                 zoom_ = static_cast<double>(dimensions.y) / map_image_.height();
             } else {
-                offset_[0] += static_cast<int>((dimensions.x / 2.0 - offset_[0]) / 11.0);
-                offset_[1] += static_cast<int>((dimensions.y / 2.0 - offset_[1]) / 11.0);
+                offset_[0] += static_cast<int_fast32_t>((dimensions.x / 2.0 - offset_[0]) / 11.0);
+                offset_[1] += static_cast<int_fast32_t>((dimensions.y / 2.0 - offset_[1]) / 11.0);
                 zoom_ /= 1.1;
             }
         }
 
-        offset_[0] -= static_cast<int>(dimensions.x / 2 - scroll_data->position.x);
-        offset_[1] -= static_cast<int>(dimensions.y / 2 - scroll_data->position.y);
+        offset_[0] -= static_cast<int_fast32_t>(dimensions.x / 2 - scroll_data->position.x);
+        offset_[1] -= static_cast<int_fast32_t>(dimensions.y / 2 - scroll_data->position.y);
 
         if (offset_[0] > 0) {
-            offset_[0] -= static_cast<int>(map_image_.width() * zoom_);
+            offset_[0] -= static_cast<int_fast32_t>(map_image_.width() * zoom_);
         } else if (offset_[0] < -(map_image_.width() * zoom_)) {
-            offset_[0] += static_cast<int>(map_image_.width() * zoom_);
+            offset_[0] += static_cast<int_fast32_t>(map_image_.width() * zoom_);
         }
 
         if (offset_[1] > 0) {
             offset_[1] = 0;
         } else if (offset_[1] < -(map_image_.height() * zoom_ - dimensions.y)) {
-            offset_[1] = static_cast<int>(-(map_image_.height() * zoom_ - dimensions.y));
+            offset_[1] = static_cast<int_fast32_t>(-(map_image_.height() * zoom_ - dimensions.y));
         }
 
         drawer_.recalculate_sprite_coords(offset_, zoom_, map_image_.width());
@@ -107,8 +113,8 @@ void simulation::handle_event(const sf::Event &event) {
         if (release_data->button != sf::Mouse::Button::Left) return;
 
         if (!mouse_moved_) {
-            const auto x = static_cast<int>((release_data->position.x - offset_[0]) / zoom_);
-            const auto y = static_cast<int>((release_data->position.y - offset_[1]) / zoom_);
+            const auto x = static_cast<int_fast32_t>((release_data->position.x - offset_[0]) / zoom_);
+            const auto y = static_cast<int_fast32_t>((release_data->position.y - offset_[1]) / zoom_);
 
             const auto color = map_image_.color(x % map_image_.width(), y);
             const auto province = &data_.provinces.at(color);
@@ -142,16 +148,16 @@ void simulation::handle_event(const sf::Event &event) {
             const auto dimensions = window_.window_dimensions();
 
             if (offset_[0] > 0) {
-                offset_[0] -= static_cast<int>(map_image_.width() * zoom_);
+                offset_[0] -= static_cast<int_fast32_t>(map_image_.width() * zoom_);
             }
             if (offset_[1] > 0) {
                 offset_[1] = 0;
             }
             if (offset_[0] < -(map_image_.width() * zoom_)) {
-                offset_[0] += static_cast<int>(map_image_.width() * zoom_);
+                offset_[0] += static_cast<int_fast32_t>(map_image_.width() * zoom_);
             }
             if (offset_[1] < -(map_image_.height() * zoom_ - dimensions.y)) {
-                offset_[1] = static_cast<int>(-(map_image_.height() * zoom_ - dimensions.y));
+                offset_[1] = static_cast<int_fast32_t>(-(map_image_.height() * zoom_ - dimensions.y));
             }
 
             previous_mouse_[0] = x;
@@ -177,12 +183,12 @@ void simulation::start_simulation() {
     process_thread.join();
 }
 
-void simulation::transform_to_screen_coordinates(std::array<int, 4> &coordinates) const {
-    coordinates[0] = static_cast<int>(coordinates[0] * zoom_ + offset_[0]);
-    coordinates[2] = static_cast<int>(coordinates[2] * zoom_ + offset_[0]);
+void simulation::transform_to_screen_coordinates(std::array<int_fast32_t, 4> &coordinates) const {
+    coordinates[0] = static_cast<int_fast32_t>(coordinates[0] * zoom_ + offset_[0]);
+    coordinates[2] = static_cast<int_fast32_t>(coordinates[2] * zoom_ + offset_[0]);
     if (coordinates[2] < 0) {
-        coordinates[0] = coordinates[0] + static_cast<int>(map_image_.width() * zoom_);
+        coordinates[0] = coordinates[0] + static_cast<int_fast32_t>(map_image_.width() * zoom_);
     }
-    coordinates[1] = static_cast<int>(coordinates[1] * zoom_ + offset_[1]);
-    coordinates[3] = static_cast<int>(coordinates[3] * zoom_ + offset_[1]);
+    coordinates[1] = static_cast<int_fast32_t>(coordinates[1] * zoom_ + offset_[1]);
+    coordinates[3] = static_cast<int_fast32_t>(coordinates[3] * zoom_ + offset_[1]);
 }

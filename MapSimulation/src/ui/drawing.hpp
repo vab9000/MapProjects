@@ -8,7 +8,7 @@ class simulation;
 
 class drawing {
     data &data_;
-    const double &progress_;
+    const double_t &progress_;
     simulation &simulation_;
 
     sf::Texture texture_{};
@@ -16,19 +16,19 @@ class drawing {
     sf::Sprite map_sprite_two_{texture_};
 
 public:
-    explicit drawing(data &data, const double &progress, simulation * simulation);
+    explicit drawing(data &data, const double_t &progress, simulation * simulation);
 
-    bool init_sprites(const image &map_image, const std::vector<unsigned char> &bytes);
+    bool init_sprites(const image &map_image, const std::vector<uint8_t> &bytes);
 
-    void recalculate_sprite_coords(std::array<int, 2> offset, double zoom, unsigned int map_width);
+    void recalculate_sprite_coords(std::array<int_fast32_t, 2> offset, double_t zoom, uint_fast32_t map_width);
 
     void draw_loading_screen(sf::RenderWindow &window) const;
 
     void draw_map(sf::RenderWindow &window) const;
 
-    void update_map_texture(const unsigned char *bytes);
+    void update_map_texture(const uint8_t *bytes);
 
-    void update_map_texture(const unsigned char *bytes, const sf::Vector2u &dimensions,
+    void update_map_texture(const uint8_t *bytes, const sf::Vector2u &dimensions,
                             const sf::Vector2u &position);
 
     void draw_gui(sf::RenderWindow &window) const;

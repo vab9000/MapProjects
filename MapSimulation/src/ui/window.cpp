@@ -2,14 +2,13 @@
 #include <SFML/System.hpp>
 #include <imgui-SFML.h>
 #include "window.hpp"
-#include "drawing.hpp"
 
-window::window(simulation &simulation, const drawing &drawer,
-               void (simulation::*event_func)(const sf::Event &)) : window_(sf::RenderWindow(
-                                                                        sf::VideoMode(sf::Vector2u(800, 600)),
-                                                                        "Map Simulation")), drawer_(drawer),
-                                                                    simulation_(simulation),
-                                                                    event_func_(event_func), gui_area_({0, 0, 100, 600}) {
+window::window(
+    std::function<void(const sf::Event &)> &&event_func) : window_(sf::RenderWindow(
+                                                               sf::VideoMode(sf::Vector2u(800, 600)),
+                                                               "Map Simulation")),
+                                                           gui_area_({0, 0, 100, 600}),
+                                                           event_func_(std::move(event_func)) {
     window_.setFramerateLimit(60);
     // window_.setVerticalSyncEnabled(true);
     if (!ImGui::SFML::Init(window_)) {
@@ -27,7 +26,7 @@ void window::stop_event_loop() {
     }
 }
 
-void window::add_render_func(void (drawing::*func)(sf::RenderWindow &) const) {
+void window::add_render_func(std::function<void(sf::RenderWindow &)> func) {
     render_funcs_.emplace_back(func);
 }
 
@@ -51,7 +50,7 @@ void window::start_event_loop() {
             } else if (const auto &_ = event->getIf<sf::Event::Closed>()) {
                 stop_event_loop();
             }
-            (simulation_.*event_func_)(event.value());
+            event_func_(event.value());
         }
 
         ImGui::SFML::Update(window_, clock.restart());
@@ -59,7 +58,7 @@ void window::start_event_loop() {
         window_.clear();
 
         for (const auto &render_func: render_funcs_) {
-            (drawer_.*render_func)(window_);
+            render_func(window_);
         }
 
         ImGui::SFML::Render(window_);
@@ -70,7 +69,7 @@ void window::start_event_loop() {
     ImGui::SFML::Shutdown();
 }
 
-const std::array<int, 4> & window::gui_area() {
+const std::array<uint_fast32_t, 4> &window::gui_area() {
     const auto dimensions = window_dimensions();
     gui_area_[2] = 200;
     gui_area_[3] = dimensions.y;

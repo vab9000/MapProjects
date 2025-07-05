@@ -1,33 +1,28 @@
 #pragma once
 
 #include <vector>
+#include <functional>
 #include <SFML/Graphics.hpp>
-
-class drawing;
-class simulation;
 
 class window {
     sf::RenderWindow window_;
-    std::vector<void (drawing::*)(sf::RenderWindow &) const> render_funcs_;
-    const drawing &drawer_;
-    simulation &simulation_;
-    std::array<int, 4> gui_area_;
+    std::vector<std::function<void(sf::RenderWindow &)> > render_funcs_;
+    std::array<uint_fast32_t, 4> gui_area_;
 
-    void (simulation::*event_func_)(const sf::Event &);
+    std::function<void(const sf::Event &)> event_func_;
 
 public:
-    explicit window(simulation &simulation, const drawing &drawer,
-                    void (simulation::*event_func)(const sf::Event &));
+    explicit window(std::function<void(const sf::Event &)> &&event_func);
 
     sf::Vector2u window_dimensions() const;
 
     void stop_event_loop();
 
-    void add_render_func(void (drawing::*func)(sf::RenderWindow &) const);
+    void add_render_func(std::function<void(sf::RenderWindow &)> func);
 
     void clear_render_funcs();
 
     void start_event_loop();
 
-    const std::array<int, 4> &gui_area();
+    const std::array<uint_fast32_t, 4> &gui_area();
 };

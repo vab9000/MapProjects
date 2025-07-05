@@ -2,20 +2,19 @@
 
 #include <SFML/Graphics.hpp>
 #include "image.hpp"
-#include "../features/base/province.hpp"
-#include "../features/base/utils.hpp"
+#include "../features/province.hpp"
 #include "../ui/window.hpp"
 #include "../ui/drawing.hpp"
 #include "data.hpp"
 #include "bitmap.hpp"
 
 class simulation {
-    std::array<int, 2> offset_{0, 0};
-    double zoom_ = 1.0;
-    std::array<int, 2> previous_mouse_{0, 0};
+    std::array<int_fast32_t, 2> offset_{0, 0};
+    double_t zoom_ = 1.0;
+    std::array<int_fast32_t, 2> previous_mouse_{0, 0};
     bool mouse_down_ = false;
     bool mouse_moved_ = false;
-    double progress_ = 0.0;
+    double_t progress_ = 0.0;
     volatile bool open_ = true;
 
     bitmap bitmap_{};
@@ -24,7 +23,7 @@ class simulation {
     data data_{};
 
     drawing drawer_{data_, progress_, this};
-    window window_{*this, drawer_, &simulation::handle_event};
+    window window_{[this](const sf::Event &event) { this->handle_event(event); }};
 
     void select_province(province *province);
 
@@ -35,7 +34,7 @@ class simulation {
 public:
     void start_simulation();
 
-    void transform_to_screen_coordinates(std::array<int, 4> &coordinates) const;
+    void transform_to_screen_coordinates(std::array<int_fast32_t, 4> &coordinates) const;
 
     void change_map_mode(map_modes mode);
 };

@@ -2,18 +2,17 @@
 #include <imgui.h>
 #include <ranges>
 #include <array>
-
 #include "../logic/image.hpp"
 #include "../logic/data.hpp"
-#include "../features/base/province.hpp"
+#include "../features/province.hpp"
 #include "../logic/simulation.hpp"
 
-drawing::drawing(data &data, const double &progress, simulation *const simulation) : data_(data),
+drawing::drawing(data &data, const double_t &progress, simulation *const simulation) : data_(data),
     progress_(progress),
     simulation_(*simulation) {
 }
 
-bool drawing::init_sprites(const image &map_image, const std::vector<unsigned char> &bytes) {
+bool drawing::init_sprites(const image &map_image, const std::vector<uint8_t> &bytes) {
     if (!texture_.loadFromImage(
         sf::Image(sf::Vector2u(map_image.width(), map_image.height()), bytes.data()))) {
         return false;
@@ -27,13 +26,13 @@ bool drawing::init_sprites(const image &map_image, const std::vector<unsigned ch
     return true;
 }
 
-void drawing::recalculate_sprite_coords(const std::array<int, 2> offset, const double zoom,
-                                        const unsigned int map_width) {
-    const auto zoom_f = static_cast<float>(zoom);
-    map_sprite_one_.setPosition(sf::Vector2f(static_cast<float>(offset[0]), static_cast<float>(offset[1])));
+void drawing::recalculate_sprite_coords(const std::array<int_fast32_t, 2> offset, const double_t zoom,
+                                        const uint_fast32_t map_width) {
+    const auto zoom_f = static_cast<float_t>(zoom);
+    map_sprite_one_.setPosition(sf::Vector2f(static_cast<float_t>(offset[0]), static_cast<float_t>(offset[1])));
     map_sprite_one_.setScale(sf::Vector2f(zoom_f, zoom_f));
-    map_sprite_two_.setPosition(sf::Vector2f(static_cast<float>(offset[0] + static_cast<int>(map_width * zoom)),
-                                             static_cast<float>(offset[1])));
+    map_sprite_two_.setPosition(sf::Vector2f(static_cast<float_t>(offset[0] + map_width * zoom),
+                                             static_cast<float_t>(offset[1])));
     map_sprite_two_.setScale(sf::Vector2f(zoom_f, zoom_f));
 }
 
@@ -42,7 +41,7 @@ void drawing::draw_loading_screen(sf::RenderWindow &window) const {
 
     progress_bar.setFillColor(sf::Color::Green);
     progress_bar.setPosition(sf::Vector2f(0, 275));
-    progress_bar.setSize(sf::Vector2f(800 * static_cast<float>(progress_), 50));
+    progress_bar.setSize(sf::Vector2f(800 * static_cast<float_t>(progress_), 50));
 
     window.draw(progress_bar);
 }
@@ -52,11 +51,11 @@ void drawing::draw_map(sf::RenderWindow &window) const {
     window.draw(map_sprite_two_);
 }
 
-void drawing::update_map_texture(const unsigned char *bytes) {
+void drawing::update_map_texture(const uint8_t *bytes) {
     texture_.update(bytes);
 }
 
-void drawing::update_map_texture(const unsigned char *bytes, const sf::Vector2u &dimensions,
+void drawing::update_map_texture(const uint8_t *bytes, const sf::Vector2u &dimensions,
                                  const sf::Vector2u &position) {
     texture_.update(bytes, dimensions, position);
 }
@@ -65,12 +64,12 @@ inline void draw_map_mode_selection(simulation &sim, const data &d) {
     constexpr static std::array<std::string, 7> map_mode_names = {
         "Provinces", "Owner", "Koppen", "Elevation", "Vegetation", "Soil", "Sea"
     };
-    static int current_item = static_cast<int>(map_modes::provinces);
-    current_item = static_cast<int>(d.map_mode);
+    static auto current_item = static_cast<uint_fast8_t>(map_modes::provinces);
+    current_item = static_cast<uint_fast8_t>(d.map_mode);
     ImGui::SetNextWindowPos({0, 0});
     ImGui::SetNextWindowSize({200, 50});
     if (ImGui::BeginCombo("Map Mode", map_mode_names[current_item].c_str())) {
-        for (int i = 0; i < map_mode_names.size(); ++i) {
+        for (size_t i = 0; i < map_mode_names.size(); ++i) {
             const bool is_selected = (current_item == i);
             if (ImGui::Selectable(map_mode_names[i].c_str(), is_selected)) {
                 current_item = i;
@@ -84,11 +83,11 @@ inline void draw_map_mode_selection(simulation &sim, const data &d) {
     }
 }
 
-inline void draw_selected_province_info(const simulation &sim, const data &d) {
+inline void draw_selected_province_info(const data &d) {
     if (d.selected_province == nullptr) return;
     ImGui::SetNextWindowPos({0, 50});
     ImGui::SetNextWindowSize({200, 100});
-    if (ImGui::Begin(d.selected_province->name().data())) {
+    if (ImGui::Begin("Selected Province Info")) {
         ImGui::TextWrapped("Province Color: %06X\n"
                            "Climate: %s\n"
                            "Elevation: %s\n"
@@ -107,11 +106,11 @@ inline void draw_selected_province_info(const simulation &sim, const data &d) {
 
 void drawing::draw_gui(sf::RenderWindow &window) const {
     ImGui::SetNextWindowPos({0, 0});
-    ImGui::SetNextWindowSize({200, static_cast<float>(window.getSize().y)});
+    ImGui::SetNextWindowSize({200, static_cast<float_t>(window.getSize().y)});
     if (ImGui::Begin("GUI")) {
         if (ImGui::BeginChild("GUI")) {
             draw_map_mode_selection(simulation_, data_);
-            draw_selected_province_info(simulation_, data_);
+            draw_selected_province_info(data_);
             ImGui::EndChild();
         }
         ImGui::End();

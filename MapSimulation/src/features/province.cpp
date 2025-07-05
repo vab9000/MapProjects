@@ -3,34 +3,30 @@
 #include <array>
 #include <queue>
 #include <ranges>
-#include <string>
-#include <unordered_map>
 #include <cmath>
 #include <vector>
-#include "../tags/tag.hpp"
-#include "utils.hpp"
+#include "tag.hpp"
 
-province::province() : owner_(nullptr), size_(0), bounds_({-1, -1, 0, 0}), center_({-1, -1}),
+province::province() : owner_(nullptr), size_(0), bounds_{0, 0, 0, 0}, center_{0, 0},
                        koppen_(koppen_t::none), elevation_(elevation_t::none), vegetation_(vegetation_t::none),
                        soil_(soil_t::none), sea_(sea_t::none), base_color_(0), color_(0) {
 }
 
-province::province(std::string name, const unsigned int color, const koppen_t koppen,
+province::province(const uint_fast32_t color, const koppen_t koppen,
                    const elevation_t elevation,
                    const vegetation_t vegetation, const soil_t soil, const sea_t sea) : owner_(nullptr),
     size_(0),
-    bounds_({-1, -1, 0, 0}), center_{-1, -1},
-    name_(std::move(name)),
+    bounds_{0, 0, 0, 0}, center_{0, 0},
     koppen_(koppen), elevation_(elevation),
     vegetation_(vegetation),
     soil_(soil), sea_(sea), base_color_(color), color_(color) {
 }
 
-void province::finalize(const std::vector<std::array<int, 2> > &pixels) {
+void province::finalize(const std::vector<std::array<uint_fast32_t, 2> > &pixels) {
     size_ = pixels.size();
 
-    auto x = std::vector<int>(size_);
-    auto y = std::vector<int>(size_);
+    auto x = std::vector<uint_fast32_t>(size_);
+    auto y = std::vector<uint_fast32_t>(size_);
 
     for (const auto &pixel: pixels) {
         x.push_back(pixel[0]);
@@ -40,7 +36,7 @@ void province::finalize(const std::vector<std::array<int, 2> > &pixels) {
     std::ranges::sort(x);
     std::ranges::sort(y);
 
-    int test_center[2] = {0, 0};
+    std::array<uint_fast32_t, 2> test_center = {0, 0};
 
     if (size_ % 2 == 0) {
         test_center[0] = (x[size_ / 2] + x[size_ / 2 - 1]) / 2;
@@ -50,7 +46,7 @@ void province::finalize(const std::vector<std::array<int, 2> > &pixels) {
         test_center[1] = y[size_ / 2];
     }
 
-    for (int i = 0; i < size_; ++i) {
+    for (uint_fast32_t i = 0; i < size_; ++i) {
         if (pixels[i][0] == test_center[0] && pixels[i][1] == test_center[1]) {
             center_[0] = test_center[0];
             center_[1] = test_center[1];
@@ -58,13 +54,15 @@ void province::finalize(const std::vector<std::array<int, 2> > &pixels) {
         }
     }
 
-    auto distance = [](const std::array<int, 2> &a, const std::array<int, 2> &b) {
-        return sqrt((a[0] - b[0]) * (a[0] - b[0]) + (a[1] - b[1]) * (a[1] - b[1]));
+    auto distance = [](const std::array<uint_fast32_t, 2> &a, const std::array<uint_fast32_t, 2> &b) {
+        return sqrt(
+            pow(static_cast<int_fast32_t>(a[0]) - static_cast<int_fast32_t>(b[0]), 2) + pow(
+                static_cast<int_fast32_t>(a[1]) - static_cast<int_fast32_t>(b[1]), 2));
     };
 
     if (center_[0] == -1) {
         double min_distance = (std::numeric_limits<double>::max)();
-        for (int i = 0; i < size_; ++i) {
+        for (uint_fast32_t i = 0; i < size_; ++i) {
             if (const auto dist = distance(pixels[i], {test_center[0], test_center[1]}); dist < min_distance) {
                 min_distance = dist;
                 center_[0] = pixels[i][0];
@@ -79,10 +77,6 @@ void province::process_distances() {
         neighbors_[neighbor] = distance(*neighbor);
     }
     distances_processed_ = true;
-}
-
-std::string_view province::name() {
-    return name_;
 }
 
 void province::set_owner(tag *new_owner) {
@@ -107,7 +101,15 @@ bool province::has_owner() const {
     return owner_ != nullptr;
 }
 
-void province::add_river_boundary(province *neighbor, const int size) {
+void province::add_pop(std::unique_ptr<pop> &&new_pop) {
+    pops_.emplace_back(std::move(new_pop));
+}
+
+void province::add_pop(pop new_pop) {
+    pops_.emplace_back(std::make_unique<pop>(new_pop));
+}
+
+void province::add_river_boundary(province *neighbor, const uint_fast8_t size) {
     river_boundaries_[neighbor] = size;
 }
 
@@ -119,12 +121,14 @@ void province::add_neighbor(province *neighbor) {
     neighbors_.emplace(neighbor, 0.0);
 }
 
-void province::expand_bounds(const int x, const int y) {
-    if (bounds_[0] == -1) {
+void province::expand_bounds(const uint_fast32_t x, const uint_fast32_t y) {
+    if (size_ == 0) {
         bounds_[0] = x;
         bounds_[1] = y;
         bounds_[2] = x;
         bounds_[3] = y;
+        size_ += 1;
+        return;
     }
     if (x < bounds_[0]) {
         bounds_[0] = x;
@@ -160,28 +164,28 @@ void province::recolor(const map_modes mode) {
             }
             break;
         case map_modes::koppen:
-            color_ = static_cast<unsigned int>(koppen_);
+            color_ = static_cast<uint_fast32_t>(koppen_);
             break;
         case map_modes::elevation:
-            color_ = static_cast<unsigned int>(elevation_);
+            color_ = static_cast<uint_fast32_t>(elevation_);
             break;
         case map_modes::vegetation:
-            color_ = static_cast<unsigned int>(vegetation_);
+            color_ = static_cast<uint_fast32_t>(vegetation_);
             break;
         case map_modes::soil:
-            color_ = static_cast<unsigned int>(soil_);
+            color_ = static_cast<uint_fast32_t>(soil_);
             break;
         case map_modes::sea:
-            color_ = static_cast<unsigned int>(sea_);
+            color_ = static_cast<uint_fast32_t>(sea_);
             break;
     }
 }
 
-unsigned int province::base_color() const {
+uint_fast32_t province::base_color() const {
     return base_color_;
 }
 
-unsigned int province::color() const {
+uint_fast32_t province::color() const {
     return color_;
 }
 
@@ -209,61 +213,8 @@ double province::distance(const province &other) const {
     if (distances_processed_ && neighbors_.contains(&const_cast<province &>(other))) {
         return neighbors_.at(&const_cast<province &>(other));
     }
-    return sqrt((center_[0] - other.center_[0]) * (center_[0] - other.center_[0]) +
-                (center_[1] - other.center_[1]) * (center_[1] - other.center_[1]));
-}
-
-std::vector<province *> province::path_to(const province &destination,
-                                          bool (*accessible)(const province &start, const province &end, void *param),
-                                          double (*cost_modifier)(const province &start, const province &end,
-                                                                  void *param),
-                                          void *param) {
-    std::unordered_map<province *, double> distances;
-    std::unordered_map<province *, province *> previous;
-    std::priority_queue<std::pair<double, province *>, std::vector<std::pair<double,
-                province *> >, std::greater<> >
-            queue;
-
-    distances[this] = 0;
-    queue.emplace(0, this);
-
-    auto reached = false;
-
-    while (!queue.empty()) {
-        auto [currentDistance, currentProvince] = queue.top();
-        queue.pop();
-
-        if (currentProvince == &const_cast<province &>(destination)) {
-            reached = true;
-            break;
-        }
-
-        for (const auto &[neighborProvince, neighborDistance]: currentProvince->neighbors()) {
-            if (!accessible(*this, *neighborProvince, param) ||
-                cost_modifier(*this, *neighborProvince, param) < 0) {
-                continue;
-            }
-
-            if (double new_distance = currentDistance + cost_modifier(*this, *neighborProvince, param) *
-                                      neighborDistance;
-                !distances.contains(neighborProvince) || new_distance < distances[neighborProvince]) {
-                distances[neighborProvince] = new_distance;
-                previous[neighborProvince] = currentProvince;
-                queue.emplace(new_distance, neighborProvince);
-            }
-        }
-    }
-
-    if (!reached) {
-        return {};
-    }
-
-    std::vector<province *> path;
-    for (province *at = &const_cast<province &>(destination); at != nullptr; at = previous[at]) {
-        path.insert(path.begin(), at);
-    }
-
-    return path;
+    return sqrt(pow(static_cast<int_fast32_t>(center_[0]) - static_cast<int_fast32_t>(other.center_[0]), 2) +
+                pow(static_cast<int_fast32_t>(center_[1]) - static_cast<int_fast32_t>(other.center_[1]), 2));
 }
 
 void province::tick() {
@@ -272,11 +223,11 @@ void province::tick() {
     }
 }
 
-const std::array<int, 4> &province::bounds() const {
+const std::array<uint_fast32_t, 4> &province::bounds() const {
     return bounds_;
 }
 
-const std::array<int, 2> &province::center() const {
+const std::array<uint_fast32_t, 2> &province::center() const {
     return center_;
 }
 
@@ -284,11 +235,11 @@ const std::list<std::unique_ptr<pop> > &province::pops() const {
     return pops_;
 }
 
-const std::unordered_map<province *, double> &province::neighbors() const {
+const std::map<province *, double_t> &province::neighbors() const {
     return neighbors_;
 }
 
-const std::unordered_map<province *, int> &province::river_boundaries() const {
+const std::map<province *, uint_fast8_t> &province::river_boundaries() const {
     return river_boundaries_;
 }
 

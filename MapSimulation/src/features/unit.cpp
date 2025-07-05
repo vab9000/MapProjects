@@ -1,0 +1,92 @@
+#include "unit.hpp"
+
+#include <ranges>
+#include <utility>
+#include "province.hpp"
+#include "army.hpp"
+#include "tag.hpp"
+#include "character.hpp"
+
+unit::unit(army *parent_army, province *location) : parent_army_(parent_army),
+                                                    location_(location),
+                                                    travel_progress_(0), retreating_(false) {
+}
+
+unit::~unit() {
+    for (auto &[home, pop]: pops_) {
+        home->add_pop(std::move(pop));
+    }
+}
+
+void unit::add_pop(province *home, std::unique_ptr<pop> &&new_pop) {
+    pops_.emplace_back(home, std::unique_ptr(std::move(new_pop)));
+}
+
+size_t unit::size() const {
+    size_t size = 0;
+    for (const auto &pop: pops_ | std::views::values) {
+        size += pop->size();
+    }
+    return size;
+}
+
+army &unit::parent() const {
+    return *parent_army_;
+}
+
+void unit::set_parent(army *new_parent) {
+    parent_army_ = new_parent;
+}
+
+void unit::set_captain(std::weak_ptr<character> new_captain) {
+    if (!captain_.expired()) captain_.lock()->remove_flag(character_flag_t::captain);
+    if (!new_captain.expired()) new_captain.lock()->add_flag(character_flag_t::captain);
+    captain_ = std::move(new_captain);
+}
+
+const std::weak_ptr<character> &unit::captain() const {
+    return captain_;
+}
+
+province &unit::location() const {
+    return *location_;
+}
+
+const std::list<province *> &unit::path() const {
+    return path_;
+}
+
+double unit::travel_progress() const {
+    return travel_progress_;
+}
+
+bool unit::retreating() const {
+    return retreating_;
+}
+
+void unit::set_destination(const province &destination) {
+    if (retreating_) return;
+
+    auto generated_path = location_->path_to<unit>(
+        destination,
+        [](const province &self, const province &other, const unit *this_unit) {
+            return this_unit->parent().parent().has_army_access(other);
+        },
+        [](const province &self, const province &other, unit *this_unit) { return 1.0; }, this);
+    path_ = std::move(generated_path);
+}
+
+void unit::move() {
+    travel_progress_ += 1.0;
+    if (travel_progress_ < 100.0) return;
+
+    if (!parent_army_->parent().has_army_access(*path_.front())) {
+        path_.clear();
+        travel_progress_ = 0.0;
+        return;
+    }
+
+    location_ = path_.front();
+    path_.erase(path_.begin());
+    travel_progress_ = 0.0;
+}

@@ -7,7 +7,7 @@ struct data;
 class drawing;
 
 class bitmap {
-    std::vector<unsigned char> bytes_{};
+    std::vector<uint8_t> bytes_{};
 
     image *map_image_ = nullptr;
 
@@ -18,5 +18,5 @@ public:
 
     void reload_bitmap(const data &data, drawing &drawer);
 
-    [[nodiscard]] const std::vector<unsigned char> &bytes() const;
+    [[nodiscard]] const std::vector<uint8_t> &bytes() const;
 };

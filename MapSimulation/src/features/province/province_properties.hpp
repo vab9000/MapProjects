@@ -1,15 +1,27 @@
 #pragma once
 
-constexpr unsigned int flip_rb(const unsigned int color) {
+#include <string>
+
+constexpr uint_fast32_t flip_rb(const uint_fast32_t color) {
     return (color & 0x00FF00) | ((color & 0xFF0000) >> 16) | ((color & 0x0000FF) << 16);
 }
 
-constexpr unsigned int to_integer_color(const unsigned char r, const unsigned char g, const unsigned char b) {
+constexpr uint_fast32_t to_integer_color(const unsigned char r, const unsigned char g, const unsigned char b) {
     return flip_rb(
-        (static_cast<unsigned int>(r) << 16) | (static_cast<unsigned int>(g) << 8) | static_cast<unsigned int>(b));
+        (static_cast<uint_fast32_t>(r) << 16) | (static_cast<uint_fast32_t>(g) << 8) | static_cast<uint_fast32_t>(b));
 }
 
-enum class koppen_t : unsigned int {
+enum class map_modes : uint_fast8_t {
+    provinces,
+    owner,
+    koppen,
+    elevation,
+    vegetation,
+    soil,
+    sea,
+};
+
+enum class koppen_t : uint_fast32_t {
     none = 0,
     af = to_integer_color(0, 0, 255),
     am = to_integer_color(0, 120, 255),
@@ -43,7 +55,7 @@ enum class koppen_t : unsigned int {
     ef = to_integer_color(102, 102, 102),
 };
 
-enum class elevation_t : unsigned int {
+enum class elevation_t : uint_fast32_t {
     none = 0,
     flatland = to_integer_color(0, 255, 0),
     hills = to_integer_color(30, 200, 200),
@@ -52,7 +64,7 @@ enum class elevation_t : unsigned int {
     mountains = to_integer_color(50, 20, 20),
 };
 
-enum class vegetation_t : unsigned int {
+enum class vegetation_t : uint_fast32_t {
     none = 0,
     tropical_evergreen_broadleaf_forest = to_integer_color(28, 85, 16),
     tropical_semi_evergreen_broadleaf_forest = to_integer_color(101, 146, 8),
@@ -76,7 +88,7 @@ enum class vegetation_t : unsigned int {
     prostrate_dwarf_shrub_tundra = to_integer_color(210, 158, 150),
 };
 
-enum class soil_t : unsigned int {
+enum class soil_t : uint_fast32_t {
     none = 0,
     acrisols = to_integer_color(247, 153, 29),
     albeluvisols = to_integer_color(155, 157, 87),
@@ -110,7 +122,7 @@ enum class soil_t : unsigned int {
     vertisols = to_integer_color(158, 86, 124),
 };
 
-enum class sea_t :unsigned int {
+enum class sea_t :uint_fast32_t {
     none = 0,
     coast = to_integer_color(25, 255, 255),
     sea = to_integer_color(100, 200, 255),

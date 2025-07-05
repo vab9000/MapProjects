@@ -14,7 +14,7 @@ image::image(const std::string &path) : data_(nullptr), width_(0), height_(0) {
 }
 
 image::~image() {
-    if (data_) {
+    if (data_ != nullptr) {
         stbi_image_free(data_);
     }
 }
@@ -27,8 +27,8 @@ image& image::operator=(image &&other) noexcept {
     return *this;
 }
 
-[[nodiscard]] unsigned int image::color(const unsigned int i, const unsigned int j) const {
-    unsigned int pixel = 0;
+[[nodiscard]] uint_fast32_t image::color(const uint_fast32_t i, const uint_fast32_t j) const {
+    uint_fast32_t pixel = 0;
     pixel += data_[(i + j * width_) * 3];
     pixel += data_[(i + j * width_) * 3 + 1] << 8;
     pixel += data_[(i + j * width_) * 3 + 2] << 16;
