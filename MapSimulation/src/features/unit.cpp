@@ -1,6 +1,5 @@
 #include "unit.hpp"
-
-#include <ranges>
+#include <numeric>
 #include <utility>
 #include "province.hpp"
 #include "army.hpp"
@@ -9,25 +8,24 @@
 
 unit::unit(army *parent_army, province *location) : parent_army_(parent_army),
                                                     location_(location),
-                                                    travel_progress_(0), retreating_(false) {
+                                                    travel_progress_(0) {
 }
 
 unit::~unit() {
-    for (auto &[home, pop]: pops_) {
-        home->add_pop(std::move(pop));
+    transfer_pops(pops_, location_->pops());
+    if (has_captain()) {
+        captain_->remove_flag(character_flag_t::captain);
     }
 }
 
-void unit::add_pop(province *home, std::unique_ptr<pop> &&new_pop) {
-    pops_.emplace_back(home, std::unique_ptr(std::move(new_pop)));
+void unit::add_pop(pop new_pop) {
+    pops_.emplace_back(std::move(new_pop));
 }
 
-size_t unit::size() const {
-    size_t size = 0;
-    for (const auto &pop: pops_ | std::views::values) {
-        size += pop->size();
-    }
-    return size;
+uint_fast32_t unit::size() const {
+    return std::accumulate(pops_.begin(), pops_.end(), 0, [](const uint_fast32_t sum, const pop &p) {
+        return sum + p.size();
+    });
 }
 
 army &unit::parent() const {
@@ -38,14 +36,22 @@ void unit::set_parent(army *new_parent) {
     parent_army_ = new_parent;
 }
 
-void unit::set_captain(std::weak_ptr<character> new_captain) {
-    if (!captain_.expired()) captain_.lock()->remove_flag(character_flag_t::captain);
-    if (!new_captain.expired()) new_captain.lock()->add_flag(character_flag_t::captain);
-    captain_ = std::move(new_captain);
+bool unit::has_parent() const {
+    return parent_army_ != nullptr;
 }
 
-const std::weak_ptr<character> &unit::captain() const {
-    return captain_;
+void unit::set_captain(character *new_captain) {
+    if (has_captain()) captain_->remove_flag(character_flag_t::captain);
+    if (new_captain != nullptr) new_captain->add_flag(character_flag_t::captain);
+    captain_ = new_captain;
+}
+
+character &unit::captain() const {
+    return *captain_;
+}
+
+bool unit::has_captain() const {
+    return captain_ != nullptr;
 }
 
 province &unit::location() const {

@@ -8,7 +8,7 @@
 #include <ranges>
 #endif
 #include "../features/province.hpp"
-#include "data.hpp"
+#include "../features/data.hpp"
 #include "../ui/drawing.hpp"
 
 inline void set_pixel(std::vector<uint8_t> &bytes, const size_t index, const uint8_t r,
@@ -39,7 +39,7 @@ void bitmap::reload_bitmap_province(const province &reload_province, const data 
     std::for_each(std::execution::par_unseq, x_indices.begin(), x_indices.end(), [&](const uint_fast32_t i) {
         std::for_each(std::execution::par_unseq, y_indices.begin(), y_indices.end(), [&](const uint_fast32_t j) {
             const auto index = (i + j * map_image_->width()) * 4;
-            const auto color = data.provinces.at(map_image_->color(i, j)).color();
+            const auto color = data.provinces().at(map_image_->color(i, j)).color();
             set_pixel(bytes_, index, static_cast<uint8_t>(color),
                       static_cast<uint8_t>(color >> 8), static_cast<uint8_t>(color >> 16));
         });
@@ -73,7 +73,7 @@ void bitmap::reload_bitmap(const data &data, drawing &drawer) {
         [&](const uint_fast32_t i) {
             std::for_each(std::execution::par_unseq, y_indices.begin(), y_indices.end(), [&](const uint_fast32_t j) {
                 const auto index = (i + j * map_image_->width()) * 4;
-                const auto color = data.provinces.at(map_image_->color(i, j)).color();
+                const auto color = data.provinces().at(map_image_->color(i, j)).color();
                 set_pixel(bytes_, index, static_cast<uint8_t>(color),
                           static_cast<uint8_t>(color >> 8), static_cast<uint8_t>(color >> 16));
             });

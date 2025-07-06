@@ -2,28 +2,30 @@
 #include "province.hpp"
 #include "character.hpp"
 
-army::army(tag *parent_tag) : directive_(army_directive{army_directive_type::none, nullptr}), parent_tag_(parent_tag) {
+army::army(tag *parent_tag) : parent_tag_(parent_tag) {
 }
 
 army::~army() {
-    if (!commander_.expired()) {
-        commander_.lock()->remove_flag(character_flag_t::commander);
-    }
+    if (has_commander()) commander_->remove_flag(character_flag_t::commander);
 }
 
 unit &army::new_unit(province *location) {
-    units_.emplace_back(std::make_unique<unit>(this, location));
-    return *units_.back();
+    units_.emplace_back(this, location);
+    return units_.back();
 }
 
-void army::set_commander(std::weak_ptr<character> commander) {
-    if (!commander_.expired()) commander_.lock()->remove_flag(character_flag_t::commander);
-    if (!commander.expired()) commander.lock()->add_flag(character_flag_t::commander);
-    commander_ = std::move(commander);
+void army::set_commander(character *new_commander) {
+    if (has_commander()) commander_->remove_flag(character_flag_t::commander);
+    if (new_commander != nullptr) new_commander->add_flag(character_flag_t::commander);
+    commander_ = new_commander;
 }
 
-const std::weak_ptr<character> &army::commander() const {
-    return commander_;
+character &army::commander() const {
+    return *commander_;
+}
+
+bool army::has_commander() const {
+    return commander_ != nullptr;
 }
 
 army_directive army::directive() const {
@@ -42,6 +44,6 @@ void army::set_parent(tag *new_parent) {
     parent_tag_ = new_parent;
 }
 
-const std::list<std::unique_ptr<unit> > &army::units() const {
+const std::list<unit> &army::units() const {
     return units_;
 }

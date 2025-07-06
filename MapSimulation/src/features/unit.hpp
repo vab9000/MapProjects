@@ -9,24 +9,24 @@ class province;
 class character;
 
 class unit {
-    std::list<std::pair<province *, std::unique_ptr<pop> > > pops_;
+    pop_container pops_;
     army *parent_army_;
-    std::weak_ptr<character> captain_;
+    character *captain_ = nullptr;
     province *location_;
     std::list<province *> path_;
     double_t travel_progress_;
-    bool retreating_;
+    bool retreating_ = false;
 
 public:
     unit(army *parent_army, province *location);
 
     ~unit();
 
-    // Add a pop to the unit, transferring it from the home province
-    void add_pop(province *home, std::unique_ptr<pop> &&new_pop);
+    // Add a pop to the unit
+    void add_pop(pop new_pop);
 
     // Get the total number of troops in the unit
-    [[nodiscard]] size_t size() const;
+    [[nodiscard]] uint_fast32_t size() const;
 
     // Get the parent army of the unit
     [[nodiscard]] army &parent() const;
@@ -34,11 +34,15 @@ public:
     // Set the parent army of the unit
     void set_parent(army *new_parent);
 
+    [[nodiscard]] bool has_parent() const;
+
     // Set the captain of the unit
-    void set_captain(std::weak_ptr<character> new_captain);
+    void set_captain(character *new_captain);
 
     // Get the captain of the unit
-    [[nodiscard]] const std::weak_ptr<character> &captain() const;
+    [[nodiscard]] character &captain() const;
+
+    [[nodiscard]] bool has_captain() const;
 
     // Get the location of the unit
     [[nodiscard]] province &location() const;

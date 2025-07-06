@@ -2,7 +2,7 @@
 #include <string>
 
 class image;
-struct data;
+class data;
 
 // Loads data from map image and files
 void load_image(data &data, image &map_image, std::string &loading_text);

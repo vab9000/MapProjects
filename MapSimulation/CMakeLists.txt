@@ -82,6 +82,10 @@ file(GLOB_RECURSE Images assets/*)
 
 file(COPY ${Images} DESTINATION ${CMAKE_BINARY_DIR}/bin/assets)
 
+file(GLOB_RECURSE Shaders shaders/*)
+
+file(COPY ${Shaders} DESTINATION ${CMAKE_BINARY_DIR}/bin/shaders)
+
 #file(GLOB_RECURSE OpenCV_DLLS ${OpenCV_LIB_PATH}/../bin/*.dll)
 #
 #file(COPY ${OpenCV_DLLS} DESTINATION ${CMAKE_BINARY_DIR}/bin)

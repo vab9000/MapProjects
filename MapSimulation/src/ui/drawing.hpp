@@ -2,20 +2,20 @@
 
 #include <SFML/Graphics.hpp>
 
-struct data;
+class data;
 class image;
 class simulation;
 
 class drawing {
-    data &data_;
     simulation &simulation_;
     const std::string &loading_text_;
 
     sf::Texture texture_{};
     sf::Sprite map_sprite_{texture_};
+    sf::Shader map_shader_{};
 
 public:
-    explicit drawing(data &data, simulation &simulation, const std::string &loading_text);
+    explicit drawing(simulation &simulation, const std::string &loading_text);
 
     // Create a texture from the map image and initialize sprites
     bool init_sprites(const image &map_image, const std::vector<uint8_t> &bytes);

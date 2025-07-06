@@ -15,7 +15,11 @@ class character final : public ai {
     std::set<personality_trait_t> traits_;
 
 public:
+    const uint_fast32_t id;
+
     explicit character(date birthday, province *location);
+
+    ~character() override;
 
     // The number of years since the character's birthday
     [[nodiscard]] uint_fast32_t age(const date &current_date) const;
@@ -25,6 +29,9 @@ public:
 
     // The province where the character is located
     [[nodiscard]] province &location() const;
+
+    // Set the character's location to a new province
+    void set_location(province *location);
 
     void update_ai() override;
 

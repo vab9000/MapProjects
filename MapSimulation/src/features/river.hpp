@@ -8,7 +8,7 @@ class river {
     std::vector<province *> provinces_;
 
 public:
-    river();
+    river() = default;
 
     // Adds a province to the river
     void add_province(province *prov);

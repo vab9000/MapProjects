@@ -14,13 +14,6 @@ image::image(const std::string &path) : width_(0), height_(0) {
     data_ = std::vector(arr, arr + (width_ * height_ * 3));
 }
 
-image& image::operator=(image &&other) noexcept {
-    data_ = std::move(other.data_);
-    width_ = other.width_;
-    height_ = other.height_;
-    return *this;
-}
-
 [[nodiscard]] uint_fast32_t image::color(const uint_fast32_t i, const uint_fast32_t j) const {
     uint_fast32_t pixel = 0;
     pixel += data_[(i + j * width_) * 3];

@@ -50,8 +50,8 @@ void tag::remove_gold(const int_fast32_t amount) {
 }
 
 [[nodiscard]] army &tag::new_army() {
-    armies_.emplace_back(std::make_unique<army>(this));
-    return *armies_.back();
+    armies_.emplace_back(this);
+    return armies_.back();
 }
 
 void tag::add_province(province &added_province) {
@@ -70,8 +70,12 @@ bool tag::has_province(const province &found_province) const {
     return provinces_;
 }
 
+std::list<province *> & tag::provinces() {
+    return provinces_;
+}
+
 [[nodiscard]] bool tag::has_army_access(const province &access_province) const {
-    return access_province.owner() == this;
+    return &access_province.owner() == this;
 }
 
 void tag::tick() {

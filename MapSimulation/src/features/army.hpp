@@ -1,7 +1,6 @@
 #pragma once
 
 #include <list>
-#include <memory>
 #include "unit.hpp"
 #include "army/army_properties.hpp"
 
@@ -10,10 +9,10 @@ class character;
 class tag;
 
 class army {
-    army_directive directive_;
-    std::weak_ptr<character> commander_;
+    army_directive directive_{army_directive_type::none, nullptr};
+    character *commander_{nullptr};
     tag *parent_tag_;
-    std::list<std::unique_ptr<unit> > units_;
+    std::list<unit> units_;
 
 public:
     explicit army(tag *parent_tag);
@@ -24,10 +23,12 @@ public:
     [[nodiscard]] unit &new_unit(province *location);
 
     // Sets the commander of the army
-    void set_commander(std::weak_ptr<character> commander);
+    void set_commander(character *new_commander);
 
     // Returns the commander of the army
-    [[nodiscard]] const std::weak_ptr<character> &commander() const;
+    [[nodiscard]] character &commander() const;
+
+    [[nodiscard]] bool has_commander() const;
 
     // Returns the directive of the army
     [[nodiscard]] army_directive directive() const;
@@ -42,5 +43,5 @@ public:
     void set_parent(tag *new_parent);
 
     // Returns the list of units in the army
-    [[nodiscard]] const std::list<std::unique_ptr<unit> > &units() const;
+    [[nodiscard]] const std::list<unit> &units() const;
 };

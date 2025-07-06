@@ -7,14 +7,14 @@
 #endif
 #include "load_image.hpp"
 
-void simulation::change_map_mode(const map_modes mode) {
-    data_.map_mode = mode;
+void simulation::change_map_mode(const map_mode_t mode) {
+    map_mode_ = mode;
 
-    const auto province_values = data_.provinces | std::views::values;
+    const auto province_values = data_.provinces() | std::views::values;
 
 #ifdef __cpp_lib_execution
     std::for_each(std::execution::par_unseq, province_values.begin(), province_values.end(),
-                  [&](province &province) { province.recolor(data_.map_mode); });
+                  [&](province &province) { province.recolor(map_mode_); });
 #else
     std::ranges::for_each(province_values, [&](province &province) { province.recolor(data_.map_mode); });
 #endif
@@ -26,17 +26,25 @@ std::array<int, 2> simulation::map_dimensions() const {
     return {map_image_.width(), map_image_.height()};
 }
 
+map_mode_t simulation::map_mode() const {
+    return map_mode_;
+}
+
+province * simulation::selected_province() const {
+    return selected_province_;
+}
+
 // ReSharper disable once CppDFAUnreachableFunctionCall
 void simulation::select_province(province *province) {
-    const auto old_selected_province = data_.selected_province;
-    data_.selected_province = province;
+    const auto old_selected_province = selected_province_;
+    selected_province_ = province;
 
     if (old_selected_province != nullptr) {
         bitmap_.reload_bitmap_province(*old_selected_province, data_, drawer_);
     }
 
-    if (data_.selected_province != nullptr) {
-        bitmap_.reload_bitmap_province(*data_.selected_province, data_, drawer_);
+    if (selected_province_ != nullptr) {
+        bitmap_.reload_bitmap_province(*selected_province_, data_, drawer_);
     }
 }
 
@@ -121,7 +129,7 @@ void simulation::handle_event(const sf::Event &event) {
             const auto y = static_cast<int_fast32_t>((release_data->position.y - offset_[1]) / zoom_);
 
             const auto color = map_image_.color(x % map_image_.width(), y);
-            const auto province = &data_.provinces.at(color);
+            const auto province = &data_.provinces().at(color);
             select_province(province);
         }
 

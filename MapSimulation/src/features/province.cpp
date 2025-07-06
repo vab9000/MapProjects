@@ -1,23 +1,19 @@
 #include "province.hpp"
 #include <algorithm>
 #include <array>
-#include <queue>
 #include <ranges>
 #include <cmath>
 #include <vector>
 #include "tag.hpp"
 
-province::province() : owner_(nullptr), size_(0), bounds_{0, 0, 0, 0}, center_{0, 0},
-                       koppen_(koppen_t::none), elevation_(elevation_t::none), vegetation_(vegetation_t::none),
+province::province() : koppen_(koppen_t::none), elevation_(elevation_t::none), vegetation_(vegetation_t::none),
                        soil_(soil_t::none), sea_(sea_t::none), base_color_(0), color_(0) {
 }
 
 province::province(const uint_fast32_t color, const koppen_t koppen,
                    const elevation_t elevation,
-                   const vegetation_t vegetation, const soil_t soil, const sea_t sea) : owner_(nullptr),
-    size_(0),
-    bounds_{0, 0, 0, 0}, center_{0, 0},
-    koppen_(koppen), elevation_(elevation),
+                   const vegetation_t vegetation, const soil_t soil, const sea_t sea) : koppen_(koppen),
+    elevation_(elevation),
     vegetation_(vegetation),
     soil_(soil), sea_(sea), base_color_(color), color_(color) {
 }
@@ -83,7 +79,10 @@ void province::set_owner(tag *new_owner) {
     if (has_owner() && owner_->has_province(*this)) {
         owner_->remove_province(*this);
     }
-    owner_ = new_owner;
+    owner_ = std::move(new_owner);
+    if (has_owner()) {
+        owner_->add_province(*this);
+    }
 }
 
 void province::remove_owner() {
@@ -93,20 +92,22 @@ void province::remove_owner() {
     owner_ = nullptr;
 }
 
-tag *province::owner() const {
-    return owner_;
+const tag &province::owner() const {
+    return *owner_;
 }
 
 bool province::has_owner() const {
     return owner_ != nullptr;
 }
 
-void province::add_pop(std::unique_ptr<pop> &&new_pop) {
+void province::add_pop(pop new_pop) {
     pops_.emplace_back(std::move(new_pop));
 }
 
-void province::add_pop(pop new_pop) {
-    pops_.emplace_back(std::make_unique<pop>(new_pop));
+void province::remove_pop(pop *p) {
+    std::erase_if(pops_, [p](const pop &elem) {
+        return &elem == p;
+    });
 }
 
 void province::add_river_boundary(province *neighbor, const uint_fast8_t size) {
@@ -142,10 +143,10 @@ void province::expand_bounds(const uint_fast32_t x, const uint_fast32_t y) {
     }
 }
 
-void province::recolor(const map_modes mode) {
-    if (mode == map_modes::provinces) {
+void province::recolor(const map_mode_t mode) {
+    if (mode == map_mode_t::provinces) {
         color_ = base_color_;
-    } else if (mode == map_modes::owner) {
+    } else if (mode == map_mode_t::owner) {
         if (has_owner()) {
             color_ = owner_->color();
         } else {
@@ -153,29 +154,29 @@ void province::recolor(const map_modes mode) {
         }
     }
     switch (mode) {
-        case map_modes::provinces:
+        case map_mode_t::provinces:
             color_ = base_color_;
             break;
-        case map_modes::owner:
+        case map_mode_t::owner:
             if (has_owner()) {
                 color_ = owner_->color();
             } else {
                 color_ = 0xFFFFFFFF;
             }
             break;
-        case map_modes::koppen:
+        case map_mode_t::koppen:
             color_ = static_cast<uint_fast32_t>(koppen_);
             break;
-        case map_modes::elevation:
+        case map_mode_t::elevation:
             color_ = static_cast<uint_fast32_t>(elevation_);
             break;
-        case map_modes::vegetation:
+        case map_mode_t::vegetation:
             color_ = static_cast<uint_fast32_t>(vegetation_);
             break;
-        case map_modes::soil:
+        case map_mode_t::soil:
             color_ = static_cast<uint_fast32_t>(soil_);
             break;
-        case map_modes::sea:
+        case map_mode_t::sea:
             color_ = static_cast<uint_fast32_t>(sea_);
             break;
     }
@@ -231,7 +232,11 @@ const std::array<uint_fast32_t, 2> &province::center() const {
     return center_;
 }
 
-const std::list<std::unique_ptr<pop> > &province::pops() const {
+const pop_container &province::pops() const {
+    return pops_;
+}
+
+pop_container &province::pops() {
     return pops_;
 }
 

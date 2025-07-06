@@ -1,7 +1,5 @@
 #include "river.hpp"
 
-river::river() = default;
-
 void river::add_province(province *prov) {
     provinces_.push_back(prov);
 }

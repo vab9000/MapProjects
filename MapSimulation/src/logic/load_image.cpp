@@ -9,9 +9,7 @@
 #include <execution>
 #endif
 #include "image.hpp"
-#include "../features/province.hpp"
-#include "../features/tag.hpp"
-#include "data.hpp"
+#include "../features/data.hpp"
 
 void load_image(data &data, image &map_image, std::string &loading_text) {
     std::ifstream province_file("assets/provinces.txt");
@@ -39,15 +37,11 @@ void load_image(data &data, image &map_image, std::string &loading_text) {
         province_file >> soil_value;
         std::getline(province_file, ignore);
         color = flip_rb(color);
-        auto new_tag = std::make_unique<tag>(color);
-        auto id = new_tag->id;
-        data.tags.emplace(id, std::move(new_tag));
-        data.provinces.emplace(std::piecewise_construct, std::forward_as_tuple(color), std::forward_as_tuple(
-                                   color, static_cast<koppen_t>(flip_rb(koppen_value)),
-                                   static_cast<elevation_t>(flip_rb(elevation_value)),
-                                   static_cast<vegetation_t>(flip_rb(vegetation_value)),
-                                   static_cast<soil_t>(flip_rb(soil_value)), sea_t::none));
-        data.provinces[color].set_owner(data.tags[id].get());
+        data.provinces().emplace(std::piecewise_construct, std::forward_as_tuple(color), std::forward_as_tuple(
+                                     color, static_cast<koppen_t>(flip_rb(koppen_value)),
+                                     static_cast<elevation_t>(flip_rb(elevation_value)),
+                                     static_cast<vegetation_t>(flip_rb(vegetation_value)),
+                                     static_cast<soil_t>(flip_rb(soil_value)), sea_t::none));
     }
     province_file.close();
 
@@ -66,9 +60,9 @@ void load_image(data &data, image &map_image, std::string &loading_text) {
         uint_fast32_t sea_value;
         sea_file >> sea_value;
         color = flip_rb(color);
-        data.provinces.emplace(std::piecewise_construct, std::forward_as_tuple(color), std::forward_as_tuple(
-                                   color, koppen_t::none, elevation_t::none, vegetation_t::none,
-                                   soil_t::none, static_cast<sea_t>(flip_rb(sea_value))));
+        data.provinces().emplace(std::piecewise_construct, std::forward_as_tuple(color), std::forward_as_tuple(
+                                     color, koppen_t::none, elevation_t::none, vegetation_t::none,
+                                     soil_t::none, static_cast<sea_t>(flip_rb(sea_value))));
     }
     sea_file.close();
 
@@ -91,8 +85,8 @@ void load_image(data &data, image &map_image, std::string &loading_text) {
         rivers_file >> river_value;
         color = flip_rb(color);
         neighbor_color = flip_rb(neighbor_color);
-        data.provinces.at(color).add_river_boundary(&data.provinces.at(neighbor_color),
-                                                    static_cast<uint_fast8_t>(river_value));
+        data.provinces().at(color).add_river_boundary(&data.provinces().at(neighbor_color),
+                                                       static_cast<uint_fast8_t>(river_value));
     }
     rivers_file.close();
 
@@ -101,29 +95,27 @@ void load_image(data &data, image &map_image, std::string &loading_text) {
         throw std::runtime_error("Failed to open river lines file: " "river_lines.txt");
     }
     loading_text = "Loading river lines file...";
-    data.rivers.emplace_back();
-    auto *current_river = &data.rivers.back();
+    auto *current_river = &data.add_river();
     while (!river_lines_file.eof()) {
         std::string command;
         std::getline(river_lines_file, command, ':');
         if (command == "\n") break;
         if (command == "River ID") {
-            data.rivers.emplace_back();
-            current_river = &data.rivers.back();
+            current_river = &data.add_river();
             uint_fast32_t river_id;
             river_lines_file >> river_id;
         } else if (command == "Province Color") {
             uint_fast32_t province_color;
             river_lines_file >> province_color;
             province_color = flip_rb(province_color);
-            current_river->add_province(&data.provinces.at(province_color));
+            current_river->add_province(&data.provinces().at(province_color));
         }
         std::getline(river_lines_file, command, '\n');
     }
     river_lines_file.close();
 
     auto process_pixel = [&](const uint_fast32_t color, const std::array<uint_fast32_t, 2> position) {
-        auto &province = data.provinces.at(color);
+        auto &province = data.provinces().at(color);
         province.expand_bounds(position[0], position[1]);
     };
 
@@ -140,7 +132,7 @@ void load_image(data &data, image &map_image, std::string &loading_text) {
                 {1, -1}, {1, 0}, {1, 1}
             }
         };
-        auto &this_province = data.provinces.at(color);
+        auto &this_province = data.provinces().at(color);
         pixels_by_province[&this_province].push_back(position);
 
         for (int_fast8_t index = 0; index < 4; index++) {
@@ -155,7 +147,7 @@ void load_image(data &data, image &map_image, std::string &loading_text) {
             if (neighbor_color == color) {
                 continue;
             }
-            auto &neighbor = data.provinces.at(neighbor_color);
+            auto &neighbor = data.provinces().at(neighbor_color);
             this_province.add_neighbor(&neighbor);
         }
         if (this_province.sea() == sea_t::none) return;
@@ -171,7 +163,7 @@ void load_image(data &data, image &map_image, std::string &loading_text) {
             if (neighbor_color == color) {
                 continue;
             }
-            auto &neighbor = data.provinces.at(neighbor_color);
+            auto &neighbor = data.provinces().at(neighbor_color);
             if (neighbor.sea() == sea_t::none) continue;
             this_province.add_neighbor(&neighbor);
         }
@@ -195,7 +187,7 @@ void load_image(data &data, image &map_image, std::string &loading_text) {
         }
     }
 
-    auto province_values = data.provinces | std::views::values;
+    auto province_values = data.provinces() | std::views::values;
 
     loading_text = "Finalizing provinces...";
 #ifdef __cpp_lib_execution

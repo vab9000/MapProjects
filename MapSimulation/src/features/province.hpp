@@ -1,11 +1,9 @@
 #pragma once
 
 #include <array>
-#include <memory>
 #include <map>
 #include <vector>
 #include <functional>
-#include <list>
 #include "pop.hpp"
 #include "province/province_properties.hpp"
 
@@ -14,15 +12,15 @@ class river;
 class unit;
 
 class province {
-    std::list<std::unique_ptr<pop> > pops_;
-    bool distances_processed_ = false;
-    tag *owner_;
+    pop_container pops_;
+    tag *owner_ = nullptr;
     std::map<province *, double_t> neighbors_;
     std::map<province *, uint_fast8_t> river_boundaries_;
     std::vector<river *> rivers_;
-    uint_fast32_t size_;
-    std::array<uint_fast32_t, 4> bounds_;
-    std::array<uint_fast32_t, 2> center_;
+    uint_fast32_t size_ = 0;
+    bool distances_processed_ = false;
+    std::array<uint_fast32_t, 4> bounds_{0, 0, 0, 0};
+    std::array<uint_fast32_t, 2> center_{0, 0};
     koppen_t koppen_;
     elevation_t elevation_;
     vegetation_t vegetation_;
@@ -41,6 +39,8 @@ public:
 
     province &operator=(const province &) = delete;
 
+    province &operator=(province &&) = default;
+
     // Do final calculations after all pixels have been added
     void finalize(const std::vector<std::array<uint_fast32_t, 2> > &pixels);
 
@@ -54,16 +54,16 @@ public:
     void remove_owner();
 
     // Get the owner of the province
-    [[nodiscard]] tag *owner() const;
+    [[nodiscard]] const tag &owner() const;
 
     // Check if the province has an owner
     [[nodiscard]] bool has_owner() const;
 
     // Add a pop to the province
-    void add_pop(std::unique_ptr<pop> &&new_pop);
-
-    // Add a pop to the province
     void add_pop(pop new_pop);
+
+    // Remove a pop from the province and return a moved pop object that can be added elsewhere
+    void remove_pop(pop *p);
 
     // Add a river boundary to the province with a specific size, linking it to a neighboring province
     void add_river_boundary(province *neighbor, uint_fast8_t size);
@@ -78,7 +78,7 @@ public:
     void expand_bounds(uint_fast32_t x, uint_fast32_t y);
 
     // Recolor the province based on the current map mode
-    void recolor(map_modes mode);
+    void recolor(map_mode_t mode);
 
     // Get the base color of the province
     [[nodiscard]] uint_fast32_t base_color() const;
@@ -120,7 +120,10 @@ public:
     [[nodiscard]] const std::array<uint_fast32_t, 2> &center() const;
 
     // List of pops that are in this province
-    [[nodiscard]] const std::list<std::unique_ptr<pop> > &pops() const;
+    [[nodiscard]] const pop_container &pops() const;
+
+    // List of pops that are in this province
+    pop_container &pops();
 
     // Get the neighbors of this province as a map of neighbor province pointers to distances
     [[nodiscard]] const std::map<province *, double_t> &neighbors() const;

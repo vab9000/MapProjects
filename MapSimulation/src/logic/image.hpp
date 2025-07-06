@@ -13,7 +13,7 @@ public:
 
     explicit image(const std::string &path);
 
-    image &operator=(image &&other) noexcept;
+    image &operator=(image &&other) noexcept = default;
 
     image &operator=(const image &other) = delete;
 

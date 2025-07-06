@@ -3,7 +3,7 @@
 #include "image.hpp"
 
 class province;
-struct data;
+class data;
 class drawing;
 
 class bitmap {

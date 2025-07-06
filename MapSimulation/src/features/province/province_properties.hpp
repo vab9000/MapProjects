@@ -2,16 +2,7 @@
 
 #include <string>
 
-constexpr uint_fast32_t flip_rb(const uint_fast32_t color) {
-    return (color & 0x00FF00) | ((color & 0xFF0000) >> 16) | ((color & 0x0000FF) << 16);
-}
-
-constexpr uint_fast32_t to_integer_color(const uint8_t r, const uint8_t g, const uint8_t b) {
-    return flip_rb(
-        (static_cast<uint_fast32_t>(r) << 16) | (static_cast<uint_fast32_t>(g) << 8) | static_cast<uint_fast32_t>(b));
-}
-
-enum class map_modes : uint_fast8_t {
+enum class map_mode_t : uint_fast8_t {
     provinces,
     owner,
     koppen,
@@ -20,6 +11,15 @@ enum class map_modes : uint_fast8_t {
     soil,
     sea,
 };
+
+constexpr uint_fast32_t flip_rb(const uint_fast32_t color) {
+    return (color & 0x00FF00) | ((color & 0xFF0000) >> 16) | ((color & 0x0000FF) << 16);
+}
+
+constexpr uint_fast32_t to_integer_color(const uint8_t r, const uint8_t g, const uint8_t b) {
+    return flip_rb(
+        (static_cast<uint_fast32_t>(r) << 16) | (static_cast<uint_fast32_t>(g) << 8) | static_cast<uint_fast32_t>(b));
+}
 
 enum class koppen_t : uint_fast32_t {
     none = 0,
