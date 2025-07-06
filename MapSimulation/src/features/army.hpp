@@ -18,6 +18,8 @@ class army {
 public:
     explicit army(tag *parent_tag);
 
+    ~army();
+
     // Creates a new unit in the army at the specified location
     [[nodiscard]] unit &new_unit(province *location);
 

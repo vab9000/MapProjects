@@ -5,6 +5,12 @@
 army::army(tag *parent_tag) : directive_(army_directive{army_directive_type::none, nullptr}), parent_tag_(parent_tag) {
 }
 
+army::~army() {
+    if (!commander_.expired()) {
+        commander_.lock()->remove_flag(character_flag_t::commander);
+    }
+}
+
 unit &army::new_unit(province *location) {
     units_.emplace_back(std::make_unique<unit>(this, location));
     return *units_.back();

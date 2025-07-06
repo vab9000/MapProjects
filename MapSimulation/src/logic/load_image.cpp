@@ -112,8 +112,7 @@ void load_image(data &data, image &map_image, std::string &loading_text) {
             current_river = &data.rivers.back();
             uint_fast32_t river_id;
             river_lines_file >> river_id;
-        }
-        else if (command == "Province Color") {
+        } else if (command == "Province Color") {
             uint_fast32_t province_color;
             river_lines_file >> province_color;
             province_color = flip_rb(province_color);

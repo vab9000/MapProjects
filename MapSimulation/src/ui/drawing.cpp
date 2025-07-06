@@ -17,23 +17,17 @@ bool drawing::init_sprites(const image &map_image, const std::vector<uint8_t> &b
         sf::Image(sf::Vector2u(map_image.width(), map_image.height()), bytes.data()))) {
         return false;
     }
-    map_sprite_one_.setTexture(texture_);
-    map_sprite_one_.setTextureRect(sf::IntRect(sf::Vector2(0, 0),
-                                               sf::Vector2(map_image.width(), map_image.height())));
-    map_sprite_two_.setTexture(texture_);
-    map_sprite_two_.setTextureRect(sf::IntRect(sf::Vector2(0, 0),
-                                               sf::Vector2(map_image.width(), map_image.height())));
+    map_sprite_.setTexture(texture_);
+    map_sprite_.setTextureRect(sf::IntRect(sf::Vector2(0, 0),
+                                           sf::Vector2(map_image.width(), map_image.height())));
     return true;
 }
 
 void drawing::recalculate_sprite_coords(const std::array<int_fast32_t, 2> offset, const double_t zoom,
                                         const uint_fast32_t map_width) {
     const auto zoom_f = static_cast<float_t>(zoom);
-    map_sprite_one_.setPosition(sf::Vector2f(static_cast<float_t>(offset[0]), static_cast<float_t>(offset[1])));
-    map_sprite_one_.setScale(sf::Vector2f(zoom_f, zoom_f));
-    map_sprite_two_.setPosition(sf::Vector2f(static_cast<float_t>(offset[0] + map_width * zoom),
-                                             static_cast<float_t>(offset[1])));
-    map_sprite_two_.setScale(sf::Vector2f(zoom_f, zoom_f));
+    map_sprite_.setPosition(sf::Vector2f(static_cast<float_t>(offset[0]), static_cast<float_t>(offset[1])));
+    map_sprite_.setScale(sf::Vector2f(zoom_f, zoom_f));
 }
 
 void drawing::draw_loading_message(sf::RenderWindow &window) const {
@@ -45,9 +39,12 @@ void drawing::draw_loading_message(sf::RenderWindow &window) const {
     }
 }
 
-void drawing::draw_map(sf::RenderWindow &window) const {
-    window.draw(map_sprite_one_);
-    window.draw(map_sprite_two_);
+void drawing::draw_map(sf::RenderWindow &window) {
+    window.draw(map_sprite_);
+    const auto offset = static_cast<float>(texture_.getSize().x) * map_sprite_.getScale().x;
+    map_sprite_.move(sf::Vector2f(offset, 0));
+    window.draw(map_sprite_);
+    map_sprite_.move(sf::Vector2f(-offset, 0));
 }
 
 void drawing::update_map_texture(const uint8_t *bytes) {

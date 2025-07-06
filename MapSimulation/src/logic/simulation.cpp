@@ -22,6 +22,10 @@ void simulation::change_map_mode(const map_modes mode) {
     bitmap_.reload_bitmap(data_, drawer_);
 }
 
+std::array<int, 2> simulation::map_dimensions() const {
+    return {map_image_.width(), map_image_.height()};
+}
+
 // ReSharper disable once CppDFAUnreachableFunctionCall
 void simulation::select_province(province *province) {
     const auto old_selected_province = data_.selected_province;
@@ -43,7 +47,7 @@ void simulation::start_processing() {
 
     load_image(data_, map_image_, loading_text_);
 
-    bitmap_.init_bitmap(&map_image_, data_, drawer_);
+    bitmap_ = bitmap{&map_image_, data_, drawer_};
 
     if (!drawer_.init_sprites(map_image_, bitmap_.bytes())) {
         throw std::runtime_error("Failed to initialize sprites");

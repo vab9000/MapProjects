@@ -3,27 +3,21 @@
 #include <stb_image.h>
 #include <stdexcept>
 
-image::image() : data_(nullptr), width_(0), height_(0) {
+image::image() : width_(0), height_(0) {
 }
 
-image::image(const std::string &path) : data_(nullptr), width_(0), height_(0) {
-    data_ = stbi_load(path.c_str(), &width_, &height_, nullptr, 3);
-    if (data_ == nullptr) {
+image::image(const std::string &path) : width_(0), height_(0) {
+    uint8_t* arr = stbi_load(path.c_str(), &width_, &height_, nullptr, 3);
+    if (arr == nullptr) {
         throw std::runtime_error("Failed to load image: " + path);
     }
-}
-
-image::~image() {
-    if (data_ != nullptr) {
-        stbi_image_free(data_);
-    }
+    data_ = std::vector(arr, arr + (width_ * height_ * 3));
 }
 
 image& image::operator=(image &&other) noexcept {
-    data_ = other.data_;
+    data_ = std::move(other.data_);
     width_ = other.width_;
     height_ = other.height_;
-    other.data_ = nullptr;
     return *this;
 }
 

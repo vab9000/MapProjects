@@ -19,11 +19,11 @@ inline void set_pixel(std::vector<uint8_t> &bytes, const size_t index, const uin
     bytes[index + 3] = 255;
 }
 
-void bitmap::init_bitmap(image *image, const data &data, drawing &drawer) {
-    map_image_ = image;
+bitmap::bitmap() = default;
 
-    bytes_ = std::vector<uint8_t>(map_image_->width() * map_image_->height() * 4, 0);
-
+bitmap::bitmap(image *image, const data &data, drawing &drawer) : map_image_(image),
+                                                                  bytes_(map_image_->width() * map_image_->height() * 4,
+                                                                         0) {
     reload_bitmap(data, drawer);
 }
 
