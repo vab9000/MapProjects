@@ -8,8 +8,8 @@ class province;
 
 class tag {
     std::list<province *> provinces_;
-    uint_fast32_t color_;
     std::list<army> armies_;
+    uint_fast32_t color_;
     int_fast32_t gold_ = 0;
 
 public:

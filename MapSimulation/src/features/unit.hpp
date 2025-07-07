@@ -14,7 +14,7 @@ class unit {
     character *captain_ = nullptr;
     province *location_;
     std::list<province *> path_;
-    double_t travel_progress_;
+    double_t travel_progress_ = 0.0;
     bool retreating_ = false;
 
 public:

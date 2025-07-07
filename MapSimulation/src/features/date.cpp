@@ -51,7 +51,7 @@ date::date(const date *other) : date(other->year, other->month, other->day) {
 
 
 int_fast64_t date::absolute_days() const {
-    size_t total_days = 0;
+    int_fast64_t total_days = 0;
 
     for (uint_fast32_t y = 0; y < year; ++y) {
         total_days += (y % 4 == 0 && (y % 100 != 0 || y % 400 == 0)) ? 366 : 365;

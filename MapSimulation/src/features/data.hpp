@@ -8,7 +8,7 @@
 #include "character.hpp"
 
 class data {
-    date current_date_{};
+    date current_date_;
     std::unordered_map<uint_fast32_t, province> provinces_;
     std::unordered_map<uint_fast32_t, tag> tags_;
     std::unordered_map<uint_fast32_t, character> characters_;

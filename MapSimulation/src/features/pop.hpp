@@ -8,7 +8,7 @@ enum class lifestyle_t {
 };
 
 class pop {
-    uint_fast32_t size_;
+    uint_fast32_t size_ = 0;
     lifestyle_t lifestyle_;
 
 public:

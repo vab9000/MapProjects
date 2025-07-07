@@ -10,9 +10,9 @@ class drawing {
     simulation &simulation_;
     const std::string &loading_text_;
 
-    sf::Texture texture_{};
+    sf::Texture texture_;
     sf::Sprite map_sprite_{texture_};
-    sf::Shader map_shader_{};
+    sf::Shader map_shader_;
 
 public:
     explicit drawing(simulation &simulation, const std::string &loading_text);

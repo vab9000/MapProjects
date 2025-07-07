@@ -9,8 +9,8 @@ class character;
 class tag;
 
 class army {
-    army_directive directive_{army_directive_type::none, nullptr};
-    character *commander_{nullptr};
+    army_directive directive_;
+    character *commander_ = nullptr;
     tag *parent_tag_;
     std::list<unit> units_;
 

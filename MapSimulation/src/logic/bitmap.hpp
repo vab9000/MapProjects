@@ -8,7 +8,7 @@ class drawing;
 
 class bitmap {
     image *map_image_ = nullptr;
-    std::vector<uint8_t> bytes_{};
+    std::vector<uint8_t> bytes_;
 
 public:
     bitmap();

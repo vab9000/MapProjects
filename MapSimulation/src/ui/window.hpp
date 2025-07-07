@@ -21,7 +21,7 @@ public:
     void stop_event_loop();
 
     // Add a function to be called during the render phase
-    void add_render_func(std::function<void(sf::RenderWindow &)> func);
+    void add_render_func(const std::function<void(sf::RenderWindow &)>& func);
 
     // Remove all render functions
     void clear_render_funcs();

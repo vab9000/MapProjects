@@ -7,8 +7,7 @@
 #include "character.hpp"
 
 unit::unit(army *parent_army, province *location) : parent_army_(parent_army),
-                                                    location_(location),
-                                                    travel_progress_(0) {
+                                                    location_(location) {
 }
 
 unit::~unit() {

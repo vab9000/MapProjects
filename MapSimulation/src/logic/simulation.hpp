@@ -18,10 +18,10 @@ class simulation {
 
     std::string loading_text_;
 
-    bitmap bitmap_{};
-    image map_image_{};
+    bitmap bitmap_;
+    image map_image_;
 
-    map_mode_t map_mode_{map_mode_t::provinces};
+    map_mode_t map_mode_ = map_mode_t::provinces;
     province *selected_province_ = nullptr;
 
     data &data_ = data::instance();

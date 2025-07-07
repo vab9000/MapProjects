@@ -7,7 +7,7 @@ window::window(
     std::function<void(const sf::Event &)> &&event_func) : window_(sf::RenderWindow(
                                                                sf::VideoMode(sf::Vector2u(800, 600)),
                                                                "Map Simulation")),
-                                                           gui_area_({0, 0, 100, 600}),
+                                                           gui_area_{0, 0, 200, 600},
                                                            event_func_(std::move(event_func)) {
     window_.setFramerateLimit(60);
     // window_.setVerticalSyncEnabled(true);
@@ -26,7 +26,7 @@ void window::stop_event_loop() {
     }
 }
 
-void window::add_render_func(std::function<void(sf::RenderWindow &)> func) {
+void window::add_render_func(const std::function<void(sf::RenderWindow &)>& func) {
     render_funcs_.emplace_back(func);
 }
 

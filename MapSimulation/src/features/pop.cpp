@@ -1,6 +1,6 @@
 #include "pop.hpp"
 
-pop::pop() : size_(0), lifestyle_(lifestyle_t::tribal) {
+pop::pop() : lifestyle_(lifestyle_t::tribal) {
 }
 
 uint_fast32_t pop::size() const {

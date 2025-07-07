@@ -4,7 +4,7 @@
 #include "province.hpp"
 #include "army.hpp"
 
-static std::stack<uint_fast32_t> id_stack = {};
+static std::stack<uint_fast32_t> id_stack;
 
 static uint_fast32_t next_id() {
     static uint_fast32_t id_counter = 0;
