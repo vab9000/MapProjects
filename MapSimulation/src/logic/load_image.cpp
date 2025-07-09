@@ -124,7 +124,7 @@ inline void process_pixel_borders(
     const auto j = static_cast<int_fast32_t>(position[1]);
 
     auto &this_province = d.provinces().at(color);
-    pixels_by_province.at(&this_province).push_back(position);
+    pixels_by_province[&this_province].push_back(position);
 
     std::ranges::for_each(std::views::iota(-1, 1 + 1), [&](const int_fast8_t dx) {
         std::ranges::for_each(std::views::iota(-1, 1 + 1), [&](const int_fast8_t dy) {
@@ -164,15 +164,15 @@ void load_image(data &d, image &map_image, std::string &loading_text) {
     map_image = image{"assets/provinces_generated.png"};
 
     loading_text = "Processing pixels...";
-    std::ranges::for_each(std::views::iota(map_image.width()), [&](const uint_fast32_t i) {
-        std::ranges::for_each(std::views::iota(map_image.height()), [&](const uint_fast32_t j) {
+    std::ranges::for_each(std::views::iota(0, map_image.width()), [&](const uint_fast32_t i) {
+        std::ranges::for_each(std::views::iota(0, map_image.height()), [&](const uint_fast32_t j) {
             d.provinces().at(map_image.color(i, j)).expand_bounds(i, j);
         });
     });
 
     loading_text = "Processing pixel borders...";
-    std::ranges::for_each(std::views::iota(map_image.width()), [&](const uint_fast32_t i) {
-        std::ranges::for_each(std::views::iota(map_image.height()), [&](const uint_fast32_t j) {
+    std::ranges::for_each(std::views::iota(0, map_image.width()), [&](const uint_fast32_t i) {
+        std::ranges::for_each(std::views::iota(0, map_image.height()), [&](const uint_fast32_t j) {
             process_pixel_borders(pixels_by_province, map_image, d, map_image.color(i, j), {i, j});
         });
     });

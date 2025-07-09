@@ -61,17 +61,17 @@ void drawing::update_map_texture(const uint8_t *bytes, const sf::Vector2u &dimen
 }
 
 inline void draw_map_mode_selection(simulation &sim) {
-    constexpr static std::array<std::string, 7> map_mode_names = {
+    constexpr static std::array<std::string_view, 7> map_mode_names = {
         "Provinces", "Owner", "Koppen", "Elevation", "Vegetation", "Soil", "Sea"
     };
     static auto current_item = static_cast<uint_fast8_t>(map_mode_t::provinces);
     current_item = static_cast<uint_fast8_t>(sim.map_mode());
     ImGui::SetNextWindowPos({0, 0});
     ImGui::SetNextWindowSize({200, 50});
-    if (ImGui::BeginCombo("Map Mode", map_mode_names[current_item].c_str())) {
+    if (ImGui::BeginCombo("Map Mode", map_mode_names[current_item].data())) {
         for (size_t i = 0; i < map_mode_names.size(); ++i) {
             const bool is_selected = (current_item == i);
-            if (ImGui::Selectable(map_mode_names[i].c_str(), is_selected)) {
+            if (ImGui::Selectable(map_mode_names[i].data(), is_selected)) {
                 current_item = i;
                 sim.change_map_mode(static_cast<map_mode_t>(i));
             }

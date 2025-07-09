@@ -1,6 +1,5 @@
 #include "character.hpp"
 #include <stack>
-#include "../utils/id_generator.hpp"
 
 id_generator character::id_gen_;
 
