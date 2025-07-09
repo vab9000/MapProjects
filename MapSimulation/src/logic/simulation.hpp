@@ -14,7 +14,7 @@ class simulation {
     std::array<int_fast32_t, 2> previous_mouse_{0, 0};
     bool mouse_down_ = false;
     bool mouse_moved_ = false;
-    volatile bool open_ = true;
+    std::atomic_bool open_ = true;
 
     std::string loading_text_;
 

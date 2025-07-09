@@ -1,7 +1,7 @@
 #pragma once
 
 #include <list>
-#include <memory>
+#include "../utils/id_generator.hpp"
 #include "army.hpp"
 
 class province;
@@ -11,6 +11,8 @@ class tag {
     std::list<army> armies_;
     uint_fast32_t color_;
     int_fast32_t gold_ = 0;
+
+    static id_generator id_gen_;
 
 public:
     const uint_fast32_t id;

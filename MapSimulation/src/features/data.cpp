@@ -39,7 +39,7 @@ const std::vector<std::unique_ptr<river> > &data::rivers() const {
 }
 
 river &data::add_river() {
-    return *rivers_.emplace_back(std::make_unique<river>()).get();
+    return *rivers_.emplace_back(std::make_unique<river>());
 }
 
 data &data::instance() {

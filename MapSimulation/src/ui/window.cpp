@@ -34,36 +34,44 @@ void window::clear_render_funcs() {
     render_funcs_.clear();
 }
 
+void window::event_loop(sf::Clock &clock) {
+    handle_event();
+
+    ImGui::SFML::Update(window_, clock.restart());
+
+    window_.clear();
+
+    for (const auto &render_func: render_funcs_) {
+        render_func(window_);
+    }
+
+    ImGui::SFML::Render(window_);
+
+    window_.display();
+}
+
+void window::handle_event() {
+    while (const auto event = window_.pollEvent()) {
+        if (!event.has_value()) {
+            continue;
+        }
+        ImGui::SFML::ProcessEvent(window_, *event);
+        if (const auto &resize_data = event->getIf<sf::Event::Resized>()) {
+            sf::FloatRect view(sf::Vector2f(0.0f, 0.0f),
+                               sf::Vector2f(static_cast<float>(resize_data->size.x),
+                                            static_cast<float>(resize_data->size.y)));
+            window_.setView(sf::View(view));
+        } else if (const auto &_ = event->getIf<sf::Event::Closed>()) {
+            stop_event_loop();
+        }
+        event_func_(event.value());
+    }
+}
+
 void window::start_event_loop() {
     sf::Clock clock;
     while (window_.isOpen()) {
-        while (const auto event = window_.pollEvent()) {
-            if (!event.has_value()) {
-                continue;
-            }
-            ImGui::SFML::ProcessEvent(window_, *event);
-            if (const auto &resize_data = event->getIf<sf::Event::Resized>()) {
-                sf::FloatRect view(sf::Vector2f(0.0f, 0.0f),
-                                   sf::Vector2f(static_cast<float>(resize_data->size.x),
-                                                static_cast<float>(resize_data->size.y)));
-                window_.setView(sf::View(view));
-            } else if (const auto &_ = event->getIf<sf::Event::Closed>()) {
-                stop_event_loop();
-            }
-            event_func_(event.value());
-        }
-
-        ImGui::SFML::Update(window_, clock.restart());
-
-        window_.clear();
-
-        for (const auto &render_func: render_funcs_) {
-            render_func(window_);
-        }
-
-        ImGui::SFML::Render(window_);
-
-        window_.display();
+        event_loop(clock);
     }
 
     ImGui::SFML::Shutdown();

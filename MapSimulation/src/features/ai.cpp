@@ -1,5 +1,4 @@
 #include "ai.hpp"
-
 #include <random>
 #include <cmath>
 
@@ -15,8 +14,9 @@ void ai::clear_actions() {
 }
 
 void ai::perform_actions() const {
-    static auto rng = std::default_random_engine(std::random_device{}());
-    static auto dis = std::uniform_real_distribution(0.0, 1.0);
+    static std::random_device rd;
+    static std::default_random_engine rng{rd()};
+    static std::uniform_real_distribution dis{0.0, 1.0};
 
     const auto random = sqrt(dis(rng));
 

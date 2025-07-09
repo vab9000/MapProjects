@@ -57,7 +57,7 @@ public:
     [[nodiscard]] bool retreating() const;
 
     // Set the destination province for the unit to move towards
-    void set_destination(const province &destination);
+    void set_destination(province *destination);
 
     // Move the unit towards its destination province
     void move();

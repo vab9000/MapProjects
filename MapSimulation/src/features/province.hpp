@@ -106,7 +106,7 @@ public:
 
     // Find the shortest path to another province using Dijkstra's algorithm
     template<typename T>
-    [[nodiscard]] std::list<province *> path_to(const province &destination,
+    [[nodiscard]] std::list<province *> path_to(province *destination,
                                                 std::function<bool
                                                     (const province &start, const province &end, T *param)> accessible,
                                                 std::function<double_t(const province &start, const province &end,
@@ -141,7 +141,7 @@ public:
 #include <queue>
 
 template<typename T>
-std::list<province *> province::path_to(const province &destination,
+std::list<province *> province::path_to(province *destination,
                                         std::function<bool(const province &start, const province &end, T *param)>
                                         accessible,
                                         std::function<double_t(const province &start, const province &end, T *param)>
@@ -151,18 +151,18 @@ std::list<province *> province::path_to(const province &destination,
     std::map<province *, province *> previous;
     std::priority_queue<std::pair<double_t, province *>, std::vector<std::pair<double_t,
                 province *> >, std::greater<> >
-            queue;
+            paths;
 
     distances[this] = 0;
-    queue.emplace(0, this);
+    paths.emplace(0, this);
 
     auto reached = false;
 
-    while (!queue.empty()) {
-        auto [current_distance, current_province] = queue.top();
-        queue.pop();
+    while (!paths.empty()) {
+        auto [current_distance, current_province] = paths.top();
+        paths.pop();
 
-        if (current_province == &destination) {
+        if (current_province == destination) {
             reached = true;
             break;
         }
@@ -172,24 +172,24 @@ std::list<province *> province::path_to(const province &destination,
                 cost_modifier(*this, *neighbor_province, param) < 0) {
                 continue;
             }
-
-            if (double_t new_distance = current_distance + cost_modifier(*this, *neighbor_province, param) *
-                                        neighbor_distance;
-                !distances.contains(neighbor_province) || new_distance < distances[neighbor_province]) {
-                distances[neighbor_province] = new_distance;
-                previous[neighbor_province] = current_province;
-                queue.emplace(new_distance, neighbor_province);
+            const double_t new_distance = current_distance + cost_modifier(*this, *neighbor_province, param) *
+                                          neighbor_distance;
+            if (distances.contains(neighbor_province) && new_distance >= distances[neighbor_province]) {
+                continue;
             }
+            distances[neighbor_province] = new_distance;
+            previous[neighbor_province] = current_province;
+            paths.emplace(new_distance, neighbor_province);
         }
     }
 
+    std::list<province *> path;
     if (!reached) {
-        return {};
+        return path;
     }
 
-    std::list<province *> path;
-    for (province *at = &const_cast<province &>(destination); at != nullptr; at = previous[at]) {
-        path.insert(path.begin(), at);
+    for (province *current_pos = destination; previous.contains(current_pos); current_pos = previous.at(current_pos)) {
+        path.insert(path.begin(), current_pos);
     }
 
     return path;

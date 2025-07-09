@@ -4,6 +4,7 @@
 #include "ai.hpp"
 #include "date.hpp"
 #include "character/character_properties.hpp"
+#include "../utils/id_generator.hpp"
 
 class army;
 class province;
@@ -13,6 +14,8 @@ class character final : public ai {
     province *location_;
     std::set<character_flag_t> flags_;
     std::set<personality_trait_t> traits_;
+
+    static id_generator id_gen_;
 
 public:
     const uint_fast32_t id;

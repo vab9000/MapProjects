@@ -8,10 +8,10 @@ uint_fast32_t pop::size() const {
 }
 
 void transfer_pop(pop_container &from, pop_container &to, pop *p) {
-    if (const auto it = std::ranges::find_if(from,
+    if (const auto loc = std::ranges::find_if(from,
         [p](const pop &elem) { return &elem == p; });
-        it != from.end()) {
-        to.splice(to.begin(), from, it);
+        loc != from.end()) {
+        to.splice(to.begin(), from, loc);
     }
 }
 

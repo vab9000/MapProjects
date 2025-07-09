@@ -69,7 +69,7 @@ bool unit::retreating() const {
     return retreating_;
 }
 
-void unit::set_destination(const province &destination) {
+void unit::set_destination(province *destination) {
     if (retreating_) return;
 
     auto generated_path = location_->path_to<unit>(

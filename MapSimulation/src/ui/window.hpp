@@ -8,8 +8,13 @@ class window {
     sf::RenderWindow window_;
     std::vector<std::function<void(sf::RenderWindow &)> > render_funcs_;
     std::array<uint_fast32_t, 4> gui_area_;
-
     std::function<void(const sf::Event &)> event_func_;
+
+    // Handles every frame of the event loop
+    void event_loop(sf::Clock &clock);
+
+    // Handles event signals
+    void handle_event();
 
 public:
     explicit window(std::function<void(const sf::Event &)> &&event_func);

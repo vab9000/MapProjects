@@ -5,4 +5,4 @@ class image;
 class data;
 
 // Loads data from map image and files
-void load_image(data &data, image &map_image, std::string &loading_text);
+void load_image(data &d, image &map_image, std::string &loading_text);

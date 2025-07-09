@@ -4,9 +4,7 @@
 #ifdef __cpp_lib_execution
 #include <execution>
 #endif
-#ifndef __cpp_lib_execution
 #include <ranges>
-#endif
 #include "../features/province.hpp"
 #include "../features/data.hpp"
 #include "../ui/drawing.hpp"
@@ -27,13 +25,12 @@ bitmap::bitmap(image *image, const data &data, drawing &drawer) : map_image_(ima
     reload_bitmap(data, drawer);
 }
 
-// ReSharper disable once CppDFAUnreachableFunctionCall
 void bitmap::reload_bitmap_province(const province &reload_province, const data &data, drawing &drawer) {
-    std::vector<uint_fast32_t> x_indices(reload_province.bounds()[2] - reload_province.bounds()[0] + 1);
-    std::iota(x_indices.begin(), x_indices.end(), reload_province.bounds()[0]);
+    const auto x_indices = std::views::iota(reload_province.bounds()[0],
+                                     reload_province.bounds()[2] + 1);
 
-    std::vector<uint_fast32_t> y_indices(reload_province.bounds()[3] - reload_province.bounds()[1] + 1);
-    std::iota(y_indices.begin(), y_indices.end(), reload_province.bounds()[1]);
+    const auto y_indices = std::views::iota(reload_province.bounds()[1],
+                                     reload_province.bounds()[3] + 1);
 
 #ifdef __cpp_lib_execution
     std::for_each(std::execution::par_unseq, x_indices.begin(), x_indices.end(), [&](const uint_fast32_t i) {
@@ -61,11 +58,8 @@ void bitmap::reload_bitmap_province(const province &reload_province, const data 
 }
 
 void bitmap::reload_bitmap(const data &data, drawing &drawer) {
-    std::vector<uint_fast32_t> x_indices(map_image_->width());
-    std::iota(x_indices.begin(), x_indices.end(), 0);
-
-    std::vector<uint_fast32_t> y_indices(map_image_->height());
-    std::iota(y_indices.begin(), y_indices.end(), 0);
+    const auto x_indices = std::views::iota(0, map_image_->width());
+    const auto y_indices = std::views::iota(0, map_image_->height());
 
 #ifdef __cpp_lib_execution
     std::for_each(

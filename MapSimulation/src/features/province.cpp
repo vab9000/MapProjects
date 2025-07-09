@@ -50,7 +50,7 @@ void province::finalize(const std::vector<std::array<uint_fast32_t, 2> > &pixels
         }
     }
 
-    auto distance = [](const std::array<uint_fast32_t, 2> &a, const std::array<uint_fast32_t, 2> &b) {
+    const auto distance = [](const std::array<uint_fast32_t, 2> &a, const std::array<uint_fast32_t, 2> &b) {
         return sqrt(
             pow(static_cast<int_fast32_t>(a[0]) - static_cast<int_fast32_t>(b[0]), 2) + pow(
                 static_cast<int_fast32_t>(a[1]) - static_cast<int_fast32_t>(b[1]), 2));
@@ -79,7 +79,7 @@ void province::set_owner(tag *new_owner) {
     if (has_owner() && owner_->has_province(*this)) {
         owner_->remove_province(*this);
     }
-    owner_ = std::move(new_owner);
+    owner_ = new_owner;
     if (has_owner()) {
         owner_->add_province(*this);
     }
@@ -144,15 +144,6 @@ void province::expand_bounds(const uint_fast32_t x, const uint_fast32_t y) {
 }
 
 void province::recolor(const map_mode_t mode) {
-    if (mode == map_mode_t::provinces) {
-        color_ = base_color_;
-    } else if (mode == map_mode_t::owner) {
-        if (has_owner()) {
-            color_ = owner_->color();
-        } else {
-            color_ = 0xFFFFFFFF;
-        }
-    }
     switch (mode) {
         case map_mode_t::provinces:
             color_ = base_color_;

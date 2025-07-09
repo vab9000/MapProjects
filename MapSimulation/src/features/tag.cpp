@@ -1,32 +1,18 @@
 #include "tag.hpp"
-#include <stack>
 #include <algorithm>
 #include "province.hpp"
 #include "army.hpp"
 
-static std::stack<uint_fast32_t> id_stack;
-
-static uint_fast32_t next_id() {
-    static uint_fast32_t id_counter = 0;
-
-    uint_fast32_t id;
-    if (id_stack.empty()) {
-        id = id_counter++;
-    } else {
-        id = id_stack.top();
-        id_stack.pop();
-    }
-    return id;
-}
+id_generator tag::id_gen_;
 
 tag::tag() : tag(0) {
 }
 
-tag::tag(const uint_fast32_t color) : color_(color), id(next_id()) {
+tag::tag(const uint_fast32_t color) : color_(color), id(id_gen_.next_id()) {
 }
 
 tag::~tag() {
-    id_stack.push(id);
+    id_gen_.return_id(id);
 }
 
 uint_fast32_t tag::color() const {

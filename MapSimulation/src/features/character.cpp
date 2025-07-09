@@ -1,27 +1,15 @@
 #include "character.hpp"
 #include <stack>
+#include "../utils/id_generator.hpp"
 
-static std::stack<uint_fast32_t> id_stack;
-
-static uint_fast32_t next_id() {
-    static uint_fast32_t id_counter = 0;
-
-    uint_fast32_t id;
-    if (id_stack.empty()) {
-        id = id_counter++;
-    } else {
-        id = id_stack.top();
-        id_stack.pop();
-    }
-    return id;
-}
+id_generator character::id_gen_;
 
 character::character(const date birthday, province *location) : birthday_(birthday), location_(location),
-                                                                id(next_id()) {
+                                                                id(id_gen_.next_id()) {
 }
 
 character::~character() {
-    id_stack.push(id);
+    id_gen_.return_id(id);
 }
 
 [[nodiscard]] uint_fast32_t character::age(const date &current_date) const {

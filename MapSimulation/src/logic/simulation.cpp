@@ -30,11 +30,10 @@ map_mode_t simulation::map_mode() const {
     return map_mode_;
 }
 
-province * simulation::selected_province() const {
+province *simulation::selected_province() const {
     return selected_province_;
 }
 
-// ReSharper disable once CppDFAUnreachableFunctionCall
 void simulation::select_province(province *province) {
     const auto old_selected_province = selected_province_;
     selected_province_ = province;
@@ -50,7 +49,7 @@ void simulation::select_province(province *province) {
 
 void simulation::start_processing() {
     window_.add_render_func([this](sf::RenderWindow &window) {
-        this->drawer_.draw_loading_message(window);
+        drawer_.draw_loading_message(window);
     });
 
     load_image(data_, map_image_, loading_text_);
@@ -63,10 +62,10 @@ void simulation::start_processing() {
 
     window_.clear_render_funcs();
     window_.add_render_func([this](sf::RenderWindow &window) {
-        this->drawer_.draw_map(window);
+        drawer_.draw_map(window);
     });
     window_.add_render_func([this](sf::RenderWindow &window) {
-        this->drawer_.draw_gui(window);
+        drawer_.draw_gui(window);
     });
 
     while (open_) {
@@ -124,17 +123,18 @@ void simulation::handle_event(const sf::Event &event) {
     } else if (const auto &release_data = event.getIf<sf::Event::MouseButtonReleased>()) {
         if (release_data->button != sf::Mouse::Button::Left) return;
 
-        if (!mouse_moved_) {
-            const auto x = static_cast<int_fast32_t>((release_data->position.x - offset_[0]) / zoom_);
-            const auto y = static_cast<int_fast32_t>((release_data->position.y - offset_[1]) / zoom_);
-
-            const auto color = map_image_.color(x % map_image_.width(), y);
-            const auto province = &data_.provinces().at(color);
-            select_province(province);
+        mouse_down_ = false;
+        if (mouse_moved_) {
+            mouse_moved_ = false;
+            return;
         }
 
-        mouse_down_ = false;
-        mouse_moved_ = false;
+        const auto x = static_cast<int_fast32_t>((release_data->position.x - offset_[0]) / zoom_);
+        const auto y = static_cast<int_fast32_t>((release_data->position.y - offset_[1]) / zoom_);
+
+        const auto color = map_image_.color(x % map_image_.width(), y);
+        const auto province = &data_.provinces().at(color);
+        select_province(province);
     } else if (const auto &press_data = event.getIf<sf::Event::MouseButtonPressed>()) {
         if (press_data->button != sf::Mouse::Button::Left) return;
         if (const auto gui_area = window_.gui_area(); press_data->position.x > gui_area[0] &&
@@ -150,34 +150,35 @@ void simulation::handle_event(const sf::Event &event) {
         mouse_down_ = true;
         mouse_moved_ = false;
     } else if (const auto &move_data = event.getIf<sf::Event::MouseMoved>()) {
-        if (mouse_down_) {
-            const auto x = move_data->position.x;
-            const auto y = move_data->position.y;
-
-            offset_[0] += x - previous_mouse_[0];
-            offset_[1] += y - previous_mouse_[1];
-
-            const auto dimensions = window_.window_dimensions();
-
-            if (offset_[0] > 0) {
-                offset_[0] -= static_cast<int_fast32_t>(map_image_.width() * zoom_);
-            }
-            if (offset_[1] > 0) {
-                offset_[1] = 0;
-            }
-            if (offset_[0] < -(map_image_.width() * zoom_)) {
-                offset_[0] += static_cast<int_fast32_t>(map_image_.width() * zoom_);
-            }
-            if (offset_[1] < -(map_image_.height() * zoom_ - dimensions.y)) {
-                offset_[1] = static_cast<int_fast32_t>(-(map_image_.height() * zoom_ - dimensions.y));
-            }
-
-            previous_mouse_[0] = x;
-            previous_mouse_[1] = y;
-
-            drawer_.recalculate_sprite_coords(offset_, zoom_, map_image_.width());
+        if (!mouse_down_) {
+            mouse_moved_ = true;
+            return;
         }
-        mouse_moved_ = true;
+        const auto x = move_data->position.x;
+        const auto y = move_data->position.y;
+
+        offset_[0] += x - previous_mouse_[0];
+        offset_[1] += y - previous_mouse_[1];
+
+        const auto dimensions = window_.window_dimensions();
+
+        if (offset_[0] > 0) {
+            offset_[0] -= static_cast<int_fast32_t>(map_image_.width() * zoom_);
+        }
+        if (offset_[1] > 0) {
+            offset_[1] = 0;
+        }
+        if (offset_[0] < -(map_image_.width() * zoom_)) {
+            offset_[0] += static_cast<int_fast32_t>(map_image_.width() * zoom_);
+        }
+        if (offset_[1] < -(map_image_.height() * zoom_ - dimensions.y)) {
+            offset_[1] = static_cast<int_fast32_t>(-(map_image_.height() * zoom_ - dimensions.y));
+        }
+
+        previous_mouse_[0] = x;
+        previous_mouse_[1] = y;
+
+        drawer_.recalculate_sprite_coords(offset_, zoom_, map_image_.width());
     } else if (const auto &key_data = event.getIf<sf::Event::KeyPressed>()) {
         if (key_data->code == sf::Keyboard::Key::Escape) {
             select_province(nullptr);
