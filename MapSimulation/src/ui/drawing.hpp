@@ -10,9 +10,12 @@ class drawing {
     simulation &simulation_;
     const std::string &loading_text_;
 
+    sf::Texture base_map_;
     sf::Texture texture_;
     sf::Sprite map_sprite_{texture_};
     sf::Shader map_shader_;
+
+    bool draw_outline_ = false;
 
 public:
     explicit drawing(simulation &simulation, const std::string &loading_text);

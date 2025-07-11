@@ -8,5 +8,5 @@ public:
 
     virtual void perform() const = 0;
 
-    virtual int_fast32_t weight() = 0;
+    [[nodiscard]] virtual int_fast32_t weight() const = 0;
 };

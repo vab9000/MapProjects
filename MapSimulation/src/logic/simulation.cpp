@@ -122,6 +122,12 @@ void simulation::handle_event(const sf::Event &event) {
         drawer_.recalculate_sprite_coords(offset_, zoom_, map_image_.width());
     } else if (const auto &release_data = event.getIf<sf::Event::MouseButtonReleased>()) {
         if (release_data->button != sf::Mouse::Button::Left) return;
+        if (const auto gui_area = window_.gui_area(); release_data->position.x > gui_area[0] &&
+                                                      release_data->position.x < gui_area[2] &&
+                                                      release_data->position.y > gui_area[1] &&
+                                                      release_data->position.y < gui_area[3]) {
+            return;
+        }
 
         mouse_down_ = false;
         if (mouse_moved_) {
@@ -151,9 +157,10 @@ void simulation::handle_event(const sf::Event &event) {
         mouse_moved_ = false;
     } else if (const auto &move_data = event.getIf<sf::Event::MouseMoved>()) {
         if (!mouse_down_) {
-            mouse_moved_ = true;
             return;
         }
+        mouse_moved_ = true;
+
         const auto x = move_data->position.x;
         const auto y = move_data->position.y;
 
