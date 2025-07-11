@@ -14,8 +14,13 @@ class drawing {
     sf::Texture texture_;
     sf::Sprite map_sprite_{texture_};
     sf::Shader map_shader_;
+    sf::Texture river_texture_;
+    sf::Sprite river_sprite_{river_texture_};
+    sf::Shader river_shader_;
 
-    bool draw_outline_ = false;
+    bool draw_rivers_ = true;
+
+    void draw_river_checkbox();
 
 public:
     explicit drawing(simulation &simulation, const std::string &loading_text);
@@ -24,7 +29,7 @@ public:
     bool init_sprites(const image &map_image, const std::vector<uint8_t> &bytes);
 
     // Recalculate the coordinates of the sprites based on the offset and zoom level
-    void recalculate_sprite_coords(std::array<int_fast32_t, 2> offset, double_t zoom, uint_fast32_t map_width);
+    void recalculate_sprite_coords(std::array<int_fast32_t, 2> offset, double_t zoom);
 
     // Draw the loading message on the window
     void draw_loading_message(sf::RenderWindow &window) const;
@@ -40,5 +45,5 @@ public:
                             const sf::Vector2u &position);
 
     // Draw the GUI elements on the window
-    void draw_gui(sf::RenderWindow &window) const;
+    void draw_gui(sf::RenderWindow &window);
 };

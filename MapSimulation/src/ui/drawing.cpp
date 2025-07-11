@@ -31,14 +31,27 @@ bool drawing::init_sprites(const image &map_image, const std::vector<uint8_t> &b
         {0, 0},
         {map_image.width(), map_image.height()}
     });
+    if (!river_texture_.loadFromFile("assets/elevation+river.png")) {
+        return false;
+    }
+    river_sprite_.setTexture(river_texture_);
+    river_sprite_.setTextureRect({
+        {0, 0},
+        {map_image.width(), map_image.height()}
+    });
+    if (!river_shader_.loadFromFile("shaders/rivers.frag", sf::Shader::Type::Fragment)) {
+        return false;
+    }
+    river_shader_.setUniform("texture", river_texture_);
     return true;
 }
 
-void drawing::recalculate_sprite_coords(const std::array<int_fast32_t, 2> offset, const double_t zoom,
-                                        const uint_fast32_t map_width) {
+void drawing::recalculate_sprite_coords(const std::array<int_fast32_t, 2> offset, const double_t zoom) {
     const auto zoom_f = static_cast<float_t>(zoom);
     map_sprite_.setPosition(sf::Vector2f(static_cast<float_t>(offset[0]), static_cast<float_t>(offset[1])));
     map_sprite_.setScale(sf::Vector2f(zoom_f, zoom_f));
+    river_sprite_.setPosition(sf::Vector2f(static_cast<float_t>(offset[0]), static_cast<float_t>(offset[1])));
+    river_sprite_.setScale(sf::Vector2f(zoom_f, zoom_f));
 }
 
 void drawing::draw_loading_message(sf::RenderWindow &window) const {
@@ -65,10 +78,18 @@ void drawing::draw_map(sf::RenderWindow &window) {
         }
     }
     window.draw(map_sprite_, &map_shader_);
+    if (draw_rivers_) {
+        window.draw(river_sprite_, &river_shader_);
+    }
     const auto offset = static_cast<float>(texture_.getSize().x) * map_sprite_.getScale().x;
     map_sprite_.move(sf::Vector2f(offset, 0));
+    river_sprite_.move(sf::Vector2f(offset, 0));
     window.draw(map_sprite_, &map_shader_);
+    if (draw_rivers_) {
+        window.draw(river_sprite_, &river_shader_);
+    }
     map_sprite_.move(sf::Vector2f(-offset, 0));
+    river_sprite_.move(sf::Vector2f(-offset, 0));
 }
 
 void drawing::update_map_texture(const uint8_t *bytes) {
@@ -120,7 +141,7 @@ inline void draw_map_mode_selection(simulation &sim) {
 inline void draw_selected_province_info(const simulation &sim) {
     const auto selected_province = sim.selected_province();
     if (selected_province == nullptr) return;
-    if (ImGui::BeginChild("Selected Province Info", {200, 50})) {
+    if (ImGui::BeginChild("Selected Province Info", {200, 100})) {
         ImGui::TextWrapped("Province Color: %06X\n"
                            "Climate: %s\n"
                            "Elevation: %s\n"
@@ -137,11 +158,17 @@ inline void draw_selected_province_info(const simulation &sim) {
     ImGui::EndChild();
 }
 
-void drawing::draw_gui(sf::RenderWindow &window) const {
+void drawing::draw_river_checkbox() {
+    ImGui::Checkbox("Rivers", &draw_rivers_);
+}
+
+void drawing::draw_gui(sf::RenderWindow &window) {
     ImGui::SetNextWindowPos({0, 0});
     ImGui::SetNextWindowSize({200, static_cast<float_t>(window.getSize().y)});
     if (ImGui::Begin("GUI")) {
         draw_date();
+        ImGui::Spacing();
+        draw_river_checkbox();
         ImGui::Spacing();
         draw_map_mode_selection(simulation_);
         ImGui::Spacing();

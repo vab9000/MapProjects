@@ -119,7 +119,7 @@ void simulation::handle_event(const sf::Event &event) {
             offset_[1] = static_cast<int_fast32_t>(-(map_image_.height() * zoom_ - dimensions.y));
         }
 
-        drawer_.recalculate_sprite_coords(offset_, zoom_, map_image_.width());
+        drawer_.recalculate_sprite_coords(offset_, zoom_);
     } else if (const auto &release_data = event.getIf<sf::Event::MouseButtonReleased>()) {
         if (release_data->button != sf::Mouse::Button::Left) return;
         if (const auto gui_area = window_.gui_area(); release_data->position.x > gui_area[0] &&
@@ -185,7 +185,7 @@ void simulation::handle_event(const sf::Event &event) {
         previous_mouse_[0] = x;
         previous_mouse_[1] = y;
 
-        drawer_.recalculate_sprite_coords(offset_, zoom_, map_image_.width());
+        drawer_.recalculate_sprite_coords(offset_, zoom_);
     } else if (const auto &key_data = event.getIf<sf::Event::KeyPressed>()) {
         if (key_data->code == sf::Keyboard::Key::Escape) {
             select_province(nullptr);

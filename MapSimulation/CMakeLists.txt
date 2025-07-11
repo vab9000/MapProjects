@@ -79,17 +79,13 @@ target_link_libraries(MapSimulation PRIVATE SFML::Graphics SFML::System SFML::Wi
 target_link_libraries(MapSimulation PUBLIC ImGui-SFML::ImGui-SFML)
 
 file(GLOB_RECURSE Images assets/*)
-
-file(COPY ${Images} DESTINATION ${CMAKE_BINARY_DIR}/bin/assets)
+foreach(image ${Images})
+    get_filename_component(filename ${image} NAME)
+    configure_file(${image} ${CMAKE_BINARY_DIR}/bin/assets/${filename} COPYONLY)
+endforeach()
 
 file(GLOB_RECURSE Shaders shaders/*)
-
-file(COPY ${Shaders} DESTINATION ${CMAKE_BINARY_DIR}/bin/shaders)
-
-#file(GLOB_RECURSE OpenCV_DLLS ${OpenCV_LIB_PATH}/../bin/*.dll)
-#
-#file(COPY ${OpenCV_DLLS} DESTINATION ${CMAKE_BINARY_DIR}/bin)
-
-#file(GLOB_RECURSE SFML_DLLS libs/SFML-3.0.0/bin/*.dll)
-#
-#file(COPY ${SFML_DLLS} DESTINATION ${CMAKE_BINARY_DIR}/bin)
+foreach(shader ${Shaders})
+    get_filename_component(filename ${shader} NAME)
+    configure_file(${shader} ${CMAKE_BINARY_DIR}/bin/shaders/${filename} COPYONLY)
+endforeach()
