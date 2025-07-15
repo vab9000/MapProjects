@@ -2,6 +2,7 @@
 
 #include <array>
 #include <map>
+#include <set>
 #include <vector>
 #include <functional>
 #include "pop.hpp"
@@ -15,8 +16,8 @@ class province {
     pop_container pops_;
     tag *owner_ = nullptr;
     std::map<province *, double_t> neighbors_;
-    std::map<province *, uint_fast8_t> river_boundaries_;
-    std::vector<river *> rivers_;
+    std::set<province *> impassable_neighbors_;
+    std::map<province *, uint_fast8_t> river_neighbors_;
     uint_fast32_t size_ = 0;
     bool distances_processed_ = false;
     std::array<uint_fast32_t, 4> bounds_{0, 0, 0, 0};
@@ -26,6 +27,7 @@ class province {
     vegetation_t vegetation_;
     soil_t soil_;
     sea_t sea_;
+    uint_fast8_t value_ = 0;
     uint_fast32_t base_color_;
     uint_fast32_t color_;
 
@@ -66,10 +68,7 @@ public:
     void remove_pop(pop *p);
 
     // Add a river boundary to the province with a specific size, linking it to a neighboring province
-    void add_river_boundary(province *neighbor, uint_fast8_t size);
-
-    // Add a river to the province
-    void add_river(river *r);
+    void add_river_neighbor(province *neighbor, uint_fast8_t size);
 
     // Add a neighboring province to this province
     void add_neighbor(province *neighbor);
@@ -102,7 +101,7 @@ public:
     [[nodiscard]] sea_t sea() const;
 
     // Get the distance to another province
-    [[nodiscard]] double distance(const province &other) const;
+    [[nodiscard]] double_t distance(const province &other) const;
 
     // Find the shortest path to another province using Dijkstra's algorithm
     template<typename T>
@@ -128,11 +127,21 @@ public:
     // Get the neighbors of this province as a map of neighbor province pointers to distances
     [[nodiscard]] const std::map<province *, double_t> &neighbors() const;
 
-    // Get the rivers that flow through this province as a map of neighbor province pointers to river sizes
-    [[nodiscard]] const std::map<province *, uint_fast8_t> &river_boundaries() const;
+    // Get the neighbor provinces that are divided by rivers, with the river size
+    [[nodiscard]] const std::map<province *, uint_fast8_t> &river_neighbors() const;
 
-    // Get the rivers that flow through this province as a vector of river pointers
-    [[nodiscard]] const std::vector<river *> &rivers() const;
+    // Get the neighbors of this province that are impassable
+    [[nodiscard]] const std::set<province *> &impassable_neighbors() const;
+
+    // Add an impassable neighbor to this province
+    void add_impassable_neighbor(province *neighbor);
+
+    [[nodiscard]] uint_fast32_t size() const;
+
+    // Get some arbitrary value that is associated with the province, such as the size for a river province
+    [[nodiscard]] uint_fast8_t value() const;
+
+    void set_value(uint_fast8_t value);
 
     // Tick function to update the province state
     void tick();
@@ -173,7 +182,10 @@ std::list<province *> province::path_to(province *destination,
                 continue;
             }
             const double_t new_distance = current_distance + cost_modifier(*this, *neighbor_province, param) *
-                                          neighbor_distance;
+                                          neighbor_distance * (current_province->impassable_neighbors_.contains(
+                                                                   neighbor_province)
+                                                                   ? 10.0
+                                                                   : 1.0);
             if (distances.contains(neighbor_province) && new_distance >= distances[neighbor_province]) {
                 continue;
             }

@@ -1,6 +1,7 @@
 #include "drawing.hpp"
 #include <imgui.h>
 #include <ranges>
+#include <thread>
 #include <array>
 #include "../logic/image.hpp"
 #include "../features/province.hpp"
@@ -10,14 +11,15 @@ drawing::drawing(simulation &simulation, const std::string &loading_text) : simu
                                                                             loading_text_(loading_text) {
 }
 
-bool drawing::init_sprites(const image &map_image, const std::vector<uint8_t> &bytes) {
+bool drawing::init_sprites(const image &map_image, const std::vector<uint8_t> &bytes,
+                           const std::vector<uint8_t> &crossing_bytes) {
     if (!base_map_.loadFromImage({sf::Vector2u(map_image.width(), map_image.height()), bytes.data()})) {
         return false;
     }
     if (!map_shader_.loadFromFile("shaders/map.frag", sf::Shader::Type::Fragment)) {
         return false;
     }
-    map_shader_.setUniform("texture", texture_);
+    map_shader_.setUniform("texture", sf::Shader::CurrentTexture);
     map_shader_.setUniform("size", sf::Vector2f(static_cast<float_t>(map_image.width()),
                                                 static_cast<float_t>(map_image.height())));
     map_shader_.setUniform("baseMap", base_map_);
@@ -31,18 +33,15 @@ bool drawing::init_sprites(const image &map_image, const std::vector<uint8_t> &b
         {0, 0},
         {map_image.width(), map_image.height()}
     });
-    if (!river_texture_.loadFromFile("assets/elevation+river.png")) {
-        return false;
-    }
-    river_sprite_.setTexture(river_texture_);
-    river_sprite_.setTextureRect({
+    crossing_sprite_.setTexture(crossing_texture_);
+    crossing_sprite_.setTextureRect({
         {0, 0},
         {map_image.width(), map_image.height()}
     });
-    if (!river_shader_.loadFromFile("shaders/rivers.frag", sf::Shader::Type::Fragment)) {
+    if (!crossing_shader_.loadFromFile("shaders/crossings.frag", sf::Shader::Type::Fragment)) {
         return false;
     }
-    river_shader_.setUniform("texture", river_texture_);
+    crossing_shader_.setUniform("borderMask", sf::Shader::CurrentTexture);
     return true;
 }
 
@@ -50,8 +49,8 @@ void drawing::recalculate_sprite_coords(const std::array<int_fast32_t, 2> offset
     const auto zoom_f = static_cast<float_t>(zoom);
     map_sprite_.setPosition(sf::Vector2f(static_cast<float_t>(offset[0]), static_cast<float_t>(offset[1])));
     map_sprite_.setScale(sf::Vector2f(zoom_f, zoom_f));
-    river_sprite_.setPosition(sf::Vector2f(static_cast<float_t>(offset[0]), static_cast<float_t>(offset[1])));
-    river_sprite_.setScale(sf::Vector2f(zoom_f, zoom_f));
+    crossing_sprite_.setPosition(sf::Vector2f(static_cast<float_t>(offset[0]), static_cast<float_t>(offset[1])));
+    crossing_sprite_.setScale(sf::Vector2f(zoom_f, zoom_f));
 }
 
 void drawing::draw_loading_message(sf::RenderWindow &window) const {
@@ -78,18 +77,18 @@ void drawing::draw_map(sf::RenderWindow &window) {
         }
     }
     window.draw(map_sprite_, &map_shader_);
-    if (draw_rivers_) {
-        window.draw(river_sprite_, &river_shader_);
+    if (draw_crossings_) {
+        window.draw(crossing_sprite_, &crossing_shader_);
     }
     const auto offset = static_cast<float>(texture_.getSize().x) * map_sprite_.getScale().x;
     map_sprite_.move(sf::Vector2f(offset, 0));
-    river_sprite_.move(sf::Vector2f(offset, 0));
+    crossing_sprite_.move(sf::Vector2f(offset, 0));
     window.draw(map_sprite_, &map_shader_);
-    if (draw_rivers_) {
-        window.draw(river_sprite_, &river_shader_);
+    if (draw_crossings_) {
+        window.draw(crossing_sprite_, &crossing_shader_);
     }
     map_sprite_.move(sf::Vector2f(-offset, 0));
-    river_sprite_.move(sf::Vector2f(-offset, 0));
+    crossing_sprite_.move(sf::Vector2f(-offset, 0));
 }
 
 void drawing::update_map_texture(const uint8_t *bytes) {
@@ -126,7 +125,8 @@ inline void draw_map_mode_selection(simulation &sim) {
                 const bool is_selected = current_item == i;
                 if (ImGui::Selectable(map_mode_names[i].data(), is_selected)) {
                     current_item = i;
-                    sim.change_map_mode(static_cast<map_mode_t>(i));
+                    std::thread update_map(&simulation::change_map_mode, &sim, static_cast<map_mode_t>(i));
+                    update_map.detach();
                 }
                 if (is_selected) {
                     ImGui::SetItemDefaultFocus();
@@ -158,8 +158,8 @@ inline void draw_selected_province_info(const simulation &sim) {
     ImGui::EndChild();
 }
 
-void drawing::draw_river_checkbox() {
-    ImGui::Checkbox("Rivers", &draw_rivers_);
+void drawing::draw_checkboxes() {
+    ImGui::Checkbox("Crossings", &draw_crossings_);
 }
 
 void drawing::draw_gui(sf::RenderWindow &window) {
@@ -168,7 +168,7 @@ void drawing::draw_gui(sf::RenderWindow &window) {
     if (ImGui::Begin("GUI")) {
         draw_date();
         ImGui::Spacing();
-        draw_river_checkbox();
+        draw_checkboxes();
         ImGui::Spacing();
         draw_map_mode_selection(simulation_);
         ImGui::Spacing();

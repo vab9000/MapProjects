@@ -1,6 +1,8 @@
 #include <unordered_map>
 #include <vector>
 #include <ranges>
+#include <fstream>
+#include <random>
 #include <functional>
 #include <iostream>
 #include <numeric>
@@ -85,6 +87,12 @@ inline void load_koppen(const image &base_map, provinces_map &provinces, const s
     }
 }
 
+struct province_pair_hash {
+    std::size_t operator()(const std::pair<province *, province *> &p) const noexcept {
+        return std::hash<province *>()(p.first) ^ (std::hash<province *>()(p.second));
+    }
+};
+
 inline void load_elevation(const image &base_map, provinces_map &provinces, const std::string &elevation_file_path) {
     const image elevation_image(elevation_file_path);
     std::unordered_map<unsigned int, std::vector<unsigned int> > elevation_data;
@@ -110,6 +118,48 @@ inline void load_elevation(const image &base_map, provinces_map &provinces, cons
         if (province.is_water()) continue;
         province.set_elevation(elevation_data[color]);
     }
+}
+
+inline void draw_impassable_map(
+    const std::unordered_set<std::pair<province *, province *>, province_pair_hash> &impassable_neighbors,
+    const int width,
+    const int height, const std::string &output_path) {
+    const image impassable_map(output_path, width, height);
+    for (int i = 0; i < impassable_map.width(); i++) {
+        for (int j = 0; j < impassable_map.height(); j++) {
+            impassable_map(i, j) = 0xFFFFFF;
+        }
+    }
+    for (const auto &[p, neighbor]: impassable_neighbors) {
+        if (p->color() > neighbor->color()) continue;
+        for (const auto &[x, y]: p->outline().at(neighbor)) {
+            impassable_map(x, y) = 0xFF0000;
+        }
+        for (const auto &[x, y]: neighbor->outline().at(p)) {
+            impassable_map(x, y) = 0xFF0000;
+        }
+    }
+    impassable_map.write();
+}
+
+inline void generate_impassable_crossings(const image &base_map, provinces_map &provinces,
+                                          const std::string &output_path) {
+    std::unordered_set<std::pair<province *, province *>, province_pair_hash> impassable_neighbors;
+    for (auto &p: provinces | std::views::values) {
+        if (p.is_water()) continue;
+        for (const auto impassable_provinces = p.impassable_neighbors(base_map); const auto &neighbor:
+             impassable_provinces) {
+            impassable_neighbors.insert({&p, const_cast<province *>(neighbor)});
+        }
+    }
+    std::ofstream file{output_path};
+    for (const auto &[province, neighbor]: impassable_neighbors) {
+        if (province->color() > neighbor->color()) continue;
+        file << "Province Color: " << province->color() << "\n";
+        file << "Neighbor Color: " << neighbor->color() << "\n";
+    }
+    file.close();
+    draw_impassable_map(impassable_neighbors, base_map.width(), base_map.height(), "impassable_crossings.png");
 }
 
 inline void load_vegetation(const image &base_map, provinces_map &provinces, const std::string &vegetation_file_path) {
@@ -199,12 +249,6 @@ inline void generate_neighbors(const image &base_map, provinces_map &provinces) 
     }
 }
 
-struct river_hash {
-    std::size_t operator()(const std::pair<province *, province *> &p) const noexcept {
-        return std::hash<province *>()(p.first) ^ (std::hash<province *>()(p.second));
-    }
-};
-
 inline std::unordered_set<std::pair<int, int>, hash_coords> find_river(
     const image &base_image, const image &river_image,
     const province *const search_province,
@@ -274,30 +318,41 @@ inline bool river_between(const image &river_map, const province &self, const pr
     return total_outline * 0.3 < river_outline;
 }
 
-inline void generate_rivers(const image &base_map, provinces_map &provinces, const std::string &river_file_path) {
-    generate_neighbors(base_map, provinces);
-
+inline void generate_rivers(image &base_map, provinces_map &provinces, const std::string &river_file_path,
+                            const std::string &river_tile_file_path) {
     const image river_image(river_file_path);
 
     std::unordered_map<std::pair<province *, province *>, std::unordered_set<std::pair<int, int>, hash_coords>,
-        river_hash> rivers_data;
+        province_pair_hash> rivers_data;
 
-    for (auto &province: provinces | std::views::values) {
-        if (province.is_water()) continue;
-        for (const auto &neighbor: province.neighbors()) {
+    for (auto &p: provinces | std::views::values) {
+        if (p.is_water()) continue;
+        for (const auto &neighbor: p.neighbors()) {
             if (neighbor->is_water()) continue;
-            if (!river_between(river_image, province, *neighbor)) continue;
-            if (province.color() < neighbor->color()) {
-                if (auto river_points = find_river(base_map, river_image, &province, neighbor); !river_points.
+            if (!river_between(river_image, p, *neighbor)) continue;
+            if (p.color() < neighbor->color()) {
+                if (auto river_points = find_river(base_map, river_image, &p, neighbor); !river_points.
                     empty()) {
-                    rivers_data[{&province, neighbor}] = std::move(river_points);
+                    rivers_data[{&p, const_cast<province *>(neighbor)}] = std::move(river_points);
                 }
             }
         }
     }
 
+    std::unordered_set<unsigned int> used_colors;
+    for (int i = 0; i < base_map.width(); i++) {
+        for (int j = 0; j < base_map.height(); j++) {
+            used_colors.insert(static_cast<unsigned int>(base_map(i, j)));
+        }
+    }
+    std::random_device rd;
+    std::default_random_engine generator(rd());
+    std::uniform_int_distribution<unsigned int> color_distribution(0x000000, 0xFFFFFE);
+
+    std::vector<std::pair<unsigned int, unsigned int> > river_colors;
+
     for (const auto &[pair, river_points]: rivers_data) {
-        auto &province = *pair.first;
+        auto &p = *pair.first;
         auto &neighbor = *pair.second;
 
         int river_size = 0;
@@ -306,9 +361,38 @@ inline void generate_rivers(const image &base_map, provinces_map &provinces, con
                                                           return sum + river_image(point.first, point.second).b();
                                                       }) / river_points.size());
 
-        province.add_river(&neighbor, river_size);
-        neighbor.add_river(&province, river_size);
+        bool river_placed = false;
+        auto new_color = color_distribution(generator);
+        while (used_colors.contains(new_color)) {
+            new_color = color_distribution(generator);
+        }
+        for (const auto &[x, y]: river_points) {
+            if (static_cast<unsigned int>(base_map(x, y)) != p.color() &&
+                static_cast<unsigned int>(base_map(x, y)) != neighbor.color()) {
+                continue;
+            }
+            base_map(x, y) = new_color;
+            river_placed = true;
+        }
+        if (river_placed) {
+            used_colors.insert(new_color);
+            river_colors.emplace_back(new_color, river_size);
+            provinces.emplace(new_color, province{new_color, true});
+        }
+
+        if (river_points.size() > 4) {
+            p.add_river(&neighbor, river_size);
+            neighbor.add_river(&p, river_size);
+        }
     }
+
+    std::ofstream river_file{river_tile_file_path};
+    for (const auto [color, size]: river_colors) {
+        river_file << "River Color: " << color << "\n";
+        river_file << "River Size: " << size << "\n";
+    }
+    river_file.close();
+    base_map.write();
 }
 
 inline void write_rivers(const provinces_map &provinces, const std::string &output_path) {
@@ -317,7 +401,8 @@ inline void write_rivers(const provinces_map &provinces, const std::string &outp
         for (const auto &[neighbor, size]: province.rivers()) {
             if (province.color() > neighbor->color()) continue;
             file << "Province Color: " << province.color() << "\n";
-            file << "Neighbor Color: " << neighbor->color() << "\nRiver Size: " << size << "\n";
+            file << "Neighbor Color: " << neighbor->color() << "\n";
+            file << "River Size: " << size << "\n";
         }
     }
     file.close();
@@ -366,62 +451,6 @@ inline std::unordered_set<std::pair<int, int>, hash_coords> find_entire_river(co
     return river_points;
 }
 
-inline void generate_river_lines(const image &base_map, const std::string &river_map_path, provinces_map &provinces,
-                                 const std::string &output_path) {
-    const image river_map(river_map_path);
-    unsigned int river_id = 0;
-    std::unordered_set<std::pair<int, int>, hash_coords> visited;
-    std::ofstream output_file(output_path);
-
-    const std::function valid_river_color = [](const image::image_color color) {
-        return color.b() != 0 && color.r() == 0 && color.g() == 0;
-    };
-
-    for (int i = 0; i < base_map.width(); i++) {
-        for (int j = 0; j < base_map.height(); j++) {
-            if (visited.contains({i, j})) continue;
-
-            if (!valid_river_color(river_map(i, j))) continue;
-            std::unordered_set<std::pair<int, int>, hash_coords> river_points = find_entire_river(river_map, i, j);
-            if (river_points.empty()) continue;
-
-            for (const auto &[x, y]: river_points) {
-                visited.insert({x, y});
-            }
-
-            std::unordered_set<unsigned int> river_provinces;
-            for (const auto &[x, y]: river_points) {
-                if (const auto province = static_cast<unsigned int>(base_map(x, y)); river_provinces.
-                    insert(province).second) {
-                    provinces.at(province).add_river_line(river_id);
-                }
-            }
-
-            if (river_provinces.size() == 1) continue;
-
-            output_file << "River ID: " << ++river_id << "\n";
-            for (const auto province: river_provinces) {
-                output_file << "Province Color: " << province << "\n";
-            }
-        }
-    }
-
-    output_file.close();
-}
-
-inline void draw_river_line_map(const image &base_map, const provinces_map &provinces, const std::string &output_path) {
-    const image write_map(output_path, base_map.width(), base_map.height());
-
-    for (int i = 0; i < base_map.width(); i++) {
-        for (int j = 0; j < base_map.height(); j++) {
-            const auto color = static_cast<unsigned int>(base_map(i, j));
-            write_map(i, j) = provinces.at(color).river_line_color();
-        }
-    }
-
-    write_map.write();
-}
-
 inline void draw_map(const image &base_map, const provinces_map &provinces, const std::string &output_path,
                      unsigned int (province::*color_func)() const) {
     const image write_map(output_path, base_map.width(), base_map.height());
@@ -441,33 +470,48 @@ inline void draw_map(const image &base_map, const provinces_map &provinces, cons
 }
 
 inline void generate_province_files() {
-    const image province_image("images/write_map.png");
+    image province_image("images/write_map.png");
 
-    std::unordered_map<unsigned int, province> provinces;
+    provinces_map provinces;
 
     load_provinces("images/map.png", province_image, provinces);
+    std::cout << "Loaded " << provinces.size() << " provinces." << std::endl;
 
-    // load_koppen(province_image, provinces, "images/koppen.png");
-    // load_elevation(province_image, provinces, "images/elevation.png");
-    // load_vegetation(province_image, provinces, "images/vegetation.png");
-    // load_soil(province_image, provinces, "images/soil.png");
-    //
-    // draw_map(province_image, provinces, "koppen_generated.png", &province::koppen_color);
-    // draw_map(province_image, provinces, "elevation_generated.png", &province::elevation_color);
-    // draw_map(province_image, provinces, "vegetation_generated.png", &province::vegetation_color);
-    // draw_map(province_image, provinces, "soil_generated.png", &province::soil_color);
-    //
-    // save_provinces(provinces);
-    //
-    // generate_rivers(province_image, provinces, "images/map.png");
-    //
-    // draw_river_map(province_image, provinces, "rivers_generated.png");
-    //
-    // write_rivers(provinces, "rivers.txt");
-    //
-    // generate_river_lines(province_image, "images/map.png", provinces, "river_lines.txt");
-    //
-    // draw_river_line_map(province_image, provinces, "river_lines_generated.png");
+    generate_neighbors(province_image, provinces);
+    std::cout << "Generated neighbors for provinces." << std::endl;
+
+    load_koppen(province_image, provinces, "images/koppen.png");
+    std::cout << "Loaded Koppen climate data." << std::endl;
+    load_elevation(province_image, provinces, "images/elevation.png");
+    std::cout << "Loaded elevation data." << std::endl;
+    load_vegetation(province_image, provinces, "images/vegetation.png");
+    std::cout << "Loaded vegetation data." << std::endl;
+    load_soil(province_image, provinces, "images/soil.png");
+    std::cout << "Loaded soil data." << std::endl;
+
+    draw_map(province_image, provinces, "koppen_generated.png", &province::koppen_color);
+    std::cout << "Generated Koppen map." << std::endl;
+    draw_map(province_image, provinces, "elevation_generated.png", &province::elevation_color);
+    std::cout << "Generated elevation map." << std::endl;
+    draw_map(province_image, provinces, "vegetation_generated.png", &province::vegetation_color);
+    std::cout << "Generated vegetation map." << std::endl;
+    draw_map(province_image, provinces, "soil_generated.png", &province::soil_color);
+    std::cout << "Generated soil map." << std::endl;
+
+    generate_impassable_crossings(image{"images/map.png"}, provinces, "impassable_crossings.txt");
+    std::cout << "Generated impassable crossings." << std::endl;
+
+    save_provinces(provinces);
+    std::cout << "Saved provinces data." << std::endl;
+
+    generate_rivers(province_image, provinces, "images/map.png", "river_tiles.txt");
+    std::cout << "Generated rivers data." << std::endl;
+
+    draw_river_map(province_image, provinces, "rivers_generated.png");
+    std::cout << "Generated river map." << std::endl;
+
+    write_rivers(provinces, "rivers.txt");
+    std::cout << "Saved rivers data." << std::endl;
 }
 
 int main() {

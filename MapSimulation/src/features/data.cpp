@@ -34,12 +34,8 @@ std::unordered_map<uint_fast32_t, character> &data::characters() {
     return characters_;
 }
 
-const std::vector<std::unique_ptr<river> > &data::rivers() const {
-    return rivers_;
-}
-
-river &data::add_river() {
-    return *rivers_.emplace_back(std::make_unique<river>());
+void data::tick() {
+    current_date_ = current_date_ + 1;
 }
 
 data &data::instance() {

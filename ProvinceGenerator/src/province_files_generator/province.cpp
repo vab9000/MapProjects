@@ -114,8 +114,10 @@ province::province() : color_(0), koppen_(koppen::none), elevation_(elevation::n
                        soil_(soil::none), water_(false) {
 }
 
-province::province(const unsigned int color, const bool water) : color_(color), koppen_(koppen::none), elevation_(elevation::none),
-                                               vegetation_(vegetation::none), soil_(soil::none), water_(water) {
+province::province(const unsigned int color, const bool water) : color_(color), koppen_(koppen::none),
+                                                                 elevation_(elevation::none),
+                                                                 vegetation_(vegetation::none), soil_(soil::none),
+                                                                 water_(water) {
 }
 
 unsigned int province::color() const {
@@ -177,7 +179,9 @@ void province::set_elevation(const std::vector<unsigned int> &elevation_colors) 
     }
 
     const int roughness = roughness_func(elevation);
+    roughness_ = roughness;
     const int average_elevation = static_cast<int>(mean(elevation));
+    average_elevation_ = average_elevation;
 
     if (average_elevation > 400) {
         elevation_ = elevation::highlands;
@@ -261,27 +265,28 @@ void province::write(std::ofstream &file) const {
     file << "\n";
 }
 
-void province::add_neighbor(province *neighbor) {
+void province::add_neighbor(const province *neighbor) {
     neighbors_.insert(neighbor);
 }
 
-const std::unordered_set<province *> &province::neighbors() const {
+const std::unordered_set<const province *> &province::neighbors() const {
     return neighbors_;
 }
 
-void province::add_outline_point(province *neighbor, int x, int y) {
+void province::add_outline_point(const province *neighbor, int x, int y) {
     outline_[neighbor].insert({x, y});
 }
 
-const std::unordered_map<province *, std::unordered_set<std::pair<int, int>, hash_coords> > &province::outline() const {
+const std::unordered_map<const province *, std::unordered_set<std::pair<int, int>, hash_coords> > &
+province::outline() const {
     return outline_;
 }
 
-void province::add_river(province *neighbor, const int size) {
+void province::add_river(const province *neighbor, const int size) {
     rivers_[neighbor] = size;
 }
 
-const std::unordered_map<province *, int> &province::rivers() const {
+const std::unordered_map<const province *, int> &province::rivers() const {
     return rivers_;
 }
 
@@ -296,33 +301,52 @@ unsigned int province::river_color(int x, int y) const {
     return 0xFFFFFF;
 }
 
-void province::add_river_line(const unsigned int line_id) {
-    river_lines_.insert(line_id);
-}
-
-const std::unordered_set<unsigned> &province::river_lines() const {
-    return river_lines_;
-}
-
-unsigned int province::river_line_color() const {
-    static std::random_device rd;
-    static std::default_random_engine gen(rd());
-    static std::uniform_int_distribution<unsigned int> dist(1, 0xFFFFFE);
-    static std::unordered_map<unsigned int, unsigned int> line_colors;
-    if (river_lines_.empty())
-        return 0xFFFFFF;
-    if (river_lines_.size() > 1)
-        return 0;
-    if (line_colors.contains(*river_lines_.begin())) {
-        return line_colors.at(*river_lines_.begin());
-    }
-    const unsigned int color = dist(gen);
-    line_colors[*river_lines_.begin()] = color;
-    return color;
-}
-
 bool province::is_water() const {
     return water_;
 }
 
-
+std::vector<const province *> province::impassable_neighbors(const image &base_image) const {
+    std::vector<const province *> impassable;
+    if (is_water()) return impassable;
+    for (auto neighbor: neighbors_) {
+        if (neighbor->is_water()) continue;
+        auto &border = outline_.at(neighbor);
+        auto num_river = 0;
+        const double border_elevation = std::accumulate(border.begin(), border.end(), 0,
+                                                        [&](const int sum, const std::pair<int, int> &point) {
+                                                            const auto color = base_image(point.first, point.second);
+                                                            if (color.r() == 0 && color.g() == 0) {
+                                                                num_river++;
+                                                                return sum + average_elevation_;
+                                                            }
+                                                            return sum + color.r() + color.g() + color.b();
+                                                        }) / static_cast<double>(border.size());
+        auto num_river_neighbor = 0;
+        const double neighbor_border_elevation = std::accumulate(neighbor->outline_.at(this).begin(),
+                                                                 neighbor->outline_.at(this).end(), 0,
+                                                                 [&](const int sum, const std::pair<int, int> &point) {
+                                                                     const auto color = base_image(
+                                                                         point.first, point.second);
+                                                                     if (color.r() == 0 && color.g() == 0) {
+                                                                         num_river_neighbor++;
+                                                                         return sum + neighbor->average_elevation_;
+                                                                     }
+                                                                     return sum + color.r() + color.g() + color.b();
+                                                                 }) / static_cast<double>(neighbor->outline_.at(this).
+                                                     size());
+        if (num_river > static_cast<int>(border.size()) * 0.3 ||
+            num_river_neighbor > static_cast<int>(neighbor->outline_.at(this).size()) * 0.3) {
+            continue;
+        }
+        if (abs(border_elevation - neighbor_border_elevation) > average_elevation_ / 10.0 + 4 || abs(
+                border_elevation - neighbor_border_elevation) > neighbor->average_elevation_ / 10.0 + 4) {
+            impassable.push_back(neighbor);
+            continue;
+        }
+        if (border_elevation > average_elevation_ * 1.5 + 10 || neighbor_border_elevation > neighbor->average_elevation_
+            * 1.5 + 10) {
+            impassable.push_back(neighbor);
+        }
+    }
+    return impassable;
+}

@@ -12,7 +12,6 @@ class data {
     std::unordered_map<uint_fast32_t, province> provinces_;
     std::unordered_map<uint_fast32_t, tag> tags_;
     std::unordered_map<uint_fast32_t, character> characters_;
-    std::vector<std::unique_ptr<river> > rivers_;
 
     static data instance_;
 
@@ -47,11 +46,8 @@ public:
     // Get the characters
     std::unordered_map<uint_fast32_t, character> &characters();
 
-    // Get the rivers
-    [[nodiscard]] const std::vector<std::unique_ptr<river> > &rivers() const;
-
-    // Add a river
-    river &add_river();
+    // Advance the simulation
+    void tick();
 
     // Get the singleton instance of data
     static data &instance();

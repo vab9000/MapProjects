@@ -5,6 +5,7 @@
 #include <fstream>
 #include <unordered_map>
 #include <unordered_set>
+#include "../common/image.hpp"
 
 struct hash_coords {
     std::size_t operator()(const std::pair<int, int> &p) const noexcept {
@@ -23,11 +24,13 @@ class province {
     elevation elevation_;
     vegetation vegetation_;
     soil soil_;
-    std::unordered_set<province *> neighbors_;
-    std::unordered_map<province *, std::unordered_set<std::pair<int, int>, hash_coords>> outline_;
-    std::unordered_map<province *, int> rivers_;
+    std::unordered_set<const province *> neighbors_;
+    std::unordered_map<const province *, std::unordered_set<std::pair<int, int>, hash_coords> > outline_;
+    std::unordered_map<const province *, int> rivers_;
     std::unordered_set<unsigned int> river_lines_;
     bool water_;
+    int roughness_ = 0;
+    int average_elevation_ = 0;
 
 public:
     province();
@@ -56,25 +59,22 @@ public:
 
     void write(std::ofstream &file) const;
 
-    void add_neighbor(province *neighbor);
+    void add_neighbor(const province *neighbor);
 
-    [[nodiscard]] const std::unordered_set<province *> &neighbors() const;
+    [[nodiscard]] const std::unordered_set<const province *> &neighbors() const;
 
-    void add_outline_point(province * neighbor, int x, int y);
+    void add_outline_point(const province *neighbor, int x, int y);
 
-    [[nodiscard]] const std::unordered_map<province *, std::unordered_set<std::pair<int, int>, hash_coords>> &outline() const;
+    [[nodiscard]] const std::unordered_map<const province *, std::unordered_set<std::pair<int, int>, hash_coords> > &
+    outline() const;
 
-    void add_river(province *neighbor, int size);
+    void add_river(const province *neighbor, int size);
 
-    [[nodiscard]] const std::unordered_map<province *, int> &rivers() const;
+    [[nodiscard]] const std::unordered_map<const province *, int> &rivers() const;
 
     [[nodiscard]] unsigned int river_color(int x, int y) const;
 
-    void add_river_line(unsigned int line_id);
-
-    [[nodiscard]] const std::unordered_set<unsigned int> &river_lines() const;
-
-    [[nodiscard]] unsigned int river_line_color() const;
-
     [[nodiscard]] bool is_water() const;
+
+    [[nodiscard]] std::vector<const province *> impassable_neighbors(const image &base_image) const;
 };

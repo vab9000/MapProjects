@@ -67,6 +67,29 @@ inline void load_seas(data &d) {
     sea_file.close();
 }
 
+inline void load_river_tiles(data &d) {
+    std::ifstream river_tiles_file("assets/river_tiles.txt");
+    if (!river_tiles_file.is_open()) {
+        throw std::runtime_error("Failed to open river tiles file: " "river_tiles.txt");
+    }
+    while (!river_tiles_file.eof()) {
+        std::string ignore;
+        std::getline(river_tiles_file, ignore, ':');
+        if (ignore == "\n") break;
+        uint_fast32_t color;
+        river_tiles_file >> color;
+        std::getline(river_tiles_file, ignore, ':');
+        uint_fast32_t river_value;
+        river_tiles_file >> river_value;
+        color = flip_rb(color);
+        d.provinces().emplace(std::piecewise_construct, std::forward_as_tuple(color), std::forward_as_tuple(
+                                  color, koppen_t::none, elevation_t::none, vegetation_t::none,
+                                  soil_t::none, sea_t::river));
+        d.provinces().at(color).set_value(river_value);
+    }
+    river_tiles_file.close();
+}
+
 inline void load_river_borders(data &d) {
     std::ifstream rivers_file("assets/rivers.txt");
     if (!rivers_file.is_open()) {
@@ -86,45 +109,44 @@ inline void load_river_borders(data &d) {
         rivers_file >> river_value;
         color = flip_rb(color);
         neighbor_color = flip_rb(neighbor_color);
-        d.provinces().at(color).add_river_boundary(&d.provinces().at(neighbor_color),
+        d.provinces().at(color).add_river_neighbor(&d.provinces().at(neighbor_color),
                                                    static_cast<uint_fast8_t>(river_value));
     }
     rivers_file.close();
 }
 
-void load_river_lines(data &d) {
-    std::ifstream river_lines_file("assets/river_lines.txt");
-    if (!river_lines_file.is_open()) {
-        throw std::runtime_error("Failed to open river lines file: " "river_lines.txt");
+inline void load_impassable_neighbors(data &d) {
+    std::ifstream impassable_file("assets/impassable_crossings.txt");
+    if (!impassable_file.is_open()) {
+        throw std::runtime_error("Failed to open impassable neighbors file: " "impassable_crossings.txt");
     }
-    auto *current_river = &d.add_river();
-    while (!river_lines_file.eof()) {
-        std::string command;
-        std::getline(river_lines_file, command, ':');
-        if (command == "\n") break;
-        if (command == "River ID") {
-            current_river = &d.add_river();
-            uint_fast32_t river_id;
-            river_lines_file >> river_id;
-        } else if (command == "Province Color") {
-            uint_fast32_t province_color;
-            river_lines_file >> province_color;
-            province_color = flip_rb(province_color);
-            current_river->add_province(&d.provinces().at(province_color));
-        }
-        std::getline(river_lines_file, command, '\n');
+    while (!impassable_file.eof()) {
+        std::string ignore;
+        std::getline(impassable_file, ignore, ':');
+        if (ignore == "\n") break;
+        uint_fast32_t color;
+        impassable_file >> color;
+        std::getline(impassable_file, ignore, ':');
+        uint_fast32_t neighbor_color;
+        impassable_file >> neighbor_color;
+        color = flip_rb(color);
+        neighbor_color = flip_rb(neighbor_color);
+        d.provinces().at(color).add_impassable_neighbor(&d.provinces().at(neighbor_color));
     }
-    river_lines_file.close();
+    impassable_file.close();
 }
 
 inline void process_pixel_borders(
     std::unordered_map<province *, std::vector<std::array<uint_fast32_t, 2> > > &pixels_by_province,
-    const image &map_image, data &d, const uint_fast32_t color, const std::array<uint_fast32_t, 2> &position) {
+    const image &map_image, data &d, const uint_fast32_t color, const std::array<uint_fast32_t, 2> &position,
+    std::vector<uint8_t> &crossing_bytes) {
     const auto i = static_cast<int_fast32_t>(position[0]);
     const auto j = static_cast<int_fast32_t>(position[1]);
 
     auto &this_province = d.provinces().at(color);
     pixels_by_province[&this_province].push_back(position);
+
+    bool impassable_neighbor = false;
 
     std::ranges::for_each(std::views::iota(-1, 1 + 1), [&](const int_fast8_t dx) {
         std::ranges::for_each(std::views::iota(-1, 1 + 1), [&](const int_fast8_t dy) {
@@ -142,11 +164,25 @@ inline void process_pixel_borders(
             auto &neighbor = d.provinces().at(neighbor_color);
             if (dx != 0 && dy != 0 && neighbor.sea() == sea_t::none) return;
             this_province.add_neighbor(&neighbor);
+            if (!impassable_neighbor && this_province.impassable_neighbors().contains(&neighbor)) {
+                impassable_neighbor = true;
+            }
         });
     });
+    if (impassable_neighbor) {
+        crossing_bytes[(i + j * map_image.width()) * 4] = 255;
+        crossing_bytes[(i + j * map_image.width()) * 4 + 1] = 0;
+        crossing_bytes[(i + j * map_image.width()) * 4 + 2] = 0;
+        crossing_bytes[(i + j * map_image.width()) * 4 + 3] = 255;
+    } else {
+        crossing_bytes[(i + j * map_image.width()) * 4] = 0;
+        crossing_bytes[(i + j * map_image.width()) * 4 + 1] = 0;
+        crossing_bytes[(i + j * map_image.width()) * 4 + 2] = 0;
+        crossing_bytes[(i + j * map_image.width()) * 4 + 3] = 0;
+    }
 }
 
-void load_image(data &d, image &map_image, std::string &loading_text) {
+void load_image(data &d, image &map_image, std::vector<uint8_t> &crossing_bytes, std::string &loading_text) {
     loading_text = "Loading provinces file...";
     load_provinces(d);
 
@@ -156,8 +192,11 @@ void load_image(data &d, image &map_image, std::string &loading_text) {
     loading_text = "Loading rivers file...";
     load_river_borders(d);
 
-    loading_text = "Loading river lines file...";
-    load_river_lines(d);
+    loading_text = "Loading river tiles file...";
+    load_river_tiles(d);
+
+    loading_text = "Loading impassable neighbors file...";
+    load_impassable_neighbors(d);
 
     std::unordered_map<province *, std::vector<std::array<uint_fast32_t, 2> > > pixels_by_province;
 
@@ -171,9 +210,10 @@ void load_image(data &d, image &map_image, std::string &loading_text) {
     });
 
     loading_text = "Processing pixel borders...";
+    crossing_bytes = std::vector<uint8_t>(map_image.width() * map_image.height() * 4);
     std::ranges::for_each(std::views::iota(0, map_image.width()), [&](const uint_fast32_t i) {
         std::ranges::for_each(std::views::iota(0, map_image.height()), [&](const uint_fast32_t j) {
-            process_pixel_borders(pixels_by_province, map_image, d, map_image.color(i, j), {i, j});
+            process_pixel_borders(pixels_by_province, map_image, d, map_image.color(i, j), {i, j}, crossing_bytes);
         });
     });
 

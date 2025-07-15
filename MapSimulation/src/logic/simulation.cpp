@@ -52,13 +52,15 @@ void simulation::start_processing() {
         drawer_.draw_loading_message(window);
     });
 
-    load_image(data_, map_image_, loading_text_);
+    std::vector<uint8_t> crossing_bytes;
+    load_image(data_, map_image_, crossing_bytes, loading_text_);
 
     bitmap_ = bitmap{&map_image_, data_, drawer_};
 
-    if (!drawer_.init_sprites(map_image_, bitmap_.bytes())) {
+    if (!drawer_.init_sprites(map_image_, bitmap_.bytes(), crossing_bytes)) {
         throw std::runtime_error("Failed to initialize sprites");
     }
+    crossing_bytes.clear();
 
     window_.clear_render_funcs();
     window_.add_render_func([this](sf::RenderWindow &window) {
@@ -69,6 +71,7 @@ void simulation::start_processing() {
     });
 
     while (open_) {
+        data_.tick();
     }
 
     window_.stop_event_loop();
@@ -88,10 +91,13 @@ void simulation::handle_event(const sf::Event &event) {
         offset_[1] += static_cast<int_fast32_t>(dimensions.y / 2 - scroll_data->position.y);
 
         if (scroll_data->delta > 0) {
+            zoom_ *= 1.1;
             if (zoom_ > 10.0) {
+                zoom_ /= 1.1;
+                offset_[0] -= static_cast<int_fast32_t>(dimensions.x / 2 - scroll_data->position.x);
+                offset_[1] -= static_cast<int_fast32_t>(dimensions.y / 2 - scroll_data->position.y);
                 return;
             }
-            zoom_ *= 1.1;
             offset_[0] -= static_cast<int_fast32_t>((dimensions.x / 2.0 - offset_[0]) * 0.1);
             offset_[1] -= static_cast<int_fast32_t>((dimensions.y / 2.0 - offset_[1]) * 0.1);
         } else {

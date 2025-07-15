@@ -131,6 +131,7 @@ enum class sea_t :uint_fast32_t {
     westerly = to_integer_color(255, 255, 100),
     polar = to_integer_color(200, 255, 255),
     lake = to_integer_color(255, 150, 255),
+    river = to_integer_color(0, 255, 0),
 };
 
 inline std::string_view koppen_to_string(const koppen_t value) {
@@ -357,6 +358,8 @@ inline std::string_view sea_to_string(const sea_t value) {
             return "Sea";
         case sea_t::westerly:
             return "Westerly";
+        case sea_t::river:
+            return "River";
         default:
             return "No sea type";
     }

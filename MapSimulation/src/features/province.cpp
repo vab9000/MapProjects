@@ -110,12 +110,8 @@ void province::remove_pop(pop *p) {
     });
 }
 
-void province::add_river_boundary(province *neighbor, const uint_fast8_t size) {
-    river_boundaries_[neighbor] = size;
-}
-
-void province::add_river(river *r) {
-    rivers_.emplace_back(r);
+void province::add_river_neighbor(province *neighbor, const uint_fast8_t size) {
+    river_neighbors_[neighbor] = size;
 }
 
 void province::add_neighbor(province *neighbor) {
@@ -201,7 +197,7 @@ sea_t province::sea() const {
     return sea_;
 }
 
-double province::distance(const province &other) const {
+double_t province::distance(const province &other) const {
     if (distances_processed_ && neighbors_.contains(&const_cast<province &>(other))) {
         return neighbors_.at(&const_cast<province &>(other));
     }
@@ -235,10 +231,26 @@ const std::map<province *, double_t> &province::neighbors() const {
     return neighbors_;
 }
 
-const std::map<province *, uint_fast8_t> &province::river_boundaries() const {
-    return river_boundaries_;
+const std::map<province *, uint_fast8_t> &province::river_neighbors() const {
+    return river_neighbors_;
 }
 
-const std::vector<river *> &province::rivers() const {
-    return rivers_;
+const std::set<province *> &province::impassable_neighbors() const {
+    return impassable_neighbors_;
+}
+
+void province::add_impassable_neighbor(province *neighbor) {
+    impassable_neighbors_.insert(neighbor);
+}
+
+uint_fast32_t province::size() const {
+    return size_;
+}
+
+uint_fast8_t province::value() const {
+    return value_;
+}
+
+void province::set_value(uint_fast8_t value) {
+    value_ = value;
 }
