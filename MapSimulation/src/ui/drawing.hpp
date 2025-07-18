@@ -46,5 +46,5 @@ public:
                             const sf::Vector2u &position);
 
     // Draw the GUI elements on the window
-    void draw_gui(sf::RenderWindow &window);
+    void draw_gui(const sf::RenderWindow &window);
 };

@@ -5,8 +5,8 @@
 
 class image {
     std::vector<uint8_t> data_;
-    int width_;
-    int height_;
+    uint_fast32_t width_;
+    uint_fast32_t height_;
 
 public:
     image();
@@ -21,8 +21,8 @@ public:
     [[nodiscard]] uint_fast32_t color(uint_fast32_t i, uint_fast32_t j) const;
 
     // Get the width
-    [[nodiscard]] int width() const;
+    [[nodiscard]] uint_fast32_t width() const;
 
     // Get the height
-    [[nodiscard]] int height() const;
+    [[nodiscard]] uint_fast32_t height() const;
 };

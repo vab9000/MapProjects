@@ -61,7 +61,7 @@ const std::list<province *> &unit::path() const {
     return path_;
 }
 
-double unit::travel_progress() const {
+double_t unit::travel_progress() const {
     return travel_progress_;
 }
 

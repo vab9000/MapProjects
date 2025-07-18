@@ -6,14 +6,12 @@ set(IMGUI_SFML_VERSION 3.0)
 
 FetchContent_Declare(
         SFML
-#        URL "https://github.com/SFML/SFML/archive/${SFML_VERSION}.zip"
         GIT_REPOSITORY "https://github.com/SFML/SFML.git"
         GIT_TAG "${SFML_VERSION}"
 )
 
 FetchContent_Declare(
         imgui
-#        URL "https://github.com/ocornut/imgui/archive/v${IMGUI_VERSION}.zip"
         GIT_REPOSITORY "https://github.com/ocornut/imgui.git"
         GIT_TAG "v${IMGUI_VERSION}"
 )
@@ -24,6 +22,16 @@ FetchContent_Declare(
         GIT_TAG "v${IMGUI_SFML_VERSION}"
 )
 
+FetchContent_Declare(
+        Boost
+        URL https://github.com/boostorg/boost/releases/download/boost-1.84.0/boost-1.84.0.tar.xz
+        URL_MD5 893b5203b862eb9bbd08553e24ff146a
+        DOWNLOAD_EXTRACT_TIMESTAMP ON
+)
+
+set(BOOST_INCLUDE_LIBRARIES unordered)
+FetchContent_MakeAvailable(Boost)
+
 option(SFML_BUILD_AUDIO "Build audio" OFF)
 option(SFML_BUILD_NETWORK "Build network" OFF)
 FetchContent_MakeAvailable(sfml)
@@ -32,7 +40,6 @@ FetchContent_MakeAvailable(imgui)
 
 set(IMGUI_DIR ${imgui_SOURCE_DIR})
 option(IMGUI_SFML_FIND_SFML "Use find_package to find SFML" OFF)
-#option(IMGUI_SFML_IMGUI_DEMO "Build imgui_demo.cpp" ON)
 
 FetchContent_MakeAvailable(imgui-sfml)
 
@@ -55,28 +62,13 @@ set_target_properties(MapSimulation PROPERTIES
 
 file(GLOB_RECURSE Sources src/*.cpp)
 
-#file(GLOB_RECURSE Libs libs/*.c libs/*.cpp)
-
 target_sources(MapSimulation PRIVATE ${Sources})
-
-#target_sources(MapSimulation PRIVATE ${Libs})
 
 target_link_libraries(MapSimulation PRIVATE SFML::Graphics SFML::System SFML::Window)
 
-#set(SFML_DIR libs/SFML-3.0.0/lib/cmake/SFML)
-#find_package(SFML 3 COMPONENTS Audio Graphics Network Main System Window REQUIRED)
-#if (SFML_FOUND)
-#    target_include_directories(MapSimulation PRIVATE libs/SFML-3.0.0/include)
-#    target_link_libraries(MapSimulation PRIVATE SFML::Graphics SFML::Audio SFML::Network SFML::System SFML::Window)
-#endif ()
-
-#find_package(OpenCV REQUIRED imgproc PATHS libs/opencv/build NO_DEFAULT_PATH)
-#if (OpenCV_FOUND)
-#    target_include_directories(MapSimulation PRIVATE ${OpenCV_INCLUDE_DIRS})
-#    target_link_libraries(MapSimulation PRIVATE ${OpenCV_LIBS})
-#endif ()
-
 target_link_libraries(MapSimulation PUBLIC ImGui-SFML::ImGui-SFML)
+
+target_link_libraries(MapSimulation PUBLIC Boost::unordered)
 
 file(GLOB_RECURSE Images assets/*)
 foreach(image ${Images})

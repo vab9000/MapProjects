@@ -54,7 +54,7 @@ int_fast64_t date::absolute_days() const {
     int_fast64_t total_days = 0;
 
     for (uint_fast32_t y = 0; y < year; ++y) {
-        total_days += (y % 4 == 0 && (y % 100 != 0 || y % 400 == 0)) ? 366 : 365;
+        total_days += y % 4 == 0 && (y % 100 != 0 || y % 400 == 0) ? 366 : 365;
     }
 
     for (uint_fast8_t m = 1; m < month; ++m) {

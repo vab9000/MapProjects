@@ -5,13 +5,11 @@
 #include <fstream>
 #include <ranges>
 #include <iostream>
-#ifdef __cpp_lib_execution
 #include <execution>
-#endif
 #include "image.hpp"
 #include "../features/data.hpp"
 
-inline void load_provinces(data &d) {
+void load_provinces(data &d) {
     std::ifstream province_file("assets/provinces.txt");
     if (!province_file.is_open()) {
         throw std::runtime_error("Failed to open province file: " "provinces.txt");
@@ -45,7 +43,7 @@ inline void load_provinces(data &d) {
     province_file.close();
 }
 
-inline void load_seas(data &d) {
+void load_seas(data &d) {
     std::ifstream sea_file("assets/sea_tiles.txt");
     if (!sea_file.is_open()) {
         throw std::runtime_error("Failed to open sea tiles file: " "sea_tiles.txt");
@@ -67,7 +65,7 @@ inline void load_seas(data &d) {
     sea_file.close();
 }
 
-inline void load_river_tiles(data &d) {
+void load_river_tiles(data &d) {
     std::ifstream river_tiles_file("assets/river_tiles.txt");
     if (!river_tiles_file.is_open()) {
         throw std::runtime_error("Failed to open river tiles file: " "river_tiles.txt");
@@ -90,7 +88,7 @@ inline void load_river_tiles(data &d) {
     river_tiles_file.close();
 }
 
-inline void load_river_borders(data &d) {
+void load_river_borders(data &d) {
     std::ifstream rivers_file("assets/rivers.txt");
     if (!rivers_file.is_open()) {
         throw std::runtime_error("Failed to open rivers file: " "rivers.txt");
@@ -115,7 +113,7 @@ inline void load_river_borders(data &d) {
     rivers_file.close();
 }
 
-inline void load_impassable_neighbors(data &d) {
+void load_impassable_neighbors(data &d) {
     std::ifstream impassable_file("assets/impassable_crossings.txt");
     if (!impassable_file.is_open()) {
         throw std::runtime_error("Failed to open impassable neighbors file: " "impassable_crossings.txt");
@@ -136,7 +134,7 @@ inline void load_impassable_neighbors(data &d) {
     impassable_file.close();
 }
 
-inline void process_pixel_borders(
+void process_pixel_borders(
     std::unordered_map<province *, std::vector<std::array<uint_fast32_t, 2> > > &pixels_by_province,
     const image &map_image, data &d, const uint_fast32_t color, const std::array<uint_fast32_t, 2> &position,
     std::vector<uint8_t> &crossing_bytes) {
@@ -203,16 +201,16 @@ void load_image(data &d, image &map_image, std::vector<uint8_t> &crossing_bytes,
     map_image = image{"assets/provinces_generated.png"};
 
     loading_text = "Processing pixels...";
-    std::ranges::for_each(std::views::iota(0, map_image.width()), [&](const uint_fast32_t i) {
-        std::ranges::for_each(std::views::iota(0, map_image.height()), [&](const uint_fast32_t j) {
+    std::ranges::for_each(std::views::iota(0u, map_image.width()), [&](const uint_fast32_t i) {
+        std::ranges::for_each(std::views::iota(0u, map_image.height()), [&](const uint_fast32_t j) {
             d.provinces().at(map_image.color(i, j)).expand_bounds(i, j);
         });
     });
 
     loading_text = "Processing pixel borders...";
     crossing_bytes = std::vector<uint8_t>(map_image.width() * map_image.height() * 4);
-    std::ranges::for_each(std::views::iota(0, map_image.width()), [&](const uint_fast32_t i) {
-        std::ranges::for_each(std::views::iota(0, map_image.height()), [&](const uint_fast32_t j) {
+    std::ranges::for_each(std::views::iota(0u, map_image.width()), [&](const uint_fast32_t i) {
+        std::ranges::for_each(std::views::iota(0u, map_image.height()), [&](const uint_fast32_t j) {
             process_pixel_borders(pixels_by_province, map_image, d, map_image.color(i, j), {i, j}, crossing_bytes);
         });
     });
@@ -220,16 +218,10 @@ void load_image(data &d, image &map_image, std::vector<uint8_t> &crossing_bytes,
     auto province_values = d.provinces() | std::views::values;
 
     loading_text = "Finalizing provinces...";
-#ifdef __cpp_lib_execution
     std::for_each(std::execution::par_unseq, province_values.begin(), province_values.end(),
                   [&pixels_by_province](province &province) { province.finalize(pixels_by_province.at(&province)); });
     std::for_each(std::execution::par_unseq, province_values.begin(), province_values.end(),
                   [](province &province) { province.process_distances(); });
-#else
-    std::ranges::for_each(province_values,
-                          [&pixels_by_province](province &province) { province.finalize(pixels_by_province.at(&province)); });
-    std::ranges::for_each(province_values,
-                          [](province &province) { province.process_distances(); });
-#endif
+
     loading_text.clear();
 }

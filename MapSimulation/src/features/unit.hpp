@@ -51,7 +51,7 @@ public:
     [[nodiscard]] const std::list<province *> &path() const;
 
     // Get the travel progress of the unit to the next province
-    [[nodiscard]] double travel_progress() const;
+    [[nodiscard]] double_t travel_progress() const;
 
     // Get if the unit is retreating
     [[nodiscard]] bool retreating() const;

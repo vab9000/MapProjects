@@ -31,12 +31,17 @@ bool drawing::init_sprites(const image &map_image, const std::vector<uint8_t> &b
     map_sprite_.setTexture(texture_);
     map_sprite_.setTextureRect({
         {0, 0},
-        {map_image.width(), map_image.height()}
+        {static_cast<int>(map_image.width()), static_cast<int>(map_image.height())}
     });
+    if (!crossing_texture_.loadFromImage({
+        sf::Vector2u(map_image.width(), map_image.height()), crossing_bytes.data()
+    })) {
+        return false;
+    }
     crossing_sprite_.setTexture(crossing_texture_);
     crossing_sprite_.setTextureRect({
         {0, 0},
-        {map_image.width(), map_image.height()}
+{static_cast<int>(map_image.width()), static_cast<int>(map_image.height())}
     });
     if (!crossing_shader_.loadFromFile("shaders/crossings.frag", sf::Shader::Type::Fragment)) {
         return false;
@@ -53,7 +58,7 @@ void drawing::recalculate_sprite_coords(const std::array<int_fast32_t, 2> offset
     crossing_sprite_.setScale(sf::Vector2f(zoom_f, zoom_f));
 }
 
-void drawing::draw_loading_message(sf::RenderWindow &window) const {
+void drawing::draw_loading_message(sf::RenderWindow &) const {
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(ImVec2(500, 100));
     if (ImGui::Begin("Loading")) {
@@ -100,7 +105,7 @@ void drawing::update_map_texture(const uint8_t *bytes, const sf::Vector2u &dimen
     texture_.update(bytes, dimensions, position);
 }
 
-inline void draw_date() {
+void draw_date() {
     static date current_date;
     static std::string date_str = std::move(current_date.to_string());
     if (ImGui::BeginChild("Date", {200, 50})) {
@@ -113,7 +118,7 @@ inline void draw_date() {
     ImGui::EndChild();
 }
 
-inline void draw_map_mode_selection(simulation &sim) {
+void draw_map_mode_selection(simulation &sim) {
     constexpr static std::array<std::string_view, 7> map_mode_names = {
         "Provinces", "Owner", "Koppen", "Elevation", "Vegetation", "Soil", "Sea"
     };
@@ -138,7 +143,7 @@ inline void draw_map_mode_selection(simulation &sim) {
     ImGui::EndChild();
 }
 
-inline void draw_selected_province_info(const simulation &sim) {
+void draw_selected_province_info(const simulation &sim) {
     const auto selected_province = sim.selected_province();
     if (selected_province == nullptr) return;
     if (ImGui::BeginChild("Selected Province Info", {200, 100})) {
@@ -162,7 +167,7 @@ void drawing::draw_checkboxes() {
     ImGui::Checkbox("Crossings", &draw_crossings_);
 }
 
-void drawing::draw_gui(sf::RenderWindow &window) {
+void drawing::draw_gui(const sf::RenderWindow &window) {
     ImGui::SetNextWindowPos({0, 0});
     ImGui::SetNextWindowSize({200, static_cast<float_t>(window.getSize().y)});
     if (ImGui::Begin("GUI")) {

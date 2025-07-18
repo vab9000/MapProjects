@@ -11,6 +11,6 @@ uint_fast32_t id_generator::next_id() {
     return id;
 }
 
-void id_generator::return_id(uint_fast32_t id) {
+void id_generator::return_id(const uint_fast32_t id) {
     id_stack_.push(id);
 }

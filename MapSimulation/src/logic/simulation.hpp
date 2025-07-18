@@ -49,7 +49,7 @@ public:
     void change_map_mode(map_mode_t mode);
 
     // Get the dimensions of the map
-    std::array<int, 2> map_dimensions() const;
+    std::array<uint_fast32_t, 2> map_dimensions() const;
 
     map_mode_t map_mode() const;
 

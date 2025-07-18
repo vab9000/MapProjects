@@ -15,7 +15,7 @@ class unit;
 class province {
     pop_container pops_;
     tag *owner_ = nullptr;
-    std::map<province *, double_t> neighbors_;
+    std::map<province *, std::pair<double_t, uint_fast8_t> > neighbors_;
     std::set<province *> impassable_neighbors_;
     std::map<province *, uint_fast8_t> river_neighbors_;
     uint_fast32_t size_ = 0;
@@ -101,7 +101,7 @@ public:
     [[nodiscard]] sea_t sea() const;
 
     // Get the distance to another province
-    [[nodiscard]] double_t distance(const province &other) const;
+    [[nodiscard]] double_t distance(province *other) const;
 
     // Find the shortest path to another province using Dijkstra's algorithm
     template<typename T>
@@ -125,7 +125,7 @@ public:
     pop_container &pops();
 
     // Get the neighbors of this province as a map of neighbor province pointers to distances
-    [[nodiscard]] const std::map<province *, double_t> &neighbors() const;
+    [[nodiscard]] const std::map<province *, std::pair<double_t, uint_fast8_t> > &neighbors() const;
 
     // Get the neighbor provinces that are divided by rivers, with the river size
     [[nodiscard]] const std::map<province *, uint_fast8_t> &river_neighbors() const;
@@ -182,7 +182,7 @@ std::list<province *> province::path_to(province *destination,
                 continue;
             }
             const double_t new_distance = current_distance + cost_modifier(*this, *neighbor_province, param) *
-                                          neighbor_distance * (current_province->impassable_neighbors_.contains(
+                                          neighbor_distance.first * (current_province->impassable_neighbors_.contains(
                                                                    neighbor_province)
                                                                    ? 10.0
                                                                    : 1.0);

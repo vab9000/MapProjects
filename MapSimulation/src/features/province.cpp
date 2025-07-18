@@ -57,7 +57,7 @@ void province::finalize(const std::vector<std::array<uint_fast32_t, 2> > &pixels
     };
 
     if (center_[0] == -1) {
-        double min_distance = (std::numeric_limits<double>::max)();
+        auto min_distance = (std::numeric_limits<double_t>::max)();
         for (uint_fast32_t i = 0; i < size_; ++i) {
             if (const auto dist = distance(pixels[i], {test_center[0], test_center[1]}); dist < min_distance) {
                 min_distance = dist;
@@ -70,7 +70,7 @@ void province::finalize(const std::vector<std::array<uint_fast32_t, 2> > &pixels
 
 void province::process_distances() {
     for (const auto neighbor: neighbors_ | std::views::keys) {
-        neighbors_[neighbor] = distance(*neighbor);
+        neighbors_.at(neighbor).first = distance(neighbor);
     }
     distances_processed_ = true;
 }
@@ -115,7 +115,11 @@ void province::add_river_neighbor(province *neighbor, const uint_fast8_t size) {
 }
 
 void province::add_neighbor(province *neighbor) {
-    neighbors_.emplace(neighbor, 0.0);
+    if (neighbors_.contains(neighbor)) {
+        neighbors_.at(neighbor).second += 1;
+        return;
+    }
+    neighbors_.emplace(neighbor, std::pair{0.0, 1});
 }
 
 void province::expand_bounds(const uint_fast32_t x, const uint_fast32_t y) {
@@ -197,12 +201,12 @@ sea_t province::sea() const {
     return sea_;
 }
 
-double_t province::distance(const province &other) const {
-    if (distances_processed_ && neighbors_.contains(&const_cast<province &>(other))) {
-        return neighbors_.at(&const_cast<province &>(other));
+double_t province::distance(province *other) const {
+    if (distances_processed_ && neighbors_.contains(other)) {
+        return neighbors_.at(other).first;
     }
-    return sqrt(pow(static_cast<int_fast32_t>(center_[0]) - static_cast<int_fast32_t>(other.center_[0]), 2) +
-                pow(static_cast<int_fast32_t>(center_[1]) - static_cast<int_fast32_t>(other.center_[1]), 2));
+    return sqrt(pow(static_cast<int_fast32_t>(center_[0]) - static_cast<int_fast32_t>(other->center_[0]), 2) +
+                pow(static_cast<int_fast32_t>(center_[1]) - static_cast<int_fast32_t>(other->center_[1]), 2));
 }
 
 void province::tick() {
@@ -227,7 +231,7 @@ pop_container &province::pops() {
     return pops_;
 }
 
-const std::map<province *, double_t> &province::neighbors() const {
+const std::map<province *, std::pair<double_t, uint_fast8_t> > &province::neighbors() const {
     return neighbors_;
 }
 
@@ -251,6 +255,6 @@ uint_fast8_t province::value() const {
     return value_;
 }
 
-void province::set_value(uint_fast8_t value) {
+void province::set_value(const uint_fast8_t value) {
     value_ = value;
 }

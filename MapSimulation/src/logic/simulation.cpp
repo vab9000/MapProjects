@@ -2,9 +2,7 @@
 #include <thread>
 #include <algorithm>
 #include <ranges>
-#ifdef __cpp_lib_execution
 #include <execution>
-#endif
 #include "load_image.hpp"
 
 void simulation::change_map_mode(const map_mode_t mode) {
@@ -12,17 +10,13 @@ void simulation::change_map_mode(const map_mode_t mode) {
 
     const auto province_values = data_.provinces() | std::views::values;
 
-#ifdef __cpp_lib_execution
     std::for_each(std::execution::par_unseq, province_values.begin(), province_values.end(),
                   [&](province &province) { province.recolor(map_mode_); });
-#else
-    std::ranges::for_each(province_values, [&](province &province) { province.recolor(data_.map_mode); });
-#endif
 
     bitmap_.reload_bitmap(data_, drawer_);
 }
 
-std::array<int, 2> simulation::map_dimensions() const {
+std::array<uint_fast32_t, 2> simulation::map_dimensions() const {
     return {map_image_.width(), map_image_.height()};
 }
 
@@ -66,7 +60,7 @@ void simulation::start_processing() {
     window_.add_render_func([this](sf::RenderWindow &window) {
         drawer_.draw_map(window);
     });
-    window_.add_render_func([this](sf::RenderWindow &window) {
+    window_.add_render_func([this](const sf::RenderWindow &window) {
         drawer_.draw_gui(window);
     });
 
