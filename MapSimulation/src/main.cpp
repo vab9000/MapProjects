@@ -1,7 +1,7 @@
-#include "logic/simulation.hpp"
+#include "processing/simulation.hpp"
 
-int main() {
-    simulation sim;
+auto main() -> int {
+    processing::simulation sim;
 
     sim.start_simulation();
 
