@@ -36,7 +36,8 @@ namespace {
                                       color, static_cast<mechanics::koppen_t>(utils::flip_rb(koppen_value)),
                                       static_cast<mechanics::elevation_t>(utils::flip_rb(elevation_value)),
                                       static_cast<mechanics::vegetation_t>(utils::flip_rb(vegetation_value)),
-                                      static_cast<mechanics::soil_t>(utils::flip_rb(soil_value)), mechanics::sea_t::none));
+                                      static_cast<mechanics::soil_t>(utils::flip_rb(soil_value)),
+                                      mechanics::sea_t::none));
         }
         province_file.close();
     }
@@ -55,8 +56,10 @@ namespace {
             sea_file >> sea_value;
             color = utils::flip_rb(color);
             d.provinces().emplace(std::piecewise_construct, std::forward_as_tuple(color), std::forward_as_tuple(
-                                      color, mechanics::koppen_t::none, mechanics::elevation_t::none, mechanics::vegetation_t::none,
-                                      mechanics::soil_t::none, static_cast<mechanics::sea_t>(utils::flip_rb(sea_value))));
+                                      color, mechanics::koppen_t::none, mechanics::elevation_t::none,
+                                      mechanics::vegetation_t::none,
+                                      mechanics::soil_t::none,
+                                      static_cast<mechanics::sea_t>(utils::flip_rb(sea_value))));
         }
         sea_file.close();
     }
@@ -77,7 +80,8 @@ namespace {
             river_tiles_file >> river_value;
             color = utils::flip_rb(color);
             d.provinces().emplace(std::piecewise_construct, std::forward_as_tuple(color), std::forward_as_tuple(
-                                      color, mechanics::koppen_t::none, mechanics::elevation_t::none, mechanics::vegetation_t::none,
+                                      color, mechanics::koppen_t::none, mechanics::elevation_t::none,
+                                      mechanics::vegetation_t::none,
                                       mechanics::soil_t::none, mechanics::sea_t::river));
             d.provinces().at(color).set_value(river_value);
         }
@@ -129,8 +133,10 @@ namespace {
     }
 
     auto process_pixel(
-        std::unordered_map<std::reference_wrapper<mechanics::province>, std::vector<std::array<uint_fast32_t, 2> > > &pixels_by_province,
-        const processing::image &map_image, mechanics::data &d, const uint_fast32_t color, const std::array<uint_fast32_t, 2> &position,
+        std::unordered_map<std::reference_wrapper<mechanics::province>, std::vector<std::array<uint_fast32_t, 2> > > &
+        pixels_by_province,
+        const processing::image &map_image, mechanics::data &d, const uint_fast32_t color,
+        const std::array<uint_fast32_t, 2> &position,
         std::vector<uint8_t> &crossing_bytes) -> void {
         const auto i = static_cast<int_fast32_t>(position[0]);
         const auto j = static_cast<int_fast32_t>(position[1]);
@@ -188,7 +194,8 @@ namespace processing {
         loading_text = "Loading impassable neighbors file...";
         load_impassable_neighbors(d);
 
-        std::unordered_map<std::reference_wrapper<mechanics::province>, std::vector<std::array<uint_fast32_t, 2> > > pixels_by_province;
+        std::unordered_map<std::reference_wrapper<mechanics::province>, std::vector<std::array<uint_fast32_t, 2> > >
+                pixels_by_province;
 
         map_image = image{"assets/provinces_generated.png"};
 
