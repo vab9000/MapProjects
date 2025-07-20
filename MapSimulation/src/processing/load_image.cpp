@@ -128,7 +128,7 @@ namespace {
         impassable_file.close();
     }
 
-    auto process_pixel_borders(
+    auto process_pixel(
         std::unordered_map<std::reference_wrapper<mechanics::province>, std::vector<std::array<uint_fast32_t, 2> > > &pixels_by_province,
         const processing::image &map_image, mechanics::data &d, const uint_fast32_t color, const std::array<uint_fast32_t, 2> &position,
         std::vector<uint8_t> &crossing_bytes) -> void {
@@ -136,6 +136,7 @@ namespace {
         const auto j = static_cast<int_fast32_t>(position[1]);
 
         auto &this_province = d.provinces().at(color);
+        this_province.expand_bounds(position);
         pixels_by_province[this_province].push_back(position);
 
         auto impassable_neighbor = false;
@@ -143,17 +144,12 @@ namespace {
         std::ranges::for_each(std::views::iota(-1, 1 + 1), [&](const int_fast8_t dx) {
             std::ranges::for_each(std::views::iota(-1, 1 + 1), [&](const int_fast8_t dy) {
                 if (dx == 0 && dy == 0) { return; }
-                if (dx != 0 && dy != 0 && this_province.sea() ==
-                    mechanics::sea_t::none) { return; }
                 const auto ni = i + dx, nj = j + dy;
                 if (ni < 0 || ni >= map_image.width() ||
                     nj < 0 || nj >= map_image.height()) { return; }
                 const auto neighbor_color = map_image.color(ni, nj);
                 if (neighbor_color == color) { return; }
                 auto &neighbor = d.provinces().at(neighbor_color);
-                if (dx != 0 && dy != 0 && neighbor.sea() == mechanics::sea_t::none) {
-                    return;
-                }
                 this_province.add_neighbor(neighbor);
                 if (!impassable_neighbor && this_province.
                     impassable_neighbors()
@@ -197,17 +193,10 @@ namespace processing {
         map_image = image{"assets/provinces_generated.png"};
 
         loading_text = "Processing pixels...";
-        std::ranges::for_each(std::views::iota(0u, map_image.width()), [&](const uint_fast32_t i) {
-            std::ranges::for_each(std::views::iota(0u, map_image.height()), [&](const uint_fast32_t j) {
-                d.provinces().at(map_image.color(i, j)).expand_bounds({i, j});
-            });
-        });
-
-        loading_text = "Processing pixel borders...";
         crossing_bytes = std::vector<uint8_t>(4ULL * map_image.width() * map_image.height());
-        std::ranges::for_each(std::views::iota(0u, map_image.width()), [&](const uint_fast32_t i) {
-            std::ranges::for_each(std::views::iota(0u, map_image.height()), [&](const uint_fast32_t j) {
-                process_pixel_borders(pixels_by_province, map_image, d, map_image.color(i, j), {i, j}, crossing_bytes);
+        std::ranges::for_each(std::views::iota(0U, map_image.width()), [&](const uint_fast32_t i) {
+            std::ranges::for_each(std::views::iota(0U, map_image.height()), [&](const uint_fast32_t j) {
+                process_pixel(pixels_by_province, map_image, d, map_image.color(i, j), {i, j}, crossing_bytes);
             });
         });
 
