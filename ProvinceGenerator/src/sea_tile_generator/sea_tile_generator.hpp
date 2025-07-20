@@ -166,7 +166,12 @@ inline void generate_ocean_tiles(const image &base_map, sea_tile_id_map &sea_til
 
     for (int i = tile_size / 2; i < base_map.width(); i += tile_size) {
         for (int j = tile_size / 2; j < base_map.height(); j += tile_size) {
-            sea_tile_map[i + dis(generator)][j + dis(generator)] = next_id();
+            const auto ni = i + dis(generator);
+            const auto nj = j + dis(generator);
+            if (sea_tile_map[ni][nj] != 0) {
+                continue;
+            }
+            sea_tile_map[ni][nj] = next_id();
         }
     }
 
