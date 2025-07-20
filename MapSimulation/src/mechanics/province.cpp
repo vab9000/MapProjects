@@ -55,7 +55,7 @@ namespace mechanics {
                     static_cast<int_fast32_t>(a[1]) - static_cast<int_fast32_t>(b[1]), 2));
         };
 
-        if (center_[0] == -1) {
+        if (center_[0] == 0 && center_[1] == 0) {
             auto min_distance = (std::numeric_limits<double_t>::max)();
             for (uint_fast32_t i = 0; i < size_; ++i) {
                 if (const auto dist = distance(pixels[i], {test_center[0], test_center[1]}); dist < min_distance) {
@@ -72,24 +72,22 @@ namespace mechanics {
         distances_processed_ = true;
     }
 
-    auto province::set_owner(tag *new_owner) -> void {
-        if (has_owner() && owner_->has_province(*this)) { owner_->remove_province(*this); }
+    auto province::set_owner(tag &new_owner) -> void {
+        if (owner_.has_value() && owner_->get().has_province(*this)) { owner_->get().remove_province(*this); }
+        new_owner.add_province(*this);
         owner_ = new_owner;
-        if (has_owner()) { owner_->add_province(*this); }
     }
 
     auto province::remove_owner() -> void {
-        if (has_owner()) { owner_->remove_province(*this); }
-        owner_ = nullptr;
+        if (owner_.has_value()) { owner_->get().remove_province(*this); }
+        owner_ = std::nullopt;
     }
 
-    auto province::owner() const -> tag * { return owner_; }
+    auto province::owner() const -> std::optional<std::reference_wrapper<tag> > { return owner_; }
 
-    auto province::has_owner() const -> bool { return owner_ != nullptr; }
+    auto province::add_pop(pop new_pop) -> void { pops_.emplace_back(new_pop); }
 
-    auto province::add_pop(pop new_pop) -> void { pops_.emplace_back(std::move(new_pop)); }
-
-    auto province::remove_pop(pop *p) -> void { std::erase_if(pops_, [p](const pop &elem) { return &elem == p; }); }
+    auto province::remove_pop(pop &p) -> void { std::erase_if(pops_, [p](const pop &elem) { return &elem == &p; }); }
 
     auto province::add_river_neighbor(province &neighbor, const uint_fast8_t size) -> void {
         river_neighbors_[neighbor] = size;
@@ -104,17 +102,21 @@ namespace mechanics {
         neighbors_.emplace(neighbor, std::pair{0.0, 1});
     }
 
-    auto province::expand_bounds(const uint_fast32_t x, const uint_fast32_t y) -> void {
+    auto province::expand_bounds(const std::array<uint_fast32_t, 2> coords) -> void {
         if (size_ == 0) {
-            bounds_[0] = x;
-            bounds_[1] = y;
-            bounds_[2] = x;
-            bounds_[3] = y;
+            bounds_[0] = coords[0];
+            bounds_[1] = coords[1];
+            bounds_[2] = coords[0];
+            bounds_[3] = coords[1];
             size_ += 1;
             return;
         }
-        if (x < bounds_[0]) { bounds_[0] = x; } else if (x > bounds_[2]) { bounds_[2] = x; }
-        if (y < bounds_[1]) { bounds_[1] = y; } else if (y > bounds_[3]) { bounds_[3] = y; }
+        if (coords[0] < bounds_[0]) { bounds_[0] = coords[0]; } else if (coords[0] > bounds_[2]) {
+            bounds_[2] = coords[0];
+        }
+        if (coords[1] < bounds_[1]) { bounds_[1] = coords[1]; } else if (coords[1] > bounds_[3]) {
+            bounds_[3] = coords[1];
+        }
     }
 
     auto province::recolor(const map_mode_t mode) -> void {
@@ -123,7 +125,7 @@ namespace mechanics {
                 color_ = base_color_;
                 break;
             case map_mode_t::owner:
-                if (has_owner()) { color_ = owner_->color(); } else { color_ = 0xFFFFFFFF; }
+                if (owner_.has_value()) { color_ = owner_->get().color(); } else { color_ = 0xFFFFFFFF; }
                 break;
             case map_mode_t::koppen:
                 color_ = static_cast<uint_fast32_t>(koppen_);
@@ -163,7 +165,7 @@ namespace mechanics {
                     pow(static_cast<int_fast32_t>(center_[1]) - static_cast<int_fast32_t>(other.center_[1]), 2));
     }
 
-    auto province::tick() -> void { if (has_owner()) { owner_->add_gold(1); } }
+    auto province::tick() -> void { if (owner_.has_value()) { owner_->get().add_gold(1); } }
 
     auto province::bounds() const -> const std::array<uint_fast32_t, 4> & { return bounds_; }
 
@@ -196,12 +198,16 @@ namespace mechanics {
         return &lhs.get() == &rhs.get();
     }
 
-    auto operator==(const std::reference_wrapper<province> &lhs, const std::reference_wrapper<const province> &rhs) -> bool {
-        return &lhs.get() == &rhs.get();
-    }
+    auto operator==(const std::reference_wrapper<province> &lhs,
+                    const std::reference_wrapper<const province> &rhs) -> bool { return &lhs.get() == &rhs.get(); }
 
-    auto operator<=>(const std::reference_wrapper<province> &lhs,
-                     const std::reference_wrapper<province> &rhs) -> std::strong_ordering {
+    auto operator<=>(const std::reference_wrapper<const province> &lhs,
+                     const std::reference_wrapper<const province> &rhs) -> std::strong_ordering {
         return &lhs.get() <=> &rhs.get();
     }
+}
+
+auto std::hash<std::reference_wrapper<mechanics::province> >::operator()(
+    const std::reference_wrapper<mechanics::province> &rt) const noexcept -> std::size_t {
+    return std::hash<mechanics::province *>()(&rt.get());
 }

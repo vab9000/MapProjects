@@ -47,7 +47,7 @@ namespace {
 
     auto draw_selected_province_info(const processing::simulation &sim) -> void {
         const auto selected_province = sim.selected_province();
-        if (selected_province == nullptr) { return; }
+        if (!selected_province.has_value()) { return; }
         if (ImGui::BeginChild("Selected Province Info", {200, 100})) {
             ImGui::TextWrapped("Province Color: %06X\n"
                                "Climate: %s\n"
@@ -55,12 +55,12 @@ namespace {
                                "Vegetation: %s\n"
                                "Soil: %s\n"
                                "Sea: %s\n",
-                               selected_province->color(),
-                               koppen_to_string(selected_province->koppen()).data(),
-                               elevation_to_string(selected_province->elevation()).data(),
-                               vegetation_to_string(selected_province->vegetation()).data(),
-                               soil_to_string(selected_province->soil()).data(),
-                               sea_to_string(selected_province->sea()).data());
+                               selected_province->get().color(),
+                               koppen_to_string(selected_province->get().koppen()).data(),
+                               elevation_to_string(selected_province->get().elevation()).data(),
+                               vegetation_to_string(selected_province->get().vegetation()).data(),
+                               soil_to_string(selected_province->get().soil()).data(),
+                               sea_to_string(selected_province->get().sea()).data());
         }
         ImGui::EndChild();
     }
@@ -118,13 +118,13 @@ namespace processing {
 
     auto drawing::draw_map(sf::RenderWindow &window) -> void {
         static sf::Color selected_color = sf::Color::White;
-        if (simulation_.selected_province() == nullptr) {
+        if (!simulation_.selected_province().has_value()) {
             if (constexpr auto new_color = sf::Color::White; new_color != selected_color) {
                 selected_color = new_color;
                 map_shader_.setUniform("selectedColor", sf::Glsl::Vec4(selected_color));
             }
         } else {
-            if (const auto new_color = sf::Color{utils::flip_rb(simulation_.selected_province()->base_color()) << 8};
+            if (const auto new_color = sf::Color{utils::flip_rb(simulation_.selected_province()->get().base_color()) << 8};
                 new_color != selected_color) {
                 selected_color = new_color;
                 map_shader_.setUniform("selectedColor", sf::Glsl::Vec4(selected_color));

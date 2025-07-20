@@ -129,14 +129,14 @@ namespace {
     }
 
     auto process_pixel_borders(
-        std::unordered_map<mechanics::province *, std::vector<std::array<uint_fast32_t, 2> > > &pixels_by_province,
+        std::unordered_map<std::reference_wrapper<mechanics::province>, std::vector<std::array<uint_fast32_t, 2> > > &pixels_by_province,
         const processing::image &map_image, mechanics::data &d, const uint_fast32_t color, const std::array<uint_fast32_t, 2> &position,
         std::vector<uint8_t> &crossing_bytes) -> void {
         const auto i = static_cast<int_fast32_t>(position[0]);
         const auto j = static_cast<int_fast32_t>(position[1]);
 
         auto &this_province = d.provinces().at(color);
-        pixels_by_province[&this_province].push_back(position);
+        pixels_by_province[this_province].push_back(position);
 
         auto impassable_neighbor = false;
 
@@ -161,15 +161,15 @@ namespace {
             });
         });
         if (impassable_neighbor) {
-            crossing_bytes[(i + j * map_image.width()) * 4] = 255;
-            crossing_bytes[(i + j * map_image.width()) * 4 + 1] = 0;
-            crossing_bytes[(i + j * map_image.width()) * 4 + 2] = 0;
-            crossing_bytes[(i + j * map_image.width()) * 4 + 3] = 255;
+            crossing_bytes[4ULL * (i + j * map_image.width())] = 255;
+            crossing_bytes[4ULL * (i + j * map_image.width()) + 1] = 0;
+            crossing_bytes[4ULL * (i + j * map_image.width()) + 2] = 0;
+            crossing_bytes[4ULL * (i + j * map_image.width()) + 3] = 255;
         } else {
-            crossing_bytes[(i + j * map_image.width()) * 4] = 0;
-            crossing_bytes[(i + j * map_image.width()) * 4 + 1] = 0;
-            crossing_bytes[(i + j * map_image.width()) * 4 + 2] = 0;
-            crossing_bytes[(i + j * map_image.width()) * 4 + 3] = 0;
+            crossing_bytes[4ULL * (i + j * map_image.width())] = 0;
+            crossing_bytes[4ULL * (i + j * map_image.width()) + 1] = 0;
+            crossing_bytes[4ULL * (i + j * map_image.width()) + 2] = 0;
+            crossing_bytes[4ULL * (i + j * map_image.width()) + 3] = 0;
         }
     }
 }
@@ -192,19 +192,19 @@ namespace processing {
         loading_text = "Loading impassable neighbors file...";
         load_impassable_neighbors(d);
 
-        std::unordered_map<mechanics::province *, std::vector<std::array<uint_fast32_t, 2> > > pixels_by_province;
+        std::unordered_map<std::reference_wrapper<mechanics::province>, std::vector<std::array<uint_fast32_t, 2> > > pixels_by_province;
 
         map_image = image{"assets/provinces_generated.png"};
 
         loading_text = "Processing pixels...";
         std::ranges::for_each(std::views::iota(0u, map_image.width()), [&](const uint_fast32_t i) {
             std::ranges::for_each(std::views::iota(0u, map_image.height()), [&](const uint_fast32_t j) {
-                d.provinces().at(map_image.color(i, j)).expand_bounds(i, j);
+                d.provinces().at(map_image.color(i, j)).expand_bounds({i, j});
             });
         });
 
         loading_text = "Processing pixel borders...";
-        crossing_bytes = std::vector<uint8_t>(map_image.width() * map_image.height() * 4);
+        crossing_bytes = std::vector<uint8_t>(4ULL * map_image.width() * map_image.height());
         std::ranges::for_each(std::views::iota(0u, map_image.width()), [&](const uint_fast32_t i) {
             std::ranges::for_each(std::views::iota(0u, map_image.height()), [&](const uint_fast32_t j) {
                 process_pixel_borders(pixels_by_province, map_image, d, map_image.color(i, j), {i, j}, crossing_bytes);
@@ -216,7 +216,7 @@ namespace processing {
         loading_text = "Finalizing provinces...";
         std::for_each(std::execution::par_unseq, province_values.begin(), province_values.end(),
                       [&pixels_by_province](mechanics::province &province) {
-                          province.finalize(pixels_by_province.at(&province));
+                          province.finalize(pixels_by_province.at(province));
                       });
         std::for_each(std::execution::par_unseq, province_values.begin(), province_values.end(),
                       [](mechanics::province &province) { province.process_distances(); });

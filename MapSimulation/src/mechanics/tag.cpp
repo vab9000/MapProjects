@@ -29,14 +29,12 @@ namespace mechanics {
 
     auto tag::add_province(province &added_province) -> void { provinces_.emplace_back(added_province); }
 
-    auto tag::remove_province(const province &removed_province) -> void { std::erase(provinces_, std::ref(removed_province)); }
+    auto tag::remove_province(const province &removed_province) -> void {
+        std::erase(provinces_, std::ref(removed_province));
+    }
 
     auto tag::has_province(const province &found_province) const -> bool {
-        for (const auto &province_ref : provinces_) {
-            if (&province_ref.get() == &found_province) {
-                return true;
-            }
-        }
+        for (const auto &province_ref: provinces_) { if (&province_ref.get() == &found_province) { return true; } }
         return false;
     }
 
@@ -47,7 +45,8 @@ namespace mechanics {
     auto tag::provinces() -> std::list<std::reference_wrapper<province> > & { return provinces_; }
 
     [[nodiscard]] auto tag::has_army_access(const province &access_province) const -> bool {
-        return access_province.owner() == this;
+        if (!access_province.owner().has_value()) { return true; }
+        return &access_province.owner()->get() == this;
     }
 
     auto tag::tick() -> void {}

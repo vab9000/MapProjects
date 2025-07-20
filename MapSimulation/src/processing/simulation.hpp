@@ -10,27 +10,30 @@
 namespace processing {
     class simulation {
         std::array<int_fast32_t, 2> offset_{0, 0};
-        double_t zoom_ = 1.0;
+        double_t zoom_{1.0};
         std::array<int_fast32_t, 2> previous_mouse_{0, 0};
-        bool mouse_down_ = false;
-        bool mouse_moved_ = false;
-        std::atomic_bool open_ = true;
+        bool mouse_down_{false};
+        bool mouse_moved_{false};
+        std::atomic_bool open_{true};
 
         std::string loading_text_;
 
         bitmap bitmap_;
         image map_image_;
 
-        mechanics::map_mode_t map_mode_ = mechanics::map_mode_t::provinces;
-        mechanics::province *selected_province_ = nullptr;
+        mechanics::map_mode_t map_mode_{mechanics::map_mode_t::provinces};
+        std::optional<std::reference_wrapper<mechanics::province>> selected_province_{std::nullopt};
 
-        mechanics::data &data_ = mechanics::data::instance();
+        mechanics::data &data_{mechanics::data::instance()};
 
         drawing drawer_{*this, loading_text_};
         window window_{[this](const sf::Event &event) { this->handle_event(event); }};
 
         // Select a province
-        auto select_province(mechanics::province *province) -> void;
+        auto select_province(std::reference_wrapper<mechanics::province> province) -> void;
+
+        // Deselect the currently selected province
+        auto deselect_province() -> void;
 
         // Start the game logic thread
         auto start_processing() -> void;
@@ -53,6 +56,6 @@ namespace processing {
 
         auto map_mode() const -> mechanics::map_mode_t;
 
-        auto selected_province() const -> mechanics::province *;
+        auto selected_province() const -> std::optional<std::reference_wrapper<mechanics::province>>;
     };
 }

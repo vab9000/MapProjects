@@ -1,4 +1,5 @@
 #pragma once
+#include <optional>
 #include <vector>
 #include "image.hpp"
 
@@ -11,13 +12,13 @@ namespace processing {
     class drawing;
 
     class bitmap {
-        image *map_image_ = nullptr;
+        std::optional<std::reference_wrapper<image>> map_image_ = std::nullopt;
         std::vector<uint8_t> bytes_;
 
     public:
         bitmap();
 
-        bitmap(image *image, const mechanics::data &data, drawing &drawer);
+        bitmap(image &image, const mechanics::data &data, drawing &drawer);
 
         // Reloads the bitmap for the region of a province
         auto reload_bitmap_province(const mechanics::province &reload_province, const mechanics::data &data,

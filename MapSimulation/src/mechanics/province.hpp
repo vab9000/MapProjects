@@ -3,6 +3,7 @@
 #include <functional>
 #include <list>
 #include <map>
+#include <optional>
 #include <queue>
 #include <set>
 #include <vector>
@@ -17,7 +18,7 @@ namespace mechanics {
 
     class province {
         pop_container pops_;
-        tag *owner_{nullptr};
+        std::optional<std::reference_wrapper<tag> > owner_{std::nullopt};
         std::map<std::reference_wrapper<province>, std::pair<double_t, uint_fast8_t> > neighbors_;
         std::set<std::reference_wrapper<province> > impassable_neighbors_;
         std::map<std::reference_wrapper<province>, uint_fast8_t> river_neighbors_;
@@ -47,13 +48,13 @@ namespace mechanics {
         auto operator=(province &&) -> province & = default;
 
         friend auto operator==(const std::reference_wrapper<province> &lhs,
-                           const std::reference_wrapper<province> &rhs) -> bool;
+                               const std::reference_wrapper<province> &rhs) -> bool;
 
         friend auto operator==(const std::reference_wrapper<province> &lhs,
-                           const std::reference_wrapper<const province> &rhs) -> bool;
+                               const std::reference_wrapper<const province> &rhs) -> bool;
 
-        friend auto operator<=>(const std::reference_wrapper<province> &lhs,
-                          const std::reference_wrapper<province> &rhs) -> std::strong_ordering;
+        friend auto operator<=>(const std::reference_wrapper<const province> &lhs,
+                                const std::reference_wrapper<const province> &rhs) -> std::strong_ordering;
 
         // Do final calculations after all pixels have been added
         auto finalize(const std::vector<std::array<uint_fast32_t, 2> > &pixels) -> void;
@@ -62,22 +63,19 @@ namespace mechanics {
         auto process_distances() -> void;
 
         // Change the owner of the province
-        auto set_owner(tag *new_owner) -> void;
+        auto set_owner(tag &new_owner) -> void;
 
         // Remove the owner of the province
         auto remove_owner() -> void;
 
         // Get the owner of the province
-        [[nodiscard]] auto owner() const -> tag *;
-
-        // Check if the province has an owner
-        [[nodiscard]] auto has_owner() const -> bool;
+        [[nodiscard]] auto owner() const -> std::optional<std::reference_wrapper<tag> >;
 
         // Add a pop to the province
         auto add_pop(pop new_pop) -> void;
 
         // Remove a pop from the province and return a moved pop object that can be added elsewhere
-        auto remove_pop(pop *p) -> void;
+        auto remove_pop(pop &p) -> void;
 
         // Add a river boundary to the province with a specific size, linking it to a neighboring province
         auto add_river_neighbor(province &neighbor, uint_fast8_t size) -> void;
@@ -86,7 +84,7 @@ namespace mechanics {
         auto add_neighbor(province &neighbor) -> void;
 
         // Expand the bounds of the province to include a new pixel
-        auto expand_bounds(uint_fast32_t x, uint_fast32_t y) -> void;
+        auto expand_bounds(std::array<uint_fast32_t, 2> coords) -> void;
 
         // Recolor the province based on the current map mode
         auto recolor(map_mode_t mode) -> void;
@@ -118,12 +116,15 @@ namespace mechanics {
         // Find the shortest path to another province using Dijkstra's algorithm
         template<typename T>
         [[nodiscard]] auto path_to(province &destination,
-                                   std::function<bool
-                                       (const province &start, const province &end, T *param)>
-                                   accessible,
-                                   std::function<double_t(const province &start, const province &end,
-                                                          T *param)> cost_modifier,
-                                   T *param) -> std::list<std::reference_wrapper<province> >;
+                                   std::function<bool(
+                                       std::pair<std::reference_wrapper<const province>, std::reference_wrapper<const
+                                           province> > c,
+                                       const T &param)> accessible,
+                                   std::function<double_t(
+                                       std::pair<std::reference_wrapper<const province>, std::reference_wrapper<const
+                                           province> > c,
+                                       const T &param)> cost_modifier,
+                                   const T &param) -> std::list<std::reference_wrapper<province> >;
 
         // Get the bounds of the province as an array of [min_x, min_y, max_x, max_y]
         [[nodiscard]] auto bounds() const -> const std::array<uint_fast32_t, 4> &;
@@ -163,17 +164,19 @@ namespace mechanics {
 
     template<typename T>
     auto province::path_to(province &destination,
-                           std::function<bool(const province &start, const province &end, T *param)>
-                           accessible,
-                           std::function<double_t
-                               (const province &start, const province &end, T *param)>
-                           cost_modifier,
-                           T *param) -> std::list<std::reference_wrapper<province> > {
-        std::map<std::reference_wrapper<province>, double_t> distances;
+                           std::function<bool(
+                               std::pair<std::reference_wrapper<const province>, std::reference_wrapper<const
+                                   province> > c,
+                               const T &param)> accessible,
+                           std::function<double_t (
+                               std::pair<std::reference_wrapper<const province>, std::reference_wrapper<const
+                                   province> > c,
+                               const T &param)> cost_modifier,
+                           const T &param) -> std::list<std::reference_wrapper<province> > {
+        std::map<std::reference_wrapper<const province>, double_t> distances;
         std::map<std::reference_wrapper<province>, std::reference_wrapper<province> > previous;
-        std::priority_queue<std::pair<double_t, std::reference_wrapper<province> >, std::vector<std::pair<double_t,
-                    std::reference_wrapper<province> > >, std::greater<> >
-                paths;
+        std::priority_queue<std::pair<double_t, std::reference_wrapper<province> >, std::vector<std::pair<double_t
+            , std::reference_wrapper<province> > >, std::greater<> > paths;
 
         distances.emplace(*this, 0.0);
         paths.emplace(0, *this);
@@ -190,10 +193,10 @@ namespace mechanics {
             }
 
             for (const auto &[neighbor_province, neighbor_distance]: current_province.get().neighbors()) {
-                if (!accessible(*this, neighbor_province.get(), param) ||
-                    cost_modifier(*this, neighbor_province.get(), param) < 0) { continue; }
-                const double_t new_distance = current_distance + cost_modifier(*this, neighbor_province.get(), param) *
-                                              neighbor_distance.first * (
+                if (!accessible({*this, neighbor_province.get()}, param) ||
+                    cost_modifier({*this, neighbor_province.get()}, param) < 0) { continue; }
+                const double_t new_distance = current_distance + cost_modifier({*this, neighbor_province.get()}, param)
+                                              * neighbor_distance.first * (
                                                   current_province.get().impassable_neighbors_.contains(
                                                       neighbor_province)
                                                       ? 10.0
@@ -214,3 +217,8 @@ namespace mechanics {
         return path;
     }
 }
+
+template<>
+struct std::hash<std::reference_wrapper<mechanics::province> > {
+    auto operator()(const std::reference_wrapper<mechanics::province> &rt) const noexcept -> std::size_t;
+};

@@ -23,18 +23,15 @@ namespace processing {
 
     auto simulation::map_mode() const -> mechanics::map_mode_t { return map_mode_; }
 
-    auto simulation::selected_province() const -> mechanics::province * { return selected_province_; }
-
-    auto simulation::select_province(mechanics::province *province) -> void {
-        const auto old_selected_province = selected_province_;
-        selected_province_ = province;
-
-        if (old_selected_province != nullptr) {
-            bitmap_.reload_bitmap_province(*old_selected_province, data_, drawer_);
-        }
-
-        if (selected_province_ != nullptr) { bitmap_.reload_bitmap_province(*selected_province_, data_, drawer_); }
+    auto simulation::selected_province() const -> std::optional<std::reference_wrapper<mechanics::province> > {
+        return selected_province_;
     }
+
+    auto simulation::select_province(const std::reference_wrapper<mechanics::province> province) -> void {
+        selected_province_ = province;
+    }
+
+    auto simulation::deselect_province() -> void { selected_province_ = std::nullopt; }
 
     auto simulation::start_processing() -> void {
         window_.add_render_func([this](sf::RenderWindow &window) { drawer_.draw_loading_message(window); });
@@ -42,7 +39,7 @@ namespace processing {
         std::vector<uint8_t> crossing_bytes;
         load_image(data_, map_image_, crossing_bytes, loading_text_);
 
-        bitmap_ = bitmap{&map_image_, data_, drawer_};
+        bitmap_ = bitmap{map_image_, data_, drawer_};
 
         if (!drawer_.init_sprites(map_image_, bitmap_.bytes(), crossing_bytes)) {
             throw std::runtime_error("Failed to initialize sprites");
@@ -104,9 +101,7 @@ namespace processing {
 
             drawer_.recalculate_sprite_coords(offset_, zoom_);
         } else if (const auto &release_data = event.getIf<sf::Event::MouseButtonReleased>()) {
-            if (release_data->button != sf::Mouse::Button::Left) {
-                return;
-            }
+            if (release_data->button != sf::Mouse::Button::Left) { return; }
             if (const auto gui_area = window_.gui_area(); release_data->position.x > gui_area[0] &&
                                                           release_data->position.x < gui_area[2] &&
                                                           release_data->position.y > gui_area[1] &&
@@ -122,12 +117,10 @@ namespace processing {
             const auto y = static_cast<int_fast32_t>((release_data->position.y - offset_[1]) / zoom_);
 
             const auto color = map_image_.color(x % map_image_.width(), y);
-            const auto province = &data_.provinces().at(color);
+            auto &province = data_.provinces().at(color);
             select_province(province);
         } else if (const auto &press_data = event.getIf<sf::Event::MouseButtonPressed>()) {
-            if (press_data->button != sf::Mouse::Button::Left) {
-                return;
-            }
+            if (press_data->button != sf::Mouse::Button::Left) { return; }
             if (const auto gui_area = window_.gui_area(); press_data->position.x > gui_area[0] &&
                                                           press_data->position.x < gui_area[2] &&
                                                           press_data->position.y > gui_area[1] &&
@@ -164,7 +157,7 @@ namespace processing {
 
             drawer_.recalculate_sprite_coords(offset_, zoom_);
         } else if (const auto &key_data = event.getIf<sf::Event::KeyPressed>()) {
-            if (key_data->code == sf::Keyboard::Key::Escape) { select_province(nullptr); }
+            if (key_data->code == sf::Keyboard::Key::Escape) { deselect_province(); }
         } else if (const auto &_ = event.getIf<sf::Event::Closed>()) { open_ = false; }
     }
 

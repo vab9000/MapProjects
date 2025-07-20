@@ -12,14 +12,14 @@ namespace processing {
         width_ = width;
         height_ = height;
         if (arr == nullptr) { throw std::runtime_error("Failed to load image: " + path); }
-        data_ = std::vector(arr, arr + width_ * height_ * 3);
+        data_ = std::vector(arr, arr + 3ULL * width_ * height_);
     }
 
     [[nodiscard]] auto image::color(const uint_fast32_t i, const uint_fast32_t j) const -> uint_fast32_t {
         uint_fast32_t pixel = 0;
-        pixel += data_[(i + j * width_) * 3];
-        pixel += data_[(i + j * width_) * 3 + 1] << 8;
-        pixel += data_[(i + j * width_) * 3 + 2] << 16;
+        pixel += data_[3ULL * (i + j * width_)];
+        pixel += data_[3ULL * (i + j * width_) + 1] << 8;
+        pixel += data_[3ULL * (i + j * width_) + 2] << 16;
 
         return pixel;
     }
