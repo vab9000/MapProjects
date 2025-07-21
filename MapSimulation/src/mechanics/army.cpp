@@ -5,7 +5,7 @@
 namespace mechanics {
     army::army(tag &parent_tag) : parent_tag_(parent_tag) {}
 
-    army::~army() { if (commander_.has_value()) { commander_->get().remove_flag(character_flag_t::commander); } }
+    army::~army() { if (commander_.has_value()) { commander_->get().flags().remove(character_flag_t::commander); } }
 
     auto army::new_unit(province &location) -> unit & {
         units_.emplace_back(*this, location);
@@ -13,14 +13,14 @@ namespace mechanics {
     }
 
     auto army::set_commander(character &new_commander) -> void {
-        if (commander_.has_value()) { commander_->get().remove_flag(character_flag_t::commander); }
-        new_commander.add_flag(character_flag_t::commander);
+        if (commander_.has_value()) { commander_->get().flags().remove(character_flag_t::commander); }
+        new_commander.flags().add(character_flag_t::commander);
         commander_ = new_commander;
     }
 
     auto army::remove_commander() -> void {
         if (commander_.has_value()) {
-            commander_->get().remove_flag(character_flag_t::commander);
+            commander_->get().flags().remove(character_flag_t::commander);
             commander_ = std::nullopt;
         }
     }

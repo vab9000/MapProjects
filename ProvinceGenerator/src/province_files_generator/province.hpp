@@ -76,5 +76,7 @@ public:
 
     [[nodiscard]] bool is_water() const;
 
+    void set_water(bool water);
+
     [[nodiscard]] std::vector<const province *> impassable_neighbors(const image &base_image) const;
 };

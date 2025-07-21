@@ -8,11 +8,11 @@
 
 namespace mechanics {
     unit::unit(army &parent_army, province &location) : parent_army_(parent_army),
-                                                        location_(location) {}
+        location_(location) {}
 
     unit::~unit() {
         transfer_pops(pops_, location_.get().pops());
-        if (captain_.has_value()) { captain_->get().remove_flag(character_flag_t::captain); }
+        if (captain_.has_value()) { captain_->get().flags().remove(character_flag_t::captain); }
     }
 
     auto unit::add_pop(pop new_pop) -> void { pops_.emplace_back(new_pop); }
@@ -32,23 +32,23 @@ namespace mechanics {
     auto unit::set_parent(army &new_parent) -> void { parent_army_ = new_parent; }
 
     auto unit::set_captain(character &new_captain) -> void {
-        if (captain_.has_value()) { captain_->get().remove_flag(character_flag_t::captain); }
-        new_captain.add_flag(character_flag_t::captain);
+        if (captain_.has_value()) { captain_->get().flags().remove(character_flag_t::captain); }
+        new_captain.flags().add(character_flag_t::captain);
         captain_ = new_captain;
     }
 
     auto unit::remove_captain() -> void {
         if (captain_.has_value()) {
-            captain_->get().remove_flag(character_flag_t::captain);
+            captain_->get().flags().remove(character_flag_t::captain);
             captain_ = std::nullopt;
         }
     }
 
-    auto unit::captain() const -> std::optional<std::reference_wrapper<character> > { return captain_; }
+    auto unit::captain() const -> std::optional<std::reference_wrapper<character>> { return captain_; }
 
     auto unit::location() const -> province & { return location_; }
 
-    auto unit::path() const -> const std::list<std::reference_wrapper<province> > & { return path_; }
+    auto unit::path() const -> const std::list<std::reference_wrapper<province>> & { return path_; }
 
     auto unit::travel_progress() const -> double_t { return travel_progress_; }
 
@@ -59,14 +59,14 @@ namespace mechanics {
 
         auto generated_path = location_.get().path_to<unit>(
             destination,
-            [](const std::pair<std::reference_wrapper<const province>, std::reference_wrapper<const province> >
-               connection,
-               const unit &this_unit) {
+            [](const std::pair<std::reference_wrapper<const province>, std::reference_wrapper<const province>>
+            connection,
+            const unit &this_unit) {
                 return this_unit.parent().parent().has_army_access(connection.second);
             },
-            [](const std::pair<std::reference_wrapper<const province>, std::reference_wrapper<const province> >
-               connection,
-               const unit &this_unit) {
+            [](const std::pair<std::reference_wrapper<const province>, std::reference_wrapper<const province>>
+            connection,
+            const unit &this_unit) {
                 return 1.0;
             }, *this);
         path_ = std::move(generated_path);

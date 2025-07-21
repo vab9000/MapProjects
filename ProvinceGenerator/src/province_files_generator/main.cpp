@@ -45,14 +45,18 @@ inline void load_provinces(const std::string &base_map_path, const image &provin
 
     for (int i = 0; i < province_image.width(); i++) {
         for (int j = 0; j < province_image.height(); j++) {
-            if (const auto color = static_cast<unsigned int>(province_image(i, j));
-                !provinces.contains(color)) {
+            const auto color = static_cast<unsigned int>(province_image(i, j));
+            if (!provinces.contains(color)) {
                 if (const auto base_color = static_cast<unsigned int>(base_map(i, j));
                     base_color == 0xFF00FF || base_color == 0x00FFFF) {
                     provinces[color] = province{color, true};
                 } else {
                     provinces[color] = province{color, false};
                 }
+            }
+            else if (const auto base_color = base_map(i, j);
+                     base_color.r() == 0 && base_color.g() == 0 && base_color.b() != 0) {
+                provinces[color].set_water(true);
             }
         }
     }
@@ -232,7 +236,7 @@ inline void generate_neighbors(const image &base_map, provinces_map &provinces) 
                 auto &province = provinces.at(color);
                 for (int dx = -1; dx <= 1; dx++) {
                     for (int dy = -1; dy <= 1; dy++) {
-                        if ((dx == 0 && dy == 0) || (dx != 0 && dy != 0)) continue;
+                        if (dx == 0 && dy == 0) continue;
                         if (const int nx = i + dx, ny = j + dy;
                             nx >= 0 && nx < base_map.width() && ny >= 0 && ny < base_map.height()) {
                             if (const auto neighbor_color = static_cast<unsigned int>(base_map(nx, ny));

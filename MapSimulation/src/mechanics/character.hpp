@@ -1,7 +1,7 @@
 #pragma once
-#include <set>
 #include "ai.hpp"
 #include "date.hpp"
+#include "../utils/flags.hpp"
 #include "../utils/id_generator.hpp"
 #include "character/character_properties.hpp"
 
@@ -12,8 +12,8 @@ namespace mechanics {
     class character final : public ai {
         date birthday_;
         std::reference_wrapper<province> location_;
-        std::set<character_flag_t> flags_;
-        std::set<personality_trait_t> traits_;
+        utils::flags<character_flag_t> flags_;
+        utils::flags<personality_trait_t> traits_;
 
         static utils::id_generator id_gen_;
 
@@ -22,7 +22,7 @@ namespace mechanics {
 
         explicit character(date birthday, province &location);
 
-        virtual ~character() override;
+        ~character() override;
 
         // The number of years since the character's birthday
         [[nodiscard]] auto age(const date &current_date) const -> uint_fast32_t;
@@ -36,30 +36,14 @@ namespace mechanics {
         // Set the character's location to a new province
         auto set_location(province &location) -> void;
 
-        virtual auto update_ai() -> void override;
+        auto update_ai() -> void override;
 
-        // Add a flag to the character
-        auto add_flag(character_flag_t flag) -> void;
+        [[nodiscard]] auto flags() const -> const utils::flags<character_flag_t> &;
 
-        // Remove a flag from the character
-        auto remove_flag(character_flag_t flag) -> void;
+        auto flags() -> utils::flags<character_flag_t> &;
 
-        // Check if the character has a specific flag
-        [[nodiscard]] auto has_flag(character_flag_t flag) const -> bool;
+        [[nodiscard]] auto traits() const -> const utils::flags<personality_trait_t> &;
 
-        // Get all flags of the character
-        [[nodiscard]] auto flags() const -> const std::set<character_flag_t> &;
-
-        // Add a personality trait to the character
-        auto add_trait(personality_trait_t trait) -> void;
-
-        // Remove a personality trait from the character
-        auto remove_trait(personality_trait_t trait) -> void;
-
-        // Check if the character has a specific personality trait
-        [[nodiscard]] auto has_trait(personality_trait_t trait) const -> bool;
-
-        // Get all personality traits of the character
-        [[nodiscard]] auto traits() const -> const std::set<personality_trait_t> &;
+        auto traits() -> utils::flags<personality_trait_t> &;
     };
 }
