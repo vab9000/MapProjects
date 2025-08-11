@@ -1,26 +1,17 @@
 #pragma once
 #include <cstdint>
-#include <list>
+#include "tickable.hpp"
 
 namespace mechanics {
-    enum class lifestyle_t {
-        tribal,
-    };
-
-    class pop {
-        uint_fast32_t size_ = 0;
-        lifestyle_t lifestyle_;
+    class pop final : public tickable {
+        uint_fast32_t size_{0U};
 
     public:
         pop();
 
         // The number of individuals in the pop
         [[nodiscard]] auto size() const -> uint_fast32_t;
+
+        auto tick(tick_t tick_type) -> void override;
     };
-
-    using pop_container = std::list<pop>;
-
-    auto transfer_pop(pop_container &from, pop_container &to, const pop &p) -> void;
-
-    auto transfer_pops(pop_container &from, pop_container &to) -> void;
 }

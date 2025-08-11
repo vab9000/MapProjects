@@ -1,122 +1,122 @@
 #pragma once
-#include <string_view>
 #include "../../utils/colors.hpp"
+#include "../../utils/zstring_view.hpp"
 
 namespace mechanics {
     enum class koppen_t : uint_fast32_t {
-        none = 0,
-        af = utils::to_integer_color(0, 0, 255),
-        am = utils::to_integer_color(0, 120, 255),
-        aw = utils::to_integer_color(70, 170, 250),
-        bwh = utils::to_integer_color(255, 0, 0),
-        bwk = utils::to_integer_color(255, 150, 150),
-        bsh = utils::to_integer_color(245, 165, 0),
-        bsk = utils::to_integer_color(255, 220, 100),
-        csa = utils::to_integer_color(255, 255, 0),
-        csb = utils::to_integer_color(200, 200, 0),
-        csc = utils::to_integer_color(150, 150, 0),
-        cwa = utils::to_integer_color(150, 255, 150),
-        cwb = utils::to_integer_color(100, 200, 100),
-        cwc = utils::to_integer_color(50, 150, 50),
-        cfa = utils::to_integer_color(200, 255, 80),
-        cfb = utils::to_integer_color(100, 255, 80),
-        cfc = utils::to_integer_color(50, 200, 0),
-        dsa = utils::to_integer_color(255, 0, 255),
-        dsb = utils::to_integer_color(200, 0, 200),
-        dsc = utils::to_integer_color(150, 50, 150),
-        dsd = utils::to_integer_color(150, 100, 150),
-        dwa = utils::to_integer_color(170, 175, 255),
-        dwb = utils::to_integer_color(90, 120, 220),
-        dwc = utils::to_integer_color(78, 80, 180),
-        dwd = utils::to_integer_color(50, 0, 135),
-        dfa = utils::to_integer_color(0, 255, 255),
-        dfb = utils::to_integer_color(55, 200, 255),
-        dfc = utils::to_integer_color(0, 125, 125),
-        dfd = utils::to_integer_color(0, 70, 95),
-        et = utils::to_integer_color(178, 178, 178),
-        ef = utils::to_integer_color(102, 102, 102),
+        none = 0U,
+        af = utils::to_integer_color(0U, 0U, 255U),
+        am = utils::to_integer_color(0U, 120U, 255U),
+        aw = utils::to_integer_color(70U, 170U, 250U),
+        bwh = utils::to_integer_color(255U, 0U, 0U),
+        bwk = utils::to_integer_color(255U, 150U, 150U),
+        bsh = utils::to_integer_color(245U, 165U, 0U),
+        bsk = utils::to_integer_color(255U, 220U, 100U),
+        csa = utils::to_integer_color(255U, 255U, 0U),
+        csb = utils::to_integer_color(200U, 200U, 0U),
+        csc = utils::to_integer_color(150U, 150U, 0U),
+        cwa = utils::to_integer_color(150U, 255U, 150U),
+        cwb = utils::to_integer_color(100U, 200U, 100U),
+        cwc = utils::to_integer_color(50U, 150U, 50U),
+        cfa = utils::to_integer_color(200U, 255U, 80U),
+        cfb = utils::to_integer_color(100U, 255U, 80U),
+        cfc = utils::to_integer_color(50U, 200U, 0U),
+        dsa = utils::to_integer_color(255U, 0U, 255U),
+        dsb = utils::to_integer_color(200U, 0U, 200U),
+        dsc = utils::to_integer_color(150U, 50U, 150U),
+        dsd = utils::to_integer_color(150U, 100U, 150U),
+        dwa = utils::to_integer_color(170U, 175U, 255U),
+        dwb = utils::to_integer_color(90U, 120U, 220U),
+        dwc = utils::to_integer_color(78U, 80U, 180U),
+        dwd = utils::to_integer_color(50U, 0U, 135U),
+        dfa = utils::to_integer_color(0U, 255U, 255U),
+        dfb = utils::to_integer_color(55U, 200U, 255U),
+        dfc = utils::to_integer_color(0U, 125U, 125U),
+        dfd = utils::to_integer_color(0U, 70U, 95U),
+        et = utils::to_integer_color(178U, 178U, 178U),
+        ef = utils::to_integer_color(102U, 102U, 102U),
     };
 
     enum class elevation_t : uint_fast32_t {
-        none = 0,
-        flatland = utils::to_integer_color(0, 255, 0),
-        hills = utils::to_integer_color(30, 200, 200),
-        plateau = utils::to_integer_color(200, 200, 10),
-        highlands = utils::to_integer_color(200, 10, 10),
-        mountains = utils::to_integer_color(50, 20, 20),
+        none = 0U,
+        flatland = utils::to_integer_color(0U, 255U, 0U),
+        hills = utils::to_integer_color(30U, 200U, 200U),
+        plateau = utils::to_integer_color(200U, 200U, 10U),
+        highlands = utils::to_integer_color(200U, 10U, 10U),
+        mountains = utils::to_integer_color(50U, 20U, 20U),
     };
 
     enum class vegetation_t : uint_fast32_t {
-        none = 0,
-        tropical_evergreen_broadleaf_forest = utils::to_integer_color(28, 85, 16),
-        tropical_semi_evergreen_broadleaf_forest = utils::to_integer_color(101, 146, 8),
-        tropical_deciduous_broadleaf_forest_and_woodland = utils::to_integer_color(174, 125, 32),
-        warm_temperate_evergreen_and_mixed_forest = utils::to_integer_color(0, 0, 101),
-        cool_temperate_rainforest = utils::to_integer_color(187, 203, 53),
-        cool_evergreen_needleleaf_forest = utils::to_integer_color(0, 154, 24),
-        cool_mixed_forest = utils::to_integer_color(202, 255, 202),
-        temperate_deciduous_broadleaf_forest = utils::to_integer_color(85, 235, 73),
-        cold_deciduous_forest = utils::to_integer_color(101, 178, 255),
-        cold_evergreen_needleleaf_forest = utils::to_integer_color(0, 32, 202),
-        temperate_sclerophyll_woodland_and_shrubland = utils::to_integer_color(142, 162, 40),
-        temperate_evergreen_needleleaf_open_woodland = utils::to_integer_color(255, 154, 223),
-        tropical_savanna = utils::to_integer_color(186, 255, 53),
-        xerophytic_woods_scrub = utils::to_integer_color(255, 186, 154),
-        steppe = utils::to_integer_color(255, 186, 53),
-        desert = utils::to_integer_color(247, 255, 202),
-        graminoid_and_forb_tundra = utils::to_integer_color(231, 231, 24),
-        erect_dwarf_shrub_tundra = utils::to_integer_color(121, 134, 73),
-        low_and_high_shrub_tundra = utils::to_integer_color(101, 255, 154),
-        prostrate_dwarf_shrub_tundra = utils::to_integer_color(210, 158, 150),
+        none = 0U,
+        tropical_evergreen_broadleaf_forest = utils::to_integer_color(28U, 85U, 16U),
+        tropical_semi_evergreen_broadleaf_forest = utils::to_integer_color(101U, 146U, 8U),
+        tropical_deciduous_broadleaf_forest_and_woodland = utils::to_integer_color(174U, 125U, 32U),
+        warm_temperate_evergreen_and_mixed_forest = utils::to_integer_color(0U, 0U, 101U),
+        cool_temperate_rainforest = utils::to_integer_color(187U, 203U, 53U),
+        cool_evergreen_needleleaf_forest = utils::to_integer_color(0U, 154U, 24U),
+        cool_mixed_forest = utils::to_integer_color(202U, 255U, 202U),
+        temperate_deciduous_broadleaf_forest = utils::to_integer_color(85U, 235U, 73U),
+        cold_deciduous_forest = utils::to_integer_color(101U, 178U, 255U),
+        cold_evergreen_needleleaf_forest = utils::to_integer_color(0U, 32U, 202U),
+        temperate_sclerophyll_woodland_and_shrubland = utils::to_integer_color(142U, 162U, 40U),
+        temperate_evergreen_needleleaf_open_woodland = utils::to_integer_color(255U, 154U, 223U),
+        tropical_savanna = utils::to_integer_color(186U, 255U, 53U),
+        xerophytic_woods_scrub = utils::to_integer_color(255U, 186U, 154U),
+        steppe = utils::to_integer_color(255U, 186U, 53U),
+        desert = utils::to_integer_color(247U, 255U, 202U),
+        graminoid_and_forb_tundra = utils::to_integer_color(231U, 231U, 24U),
+        erect_dwarf_shrub_tundra = utils::to_integer_color(121U, 134U, 73U),
+        low_and_high_shrub_tundra = utils::to_integer_color(101U, 255U, 154U),
+        prostrate_dwarf_shrub_tundra = utils::to_integer_color(210U, 158U, 150U),
     };
 
     enum class soil_t : uint_fast32_t {
-        none = 0,
-        acrisols = utils::to_integer_color(247, 153, 29),
-        albeluvisols = utils::to_integer_color(155, 157, 87),
-        alisols = utils::to_integer_color(250, 247, 192),
-        andosols = utils::to_integer_color(237, 58, 51),
-        arenosols = utils::to_integer_color(247, 216, 172),
-        calcisols = utils::to_integer_color(255, 238, 0),
-        cambisols = utils::to_integer_color(254, 205, 103),
-        chernozems = utils::to_integer_color(226, 200, 55),
-        cryosols = utils::to_integer_color(117, 106, 146),
-        durisols = utils::to_integer_color(239, 230, 191),
-        ferrasols = utils::to_integer_color(246, 135, 45),
-        fluvisols = utils::to_integer_color(1, 176, 239),
-        gleysols = utils::to_integer_color(146, 145, 185),
-        gypsisols = utils::to_integer_color(251, 246, 165),
-        histosols = utils::to_integer_color(139, 137, 138),
-        kastanozems = utils::to_integer_color(201, 149, 128),
-        leptosols = utils::to_integer_color(213, 214, 216),
-        lixisols = utils::to_integer_color(249, 189, 191),
-        luvisols = utils::to_integer_color(244, 131, 133),
-        nitisols = utils::to_integer_color(247, 160, 130),
-        phaeozems = utils::to_integer_color(186, 104, 80),
-        planosols = utils::to_integer_color(245, 147, 84),
-        plinthosols = utils::to_integer_color(111, 14, 65),
-        podzols = utils::to_integer_color(13, 175, 99),
-        regosols = utils::to_integer_color(255, 226, 174),
-        solonchaks = utils::to_integer_color(237, 57, 148),
-        solonetz = utils::to_integer_color(244, 205, 226),
-        stagnosols = utils::to_integer_color(64, 193, 235),
-        umbrisols = utils::to_integer_color(97, 143, 130),
-        vertisols = utils::to_integer_color(158, 86, 124),
+        none = 0U,
+        acrisols = utils::to_integer_color(247U, 153U, 29U),
+        albeluvisols = utils::to_integer_color(155U, 157U, 87U),
+        alisols = utils::to_integer_color(250U, 247U, 192U),
+        andosols = utils::to_integer_color(237U, 58U, 51U),
+        arenosols = utils::to_integer_color(247U, 216U, 172U),
+        calcisols = utils::to_integer_color(255U, 238U, 0U),
+        cambisols = utils::to_integer_color(254U, 205U, 103U),
+        chernozems = utils::to_integer_color(226U, 200U, 55U),
+        cryosols = utils::to_integer_color(117U, 106U, 146U),
+        durisols = utils::to_integer_color(239U, 230U, 191U),
+        ferrasols = utils::to_integer_color(246U, 135U, 45U),
+        fluvisols = utils::to_integer_color(1U, 176U, 239U),
+        gleysols = utils::to_integer_color(146U, 145U, 185U),
+        gypsisols = utils::to_integer_color(251U, 246U, 165U),
+        histosols = utils::to_integer_color(139U, 137U, 138U),
+        kastanozems = utils::to_integer_color(201U, 149U, 128U),
+        leptosols = utils::to_integer_color(213U, 214U, 216U),
+        lixisols = utils::to_integer_color(249U, 189U, 191U),
+        luvisols = utils::to_integer_color(244U, 131U, 133U),
+        nitisols = utils::to_integer_color(247U, 160U, 130U),
+        phaeozems = utils::to_integer_color(186U, 104U, 80U),
+        planosols = utils::to_integer_color(245U, 147U, 84U),
+        plinthosols = utils::to_integer_color(111U, 14U, 65U),
+        podzols = utils::to_integer_color(13U, 175U, 99U),
+        regosols = utils::to_integer_color(255U, 226U, 174U),
+        solonchaks = utils::to_integer_color(237U, 57U, 148U),
+        solonetz = utils::to_integer_color(244U, 205U, 226U),
+        stagnosols = utils::to_integer_color(64U, 193U, 235U),
+        umbrisols = utils::to_integer_color(97U, 143U, 130U),
+        vertisols = utils::to_integer_color(158U, 86U, 124U),
     };
 
     enum class sea_t :uint_fast32_t {
-        none = 0,
-        coast = utils::to_integer_color(25, 255, 255),
-        sea = utils::to_integer_color(100, 200, 255),
-        southeasterly = utils::to_integer_color(255, 100, 100),
-        northeasterly = utils::to_integer_color(100, 100, 255),
-        westerly = utils::to_integer_color(255, 255, 100),
-        polar = utils::to_integer_color(200, 255, 255),
-        lake = utils::to_integer_color(255, 150, 255),
-        river = utils::to_integer_color(0, 255, 0),
+        none = 0U,
+        coast = utils::to_integer_color(25U, 255U, 255U),
+        sea = utils::to_integer_color(100U, 200U, 255U),
+        southeasterly = utils::to_integer_color(255U, 100U, 100U),
+        northeasterly = utils::to_integer_color(100U, 100U, 255U),
+        westerly = utils::to_integer_color(255U, 255U, 100U),
+        polar = utils::to_integer_color(200U, 255U, 255U),
+        lake = utils::to_integer_color(255U, 150U, 255U),
+        river = utils::to_integer_color(0U, 255U, 0U),
     };
 
-    inline auto koppen_to_string(const koppen_t value) -> std::string_view {
+    inline auto koppen_to_string(const koppen_t value) -> utils::zstring_view {
         switch (value) {
             case koppen_t::none:
                 return "None";
@@ -185,7 +185,7 @@ namespace mechanics {
         }
     }
 
-    inline auto elevation_to_string(const elevation_t value) -> std::string_view {
+    inline auto elevation_to_string(const elevation_t value) -> utils::zstring_view {
         switch (value) {
             case elevation_t::none:
                 return "None";
@@ -204,7 +204,7 @@ namespace mechanics {
         }
     }
 
-    inline auto vegetation_to_string(const vegetation_t value) -> std::string_view {
+    inline auto vegetation_to_string(const vegetation_t value) -> utils::zstring_view {
         switch (value) {
             case vegetation_t::none:
                 return "None";
@@ -253,7 +253,7 @@ namespace mechanics {
         }
     }
 
-    inline auto soil_to_string(const soil_t value) -> std::string_view {
+    inline auto soil_to_string(const soil_t value) -> utils::zstring_view {
         switch (value) {
             case soil_t::none:
                 return "None";
@@ -322,7 +322,7 @@ namespace mechanics {
         }
     }
 
-    inline auto sea_to_string(const sea_t value) -> std::string_view {
+    inline auto sea_to_string(const sea_t value) -> utils::zstring_view {
         switch (value) {
             case sea_t::none:
                 return "None";

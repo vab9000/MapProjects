@@ -1,7 +1,7 @@
 #pragma once
 #include <list>
-#include <memory>
 #include <optional>
+#include <vector>
 #include "pop.hpp"
 
 namespace mechanics {
@@ -10,12 +10,12 @@ namespace mechanics {
     class character;
 
     class unit {
-        pop_container pops_;
+        std::vector<std::reference_wrapper<pop>> pops_;
         std::reference_wrapper<army> parent_army_;
         std::optional<std::reference_wrapper<character>> captain_{std::nullopt};
         std::reference_wrapper<province> location_;
         std::list<std::reference_wrapper<province> > path_;
-        double_t travel_progress_{0.0};
+        double travel_progress_{0.0};
         bool retreating_{false};
 
     public:
@@ -24,13 +24,13 @@ namespace mechanics {
         ~unit();
 
         // Add a pop to the unit
-        auto add_pop(pop new_pop) -> void;
+        auto add_pop(pop &new_pop) -> void;
 
         // List of pops that are in this unit
-        [[nodiscard]] auto pops() const -> const pop_container &;
+        [[nodiscard]] auto pops() const -> const std::vector<std::reference_wrapper<pop>> &;
 
         // List of pops that are in this unit
-        auto pops() -> pop_container &;
+        auto pops() -> std::vector<std::reference_wrapper<pop>> &;
 
         // Get the total number of troops in the unit
         [[nodiscard]] auto size() const -> uint_fast32_t;
@@ -57,7 +57,7 @@ namespace mechanics {
         [[nodiscard]] auto path() const -> const std::list<std::reference_wrapper<province> > &;
 
         // Get the travel progress of the unit to the next province
-        [[nodiscard]] auto travel_progress() const -> double_t;
+        [[nodiscard]] auto travel_progress() const -> double;
 
         // Get if the unit is retreating
         [[nodiscard]] auto retreating() const -> bool;

@@ -11,18 +11,17 @@ namespace mechanics {
         location_(location) {}
 
     unit::~unit() {
-        transfer_pops(pops_, location_.get().pops());
         if (captain_.has_value()) { captain_->get().flags().remove(character_flag_t::captain); }
     }
 
-    auto unit::add_pop(pop new_pop) -> void { pops_.emplace_back(new_pop); }
+    auto unit::add_pop(pop& new_pop) -> void { pops_.emplace_back(new_pop); }
 
-    auto unit::pops() const -> const pop_container & { return pops_; }
+    auto unit::pops() const -> const std::vector<std::reference_wrapper<pop>> & { return pops_; }
 
-    auto unit::pops() -> pop_container & { return pops_; }
+    auto unit::pops() -> std::vector<std::reference_wrapper<pop>> & { return pops_; }
 
     auto unit::size() const -> uint_fast32_t {
-        return std::accumulate(pops_.begin(), pops_.end(), 0, [](const uint_fast32_t sum, const pop &p) {
+        return std::accumulate(pops_.begin(), pops_.end(), 0U, [](const uint_fast32_t sum, const pop &p) {
             return sum + p.size();
         });
     }
@@ -57,18 +56,20 @@ namespace mechanics {
     auto unit::set_destination(province &destination) -> void {
         if (retreating_) { return; }
 
+        const std::function accessible = [](const std::pair<std::reference_wrapper<const province>, std::reference_wrapper<const province>>
+            connection,
+            const unit &this_unit) {
+            return this_unit.parent().parent().has_army_access(connection.second);
+        };
+        const std::function cost_modifier = [](const std::pair<std::reference_wrapper<const province>, std::reference_wrapper<const province>>
+            connection,
+            const unit &this_unit) {
+            return 1.0;
+        };
         auto generated_path = location_.get().path_to<unit>(
             destination,
-            [](const std::pair<std::reference_wrapper<const province>, std::reference_wrapper<const province>>
-            connection,
-            const unit &this_unit) {
-                return this_unit.parent().parent().has_army_access(connection.second);
-            },
-            [](const std::pair<std::reference_wrapper<const province>, std::reference_wrapper<const province>>
-            connection,
-            const unit &this_unit) {
-                return 1.0;
-            }, *this);
+            accessible,
+            cost_modifier, *this);
         path_ = std::move(generated_path);
     }
 

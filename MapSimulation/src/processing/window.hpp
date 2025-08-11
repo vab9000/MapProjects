@@ -8,7 +8,7 @@ namespace processing {
     class window {
         sf::RenderWindow window_;
         std::vector<std::function<void(sf::RenderWindow &)> > render_funcs_;
-        std::array<uint_fast32_t, 4> gui_area_;
+        std::array<uint_fast32_t, 4UZ> gui_area_;
         std::function<void(const sf::Event &)> event_func_;
 
         // Handles every frame of the event loop
@@ -36,6 +36,6 @@ namespace processing {
         auto start_event_loop() -> void;
 
         // Get the GUI area
-        auto gui_area() -> const std::array<uint_fast32_t, 4> &;
+        auto gui_area() -> const std::array<uint_fast32_t, 4UZ> &;
     };
 }

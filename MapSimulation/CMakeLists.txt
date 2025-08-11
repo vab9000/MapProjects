@@ -29,8 +29,8 @@ FetchContent_Declare(
         DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
 
-set(BOOST_INCLUDE_LIBRARIES unordered)
-FetchContent_MakeAvailable(Boost)
+#set(BOOST_INCLUDE_LIBRARIES unordered)
+#FetchContent_MakeAvailable(Boost)
 
 option(SFML_BUILD_AUDIO "Build audio" OFF)
 option(SFML_BUILD_NETWORK "Build network" OFF)
@@ -68,7 +68,7 @@ target_link_libraries(MapSimulation PRIVATE SFML::Graphics SFML::System SFML::Wi
 
 target_link_libraries(MapSimulation PUBLIC ImGui-SFML::ImGui-SFML)
 
-target_link_libraries(MapSimulation PUBLIC Boost::unordered)
+#target_link_libraries(MapSimulation PUBLIC Boost::unordered)
 
 file(GLOB_RECURSE Images assets/*)
 foreach(image ${Images})

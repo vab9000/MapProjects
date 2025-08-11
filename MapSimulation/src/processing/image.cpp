@@ -4,22 +4,23 @@
 #include <stdexcept>
 
 namespace processing {
-    image::image() : width_(0), height_(0) {}
+    image::image() : width_(0U), height_(0U) {}
 
     image::image(const std::string &path) {
-        int width, height;
+        int width{};
+        int height{};
         uint8_t *arr = stbi_load(path.c_str(), &width, &height, nullptr, 3);
-        width_ = width;
-        height_ = height;
+        width_ = static_cast<uint_fast32_t>(width);
+        height_ = static_cast<uint_fast32_t>(height);
         if (arr == nullptr) { throw std::runtime_error("Failed to load image: " + path); }
-        data_ = std::vector(arr, arr + 3ULL * width_ * height_);
+        data_ = std::vector(arr, arr + 3UZ * width_ * height_);
     }
 
     [[nodiscard]] auto image::color(const uint_fast32_t i, const uint_fast32_t j) const -> uint_fast32_t {
-        uint_fast32_t pixel = 0;
-        pixel += data_[3ULL * (i + j * width_)];
-        pixel += data_[3ULL * (i + j * width_) + 1] << 8;
-        pixel += data_[3ULL * (i + j * width_) + 2] << 16;
+        auto pixel = 0U;
+        pixel += data_[3UZ * (i + j * width_)];
+        pixel += static_cast<uint_fast32_t>(data_[3UZ * (i + j * width_) + 1UZ]) << 8;
+        pixel += static_cast<uint_fast32_t>(data_[3UZ * (i + j * width_) + 2UZ]) << 16;
 
         return pixel;
     }

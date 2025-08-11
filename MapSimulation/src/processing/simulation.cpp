@@ -1,29 +1,16 @@
 #include "simulation.hpp"
-#include <algorithm>
 #include <execution>
 #include <ranges>
 #include <thread>
+#include <utility>
 #include "load_image.hpp"
 
 namespace processing {
-    auto simulation::change_map_mode(const mechanics::map_mode_t mode) -> void {
-        map_mode_ = mode;
-
-        const auto province_values = data_.provinces() | std::views::values;
-
-        std::for_each(std::execution::par_unseq, province_values.begin(), province_values.end(),
-                      [&](mechanics::province &province) { province.recolor(map_mode_); });
-
-        bitmap_.reload_bitmap(data_, drawer_);
-    }
-
-    auto simulation::map_dimensions() const -> std::array<uint_fast32_t, 2> {
+    auto simulation::map_dimensions() const -> std::array<uint_fast32_t, 2UZ> {
         return {map_image_.width(), map_image_.height()};
     }
 
-    auto simulation::map_mode() const -> mechanics::map_mode_t { return map_mode_; }
-
-    auto simulation::selected_province() const -> std::optional<std::reference_wrapper<mechanics::province> > {
+    auto simulation::selected_province() const -> std::optional<std::reference_wrapper<mechanics::province>> {
         return selected_province_;
     }
 
@@ -39,9 +26,27 @@ namespace processing {
         std::vector<uint8_t> crossing_bytes;
         load_image(data_, map_image_, crossing_bytes, loading_text_);
 
-        bitmap_ = bitmap{map_image_, data_, drawer_};
+        // bitmap_ = bitmap{map_image_, data_, drawer_};
 
-        if (!drawer_.init_sprites(map_image_, bitmap_.bytes(), crossing_bytes)) {
+        mechanics::set_province_colors_size();
+        mechanics::update_all_province_colors();
+
+        std::vector<uint8_t> province_ids(4UZ * map_image_.width() * map_image_.height());
+
+        const auto x_range = std::views::iota(0U, map_image_.width());
+        const auto y_range = std::views::iota(0U, map_image_.height());
+        for (const auto x : x_range) {
+            for (const auto y : y_range) {
+                const auto index = (y * map_image_.width() + x) * 4UZ;
+                const auto id = data_.province_at(map_image_.color(x, y)).id();
+                province_ids[index + 3UZ] = static_cast<uint8_t>(id % 256U);
+                province_ids[index + 2UZ] = static_cast<uint8_t>(id / 256U % 256U);
+                province_ids[index + 1UZ] = static_cast<uint8_t>(id / 256U / 256U % 256U);
+                province_ids[index] = static_cast<uint8_t>(id / 256U / 256U / 256U % 256U);
+            }
+        }
+
+        if (!drawer_.init_sprites(map_image_, province_ids, crossing_bytes)) {
             throw std::runtime_error("Failed to initialize sprites");
         }
         crossing_bytes.clear();
@@ -50,62 +55,72 @@ namespace processing {
         window_.add_render_func([this](sf::RenderWindow &window) { drawer_.draw_map(window); });
         window_.add_render_func([this](const sf::RenderWindow &window) { drawer_.draw_gui(window); });
 
-        while (open_) { data_.tick(); }
+        while (open_) {
+            if (paused_) {
+                sleep(sf::milliseconds(100));
+                continue;
+            }
+            data_.tick();
+        }
 
         window_.stop_event_loop();
     }
 
     auto simulation::handle_event(const sf::Event &event) -> void {
+        const auto in_gui = [&](const uint_fast32_t x, const uint_fast32_t y) {
+            const auto gui_area = window_.gui_area();
+            return x > gui_area[0UZ] && x < gui_area[2UZ] && y > gui_area[1UZ] && y < gui_area[3UZ];
+        };
+
         if (const auto &scroll_data = event.getIf<sf::Event::MouseWheelScrolled>()) {
             const auto dimensions = window_.window_dimensions();
-            if (const auto gui_area = window_.gui_area(); scroll_data->position.x > gui_area[0] &&
-                                                          scroll_data->position.x < gui_area[2] &&
-                                                          scroll_data->position.y > gui_area[1] &&
-                                                          scroll_data->position.y < gui_area[3]) { return; }
+            if (in_gui(static_cast<uint_fast32_t>(scroll_data->position.x),
+                static_cast<uint_fast32_t>(scroll_data->position.y))) { return; }
 
-            offset_[0] += static_cast<int_fast32_t>(dimensions.x / 2 - scroll_data->position.x);
-            offset_[1] += static_cast<int_fast32_t>(dimensions.y / 2 - scroll_data->position.y);
+            offset_[0UZ] += static_cast<int_fast32_t>(dimensions.x / 2U) - scroll_data->position.x;
+            offset_[1UZ] += static_cast<int_fast32_t>(dimensions.y / 2U) - scroll_data->position.y;
 
-            if (scroll_data->delta > 0) {
+            if (scroll_data->delta > 0.0F) {
                 zoom_ *= 1.1;
                 if (zoom_ > 10.0) {
                     zoom_ /= 1.1;
-                    offset_[0] -= static_cast<int_fast32_t>(dimensions.x / 2 - scroll_data->position.x);
-                    offset_[1] -= static_cast<int_fast32_t>(dimensions.y / 2 - scroll_data->position.y);
+                    offset_[0UZ] -= static_cast<int_fast32_t>(dimensions.x / 2U) - scroll_data->position.x;
+                    offset_[1UZ] -= static_cast<int_fast32_t>(dimensions.y / 2U) - scroll_data->position.y;
                     return;
                 }
-                offset_[0] -= static_cast<int_fast32_t>((dimensions.x / 2.0 - offset_[0]) * 0.1);
-                offset_[1] -= static_cast<int_fast32_t>((dimensions.y / 2.0 - offset_[1]) * 0.1);
-            } else {
+                offset_[0UZ] -= static_cast<int_fast32_t>((dimensions.x / 2.0 - offset_[0UZ]) * 0.1);
+                offset_[1UZ] -= static_cast<int_fast32_t>((dimensions.y / 2.0 - offset_[1UZ]) * 0.1);
+            }
+            else {
                 if (zoom_ / 1.1 < static_cast<double>(dimensions.y) / map_image_.height()) {
                     zoom_ = static_cast<double>(dimensions.y) / map_image_.height();
-                } else {
-                    offset_[0] += static_cast<int_fast32_t>((dimensions.x / 2.0 - offset_[0]) / 11.0);
-                    offset_[1] += static_cast<int_fast32_t>((dimensions.y / 2.0 - offset_[1]) / 11.0);
+                }
+                else {
+                    offset_[0UZ] += static_cast<int_fast32_t>((dimensions.x / 2.0 - offset_[0UZ]) / 11.0);
+                    offset_[1UZ] += static_cast<int_fast32_t>((dimensions.y / 2.0 - offset_[1UZ]) / 11.0);
                     zoom_ /= 1.1;
                 }
             }
 
-            offset_[0] -= static_cast<int_fast32_t>(dimensions.x / 2 - scroll_data->position.x);
-            offset_[1] -= static_cast<int_fast32_t>(dimensions.y / 2 - scroll_data->position.y);
+            offset_[0UZ] -= static_cast<int_fast32_t>(dimensions.x / 2U) - scroll_data->position.x;
+            offset_[1UZ] -= static_cast<int_fast32_t>(dimensions.y / 2U) - scroll_data->position.y;
 
-            if (offset_[0] > 0) { offset_[0] -= static_cast<int_fast32_t>(map_image_.width() * zoom_); } else if (
-                offset_[0] < -(map_image_.width() * zoom_)) {
-                offset_[0] += static_cast<int_fast32_t>(map_image_.width() * zoom_);
+            if (offset_[0UZ] > 0) { offset_[0UZ] -= static_cast<int_fast32_t>(map_image_.width() * zoom_); }
+            else if (offset_[0UZ] < -(map_image_.width() * zoom_)) {
+                offset_[0UZ] += static_cast<int_fast32_t>(map_image_.width() * zoom_);
             }
 
-            if (offset_[1] > 0) { offset_[1] = 0; } else if (
-                offset_[1] < -(map_image_.height() * zoom_ - dimensions.y)) {
-                offset_[1] = static_cast<int_fast32_t>(-(map_image_.height() * zoom_ - dimensions.y));
+            if (offset_[1UZ] > 0) { offset_[1UZ] = 0; }
+            else if (offset_[1UZ] < -(map_image_.height() * zoom_ - dimensions.y)) {
+                offset_[1UZ] = static_cast<int_fast32_t>(-(map_image_.height() * zoom_ - dimensions.y));
             }
 
             drawer_.recalculate_sprite_coords(offset_, zoom_);
-        } else if (const auto &release_data = event.getIf<sf::Event::MouseButtonReleased>()) {
+        }
+        else if (const auto &release_data = event.getIf<sf::Event::MouseButtonReleased>()) {
             if (release_data->button != sf::Mouse::Button::Left) { return; }
-            if (const auto gui_area = window_.gui_area(); release_data->position.x > gui_area[0] &&
-                                                          release_data->position.x < gui_area[2] &&
-                                                          release_data->position.y > gui_area[1] &&
-                                                          release_data->position.y < gui_area[3]) { return; }
+            if (in_gui(static_cast<uint_fast32_t>(release_data->position.x),
+                static_cast<uint_fast32_t>(release_data->position.y))) { return; }
 
             mouse_down_ = false;
             if (mouse_moved_) {
@@ -113,52 +128,60 @@ namespace processing {
                 return;
             }
 
-            const auto x = static_cast<int_fast32_t>((release_data->position.x - offset_[0]) / zoom_);
-            const auto y = static_cast<int_fast32_t>((release_data->position.y - offset_[1]) / zoom_);
+            const auto x = static_cast<uint_fast32_t>((release_data->position.x - offset_[0UZ]) / zoom_);
+            const auto y = static_cast<uint_fast32_t>((release_data->position.y - offset_[1UZ]) / zoom_);
 
             const auto color = map_image_.color(x % map_image_.width(), y);
-            auto &province = data_.provinces().at(color);
+            auto &province = data_.province_at(color);
             select_province(province);
-        } else if (const auto &press_data = event.getIf<sf::Event::MouseButtonPressed>()) {
+        }
+        else if (const auto &press_data = event.getIf<sf::Event::MouseButtonPressed>()) {
             if (press_data->button != sf::Mouse::Button::Left) { return; }
-            if (const auto gui_area = window_.gui_area(); press_data->position.x > gui_area[0] &&
-                                                          press_data->position.x < gui_area[2] &&
-                                                          press_data->position.y > gui_area[1] &&
-                                                          press_data->position.y < gui_area[3]) { return; }
+            if (in_gui(static_cast<uint_fast32_t>(press_data->position.x),
+                static_cast<uint_fast32_t>(press_data->position.y))) { return; }
 
-            previous_mouse_[0] = press_data->position.x;
-            previous_mouse_[1] = press_data->position.y;
+            previous_mouse_[0UZ] = press_data->position.x;
+            previous_mouse_[1UZ] = press_data->position.y;
 
             mouse_down_ = true;
             mouse_moved_ = false;
-        } else if (const auto &move_data = event.getIf<sf::Event::MouseMoved>()) {
+        }
+        else if (const auto &move_data = event.getIf<sf::Event::MouseMoved>()) {
             if (!mouse_down_) { return; }
             mouse_moved_ = true;
 
             const auto x = move_data->position.x;
             const auto y = move_data->position.y;
 
-            offset_[0] += x - previous_mouse_[0];
-            offset_[1] += y - previous_mouse_[1];
+            offset_[0UZ] += x - previous_mouse_[0UZ];
+            offset_[1UZ] += y - previous_mouse_[1UZ];
 
             const auto dimensions = window_.window_dimensions();
 
-            if (offset_[0] > 0) { offset_[0] -= static_cast<int_fast32_t>(map_image_.width() * zoom_); }
-            if (offset_[1] > 0) { offset_[1] = 0; }
-            if (offset_[0] < -(map_image_.width() * zoom_)) {
-                offset_[0] += static_cast<int_fast32_t>(map_image_.width() * zoom_);
+            if (offset_[0UZ] > 0) { offset_[0UZ] -= static_cast<int_fast32_t>(map_image_.width() * zoom_); }
+            if (offset_[1UZ] > 0) { offset_[1UZ] = 0; }
+            if (offset_[0UZ] < -(map_image_.width() * zoom_)) {
+                offset_[0UZ] += static_cast<int_fast32_t>(map_image_.width() * zoom_);
             }
-            if (offset_[1] < -(map_image_.height() * zoom_ - dimensions.y)) {
-                offset_[1] = static_cast<int_fast32_t>(-(map_image_.height() * zoom_ - dimensions.y));
+            if (offset_[1UZ] < -(map_image_.height() * zoom_ - dimensions.y)) {
+                offset_[1UZ] = static_cast<int_fast32_t>(-(map_image_.height() * zoom_ - dimensions.y));
             }
 
-            previous_mouse_[0] = x;
-            previous_mouse_[1] = y;
+            previous_mouse_[0UZ] = x;
+            previous_mouse_[1UZ] = y;
 
             drawer_.recalculate_sprite_coords(offset_, zoom_);
-        } else if (const auto &key_data = event.getIf<sf::Event::KeyPressed>()) {
-            if (key_data->code == sf::Keyboard::Key::Escape) { deselect_province(); }
-        } else if (const auto &_ = event.getIf<sf::Event::Closed>()) { open_ = false; }
+        }
+        else if (const auto &key_data = event.getIf<sf::Event::KeyPressed>()) {
+            switch (key_data->code) {
+                case sf::Keyboard::Key::Escape: { deselect_province(); }
+                break;
+                case sf::Keyboard::Key::Space: { paused_ = !paused_; }
+                break;
+                default: break;
+            }
+        }
+        else if (event.getIf<sf::Event::Closed>()) { open_ = false; }
     }
 
     auto simulation::start_simulation() -> void {
@@ -169,13 +192,13 @@ namespace processing {
         process_thread.join();
     }
 
-    auto simulation::transform_to_screen_coordinates(std::array<int_fast32_t, 4> &coordinates) const -> void {
-        coordinates[0] = static_cast<int_fast32_t>(coordinates[0] * zoom_ + offset_[0]);
-        coordinates[2] = static_cast<int_fast32_t>(coordinates[2] * zoom_ + offset_[0]);
-        if (coordinates[2] < 0) {
-            coordinates[0] = coordinates[0] + static_cast<int_fast32_t>(map_image_.width() * zoom_);
+    auto simulation::transform_to_screen_coordinates(std::array<int_fast32_t, 4UZ> &coordinates) const -> void {
+        coordinates[0UZ] = static_cast<int_fast32_t>(coordinates[0UZ] * zoom_ + offset_[0UZ]);
+        coordinates[2UZ] = static_cast<int_fast32_t>(coordinates[2UZ] * zoom_ + offset_[0UZ]);
+        if (coordinates[2UZ] < 0) {
+            coordinates[0UZ] = coordinates[0UZ] + static_cast<int_fast32_t>(map_image_.width() * zoom_);
         }
-        coordinates[1] = static_cast<int_fast32_t>(coordinates[1] * zoom_ + offset_[1]);
-        coordinates[3] = static_cast<int_fast32_t>(coordinates[3] * zoom_ + offset_[1]);
+        coordinates[1UZ] = static_cast<int_fast32_t>(coordinates[1UZ] * zoom_ + offset_[1UZ]);
+        coordinates[3UZ] = static_cast<int_fast32_t>(coordinates[3UZ] * zoom_ + offset_[1UZ]);
     }
 }

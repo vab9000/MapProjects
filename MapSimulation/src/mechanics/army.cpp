@@ -27,10 +27,6 @@ namespace mechanics {
 
     auto army::commander() const -> std::optional<std::reference_wrapper<character>> { return commander_; }
 
-    auto army::directive() const -> army_directive { return directive_; }
-
-    auto army::set_directive(const army_directive directive) -> void { directive_ = directive; }
-
     auto army::parent() const -> tag & { return parent_tag_; }
 
     auto army::set_parent(tag &new_parent) -> void { parent_tag_ = new_parent; }

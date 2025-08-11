@@ -1,27 +1,24 @@
 #pragma once
 #include <SFML/Graphics.hpp>
-#include "bitmap.hpp"
 #include "drawing.hpp"
 #include "image.hpp"
 #include "window.hpp"
 #include "../mechanics/data.hpp"
-#include "../mechanics/map_mode.hpp"
 
 namespace processing {
     class simulation {
-        std::array<int_fast32_t, 2> offset_{0, 0};
-        double_t zoom_{1.0};
-        std::array<int_fast32_t, 2> previous_mouse_{0, 0};
+        std::array<int_fast32_t, 2UZ> offset_{0, 0};
+        double zoom_{1.0};
+        std::array<int_fast32_t, 2UZ> previous_mouse_{0, 0};
         bool mouse_down_{false};
         bool mouse_moved_{false};
         std::atomic_bool open_{true};
+        bool paused_{true};
 
         std::string loading_text_;
 
-        bitmap bitmap_;
         image map_image_;
 
-        mechanics::map_mode_t map_mode_{mechanics::map_mode_t::provinces};
         std::optional<std::reference_wrapper<mechanics::province>> selected_province_{std::nullopt};
 
         mechanics::data &data_{mechanics::data::instance()};
@@ -46,15 +43,10 @@ namespace processing {
         auto start_simulation() -> void;
 
         // Transform coordinates from map to screen
-        auto transform_to_screen_coordinates(std::array<int_fast32_t, 4> &coordinates) const -> void;
-
-        // Change the map mode
-        auto change_map_mode(mechanics::map_mode_t mode) -> void;
+        auto transform_to_screen_coordinates(std::array<int_fast32_t, 4UZ> &coordinates) const -> void;
 
         // Get the dimensions of the map
-        auto map_dimensions() const -> std::array<uint_fast32_t, 2>;
-
-        auto map_mode() const -> mechanics::map_mode_t;
+        auto map_dimensions() const -> std::array<uint_fast32_t, 2UZ>;
 
         auto selected_province() const -> std::optional<std::reference_wrapper<mechanics::province>>;
     };

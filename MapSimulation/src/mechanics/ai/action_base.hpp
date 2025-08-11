@@ -7,8 +7,10 @@ namespace mechanics {
     public:
         virtual ~action_base() = default;
 
-        virtual auto perform() const -> void = 0;
+        virtual explicit operator bool() const = 0;
 
-        [[nodiscard]] virtual auto weight() const -> int_fast32_t = 0;
+        [[nodiscard]] virtual auto operator*() const -> int_fast32_t = 0;
+
+        virtual auto operator()() const -> void = 0;
     };
 }

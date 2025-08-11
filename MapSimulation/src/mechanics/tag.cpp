@@ -8,9 +8,11 @@ namespace mechanics {
 
     tag::tag() : tag(0) {}
 
-    tag::tag(const uint_fast32_t color) : color_(color), id(id_gen_.next_id()) {}
+    tag::tag(const uint_fast32_t color) : color_(color), id_(id_gen_.next_id()) {}
 
-    tag::~tag() { id_gen_.return_id(id); }
+    tag::~tag() { id_gen_.return_id(id_); }
+
+    auto tag::id() const -> uint_fast32_t { return id_; }
 
     auto tag::color() const -> uint_fast32_t { return color_; }
 
@@ -34,20 +36,20 @@ namespace mechanics {
     }
 
     auto tag::has_province(const province &found_province) const -> bool {
-        for (const auto &province_ref: provinces_) { if (&province_ref.get() == &found_province) { return true; } }
+        for (const auto &province_ref : provinces_) { if (&province_ref.get() == &found_province) { return true; } }
         return false;
     }
 
-    [[nodiscard]] auto tag::provinces() const -> const std::list<std::reference_wrapper<province> > & {
+    [[nodiscard]] auto tag::provinces() const -> const std::list<std::reference_wrapper<province>> & {
         return provinces_;
     }
 
-    auto tag::provinces() -> std::list<std::reference_wrapper<province> > & { return provinces_; }
+    auto tag::provinces() -> std::list<std::reference_wrapper<province>> & { return provinces_; }
 
     [[nodiscard]] auto tag::has_army_access(const province &access_province) const -> bool {
         if (!access_province.owner().has_value()) { return true; }
         return &access_province.owner()->get() == this;
     }
 
-    auto tag::tick() -> void {}
+    auto tag::tick(tick_t tick_type) -> void {}
 }

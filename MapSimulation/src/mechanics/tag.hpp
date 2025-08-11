@@ -1,27 +1,30 @@
 #pragma once
 #include <list>
 #include "army.hpp"
+#include "tickable.hpp"
 #include "../utils/id_generator.hpp"
 
 namespace mechanics {
     class province;
 
-    class tag {
+    class tag final : public tickable {
         std::list<std::reference_wrapper<province>> provinces_;
         std::list<army> armies_;
         uint_fast32_t color_;
         int_fast32_t gold_{0};
 
+        const uint_fast32_t id_;
+
         static utils::id_generator id_gen_;
 
     public:
-        const uint_fast32_t id;
-
         tag();
 
         explicit tag(uint_fast32_t color);
 
-        ~tag();
+        ~tag() override;
+
+        [[nodiscard]] auto id() const -> uint_fast32_t;
 
         // Get the color of the tag
         [[nodiscard]] auto color() const -> uint_fast32_t;
@@ -60,6 +63,6 @@ namespace mechanics {
         [[nodiscard]] auto has_army_access(const province &access_province) const -> bool;
 
         // Tick the tag
-        auto tick() -> void;
+        auto tick(tick_t tick_type) -> void override;
     };
 }

@@ -1,7 +1,6 @@
 #pragma once
 #include <list>
 #include "unit.hpp"
-#include "army/army_properties.hpp"
 
 namespace mechanics {
     class province;
@@ -9,8 +8,7 @@ namespace mechanics {
     class tag;
 
     class army {
-        army_directive directive_;
-        std::optional<std::reference_wrapper<character> > commander_ = std::nullopt;
+        std::optional<std::reference_wrapper<character>> commander_ = std::nullopt;
         std::reference_wrapper<tag> parent_tag_;
         std::list<unit> units_;
 
@@ -29,13 +27,7 @@ namespace mechanics {
         auto remove_commander() -> void;
 
         // Returns the commander of the army
-        [[nodiscard]] auto commander() const -> std::optional<std::reference_wrapper<character> >;
-
-        // Returns the directive of the army
-        [[nodiscard]] auto directive() const -> army_directive;
-
-        // Sets the directive of the army
-        auto set_directive(army_directive directive) -> void;
+        [[nodiscard]] auto commander() const -> std::optional<std::reference_wrapper<character>>;
 
         // Returns the parent tag of the army
         [[nodiscard]] auto parent() const -> tag &;
