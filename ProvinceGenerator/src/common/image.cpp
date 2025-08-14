@@ -7,6 +7,7 @@
 
 #include <stb_image.h>
 #include <stb_image_write.h>
+#include <stdexcept>
 
 image::image_color::image_color(unsigned char *data) : data_(data) {
 }

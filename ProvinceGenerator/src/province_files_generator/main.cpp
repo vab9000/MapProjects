@@ -54,10 +54,10 @@ inline void load_provinces(const std::string &base_map_path, const image &provin
                     provinces[color] = province{color, false};
                 }
             }
-            else if (const auto base_color = base_map(i, j);
-                     base_color.r() == 0 && base_color.g() == 0 && base_color.b() != 0) {
-                provinces[color].set_water(true);
-            }
+            // else if (const auto base_color = base_map(i, j);
+            //          base_color.r() == 0 && base_color.g() == 0 && base_color.b() != 0) {
+            //     provinces[color].set_water(true);
+            // }
         }
     }
 }
@@ -307,13 +307,13 @@ inline bool river_between(const image &river_map, const province &self, const pr
     };
     int total_outline = 0;
     int river_outline = 0;
-    for (const auto &[x, y]: self.outline().at(const_cast<province *>(&neighbor))) {
+    for (const auto &[x, y]: self.outline().at(&neighbor)) {
         if (valid_river_color(river_map(x, y))) {
             river_outline++;
         }
         total_outline++;
     }
-    for (const auto &[x, y]: neighbor.outline().at(const_cast<province *>(&self))) {
+    for (const auto &[x, y]: neighbor.outline().at(&self)) {
         if (valid_river_color(river_map(x, y))) {
             river_outline++;
         }

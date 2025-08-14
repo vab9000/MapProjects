@@ -123,7 +123,9 @@ inline void spread_ocean_tiles(const image &base_map, sea_tile_id_map &sea_tile_
     std::uniform_real_distribution dis(0.0, 1.0);
     std::vector finished(base_map.width(), std::vector(base_map.height(), std::pair(false, false)));
     bool changed = true;
+    double nudge = 1.0;
     while (changed) {
+        nudge += 0.01;
         changed = false;
         std::cout << "Spreading ocean tiles, filled pixels: " << filled_pixels << std::endl;
         for (int i = 0; i < base_map.width(); i++) {
@@ -147,7 +149,7 @@ inline void spread_ocean_tiles(const image &base_map, sea_tile_id_map &sea_tile_
                         if (ni < 0 || ni >= base_map.width() || nj < 0 || nj >= base_map.height()) continue;
                         if (sea_tile_map[ni][nj] != 0) continue;
                         finished[i][j].first = false;
-                        if (dis(generator) < 0.5) {
+                        if (pow(dis(generator), nudge) < 0.5) {
                             sea_tile_map[ni][nj] = sea_tile_map[i][j];
                             finished[ni][nj].second = true;
                             filled_pixels++;
@@ -161,7 +163,7 @@ inline void spread_ocean_tiles(const image &base_map, sea_tile_id_map &sea_tile_
 }
 
 inline void generate_ocean_tiles(const image &base_map, sea_tile_id_map &sea_tile_map) {
-    constexpr int tile_size = 50;
+    constexpr int tile_size = 100;
     std::uniform_int_distribution dis(-tile_size / 3, tile_size / 3);
 
     for (int i = tile_size / 2; i < base_map.width(); i += tile_size) {
