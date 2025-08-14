@@ -2,20 +2,15 @@
 #include <stack>
 
 namespace mechanics {
-    utils::id_generator character::id_gen_;
+    character::character(const date &birthday, province &location) : birthday_(birthday), location_(location) {}
 
-    character::character(const date &birthday, province &location) : birthday_(birthday), location_(location),
-        id_(id_gen_.next_id()) {}
-
-    character::~character() { id_gen_.return_id(id_); }
-
-    auto character::id() const -> unsigned int { return id_; }
+    character::~character() = default;
 
     auto character::is_alive() const -> bool { return alive_; }
 
     auto character::kill() -> void { alive_ = false; }
 
-    [[nodiscard]] auto character::age(const date &current_date) const -> unsigned int {
+    [[nodiscard]] auto character::age(const date &current_date) const -> int {
         return (current_date - birthday_) / 365;
     }
 

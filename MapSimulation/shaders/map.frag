@@ -30,7 +30,13 @@ void main() {
             if (dx != 0 && dy != 0) continue;
             vec2 offset = vec2(dx, dy) / size / 2.0;
             vec2 new_pos = gl_TexCoord[0].xy + offset;
-            if (new_pos.x < 0.0 || new_pos.y < 0.0 || new_pos.x >= size.x || new_pos.y >= size.y) {
+            if (new_pos.x < 0.0) {
+                new_pos.x = 1.0;
+            }
+            else if (new_pos.x > 1.0) {
+                new_pos.x = 0.0;
+            }
+            if (new_pos.y < 0.0 || new_pos.y >= 1.0) {
                 outline = true;
                 break;
             }

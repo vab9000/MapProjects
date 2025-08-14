@@ -4,15 +4,11 @@
 #include "province.hpp"
 
 namespace mechanics {
-    utils::id_generator tag::id_gen_;
+    tag::tag() : tag(0U) {}
 
-    tag::tag() : tag(0) {}
+    tag::tag(const unsigned int color) : color_(color) {}
 
-    tag::tag(const unsigned int color) : color_(color), id_(id_gen_.next_id()) {}
-
-    tag::~tag() { id_gen_.return_id(id_); }
-
-    auto tag::id() const -> unsigned int { return id_; }
+    tag::~tag() = default;
 
     auto tag::color() const -> unsigned int { return color_; }
 

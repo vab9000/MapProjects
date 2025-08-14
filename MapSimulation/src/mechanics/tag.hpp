@@ -2,7 +2,6 @@
 #include <list>
 #include "army.hpp"
 #include "tickable.hpp"
-#include "../utils/id_generator.hpp"
 
 namespace mechanics {
     class province;
@@ -13,18 +12,12 @@ namespace mechanics {
         unsigned int color_;
         int gold_{0};
 
-        const unsigned int id_;
-
-        static utils::id_generator id_gen_;
-
     public:
         tag();
 
         explicit tag(unsigned int color);
 
         ~tag() override;
-
-        [[nodiscard]] auto id() const -> unsigned int;
 
         // Get the color of the tag
         [[nodiscard]] auto color() const -> unsigned int;

@@ -19,11 +19,11 @@ namespace mechanics {
 
     auto date::operator<=>(const date &other) const -> std::strong_ordering { return time_ <=> other.time_; }
 
-    auto date::operator+(const int_fast64_t n_days) const -> date {
+    auto date::operator+(const int n_days) const -> date {
         return date{year_month_day{sys_days{time_} + days{n_days}}};
     }
 
-    auto date::operator-(const date &other) const -> int_fast64_t {
+    auto date::operator-(const date &other) const -> int {
         return (sys_days{time_} - sys_days{other.time_}).count();
     }
 

@@ -17,23 +17,17 @@ namespace mechanics {
         utils::flags<personality_trait_t> traits_;
         bool alive_{true};
 
-        const unsigned int id_;
-
-        static utils::id_generator id_gen_;
-
     public:
         explicit character(const date &birthday, province &location);
 
         ~character() override;
-
-        [[nodiscard]] auto id() const -> unsigned int;
 
         [[nodiscard]] auto is_alive() const -> bool;
 
         auto kill() -> void;
 
         // The number of years since the character's birthday
-        [[nodiscard]] auto age(const date &current_date) const -> unsigned int;
+        [[nodiscard]] auto age(const date &current_date) const -> int;
 
         // The character's birthday
         [[nodiscard]] auto birthday() const -> const date &;

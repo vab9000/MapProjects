@@ -136,7 +136,7 @@ namespace processing {
             const auto x = static_cast<unsigned int>((release_data->position.x - offset_[0UZ]) / zoom_);
             const auto y = static_cast<unsigned int>((release_data->position.y - offset_[1UZ]) / zoom_);
 
-            if (loaded_) {
+            if (loaded_ && y < map_image_.height()) {
                 const auto color = map_image_.color(x % map_image_.width(), y);
                 auto &province = data_.province_at(color);
                 select_province(province);
@@ -161,9 +161,11 @@ namespace processing {
                 const auto i = static_cast<unsigned int>((x - offset_[0UZ]) / zoom_);
                 const auto j = static_cast<unsigned int>((y - offset_[1UZ]) / zoom_);
 
-                const auto color = map_image_.color(i % map_image_.width(), j);
-                auto &province = data_.province_at(color);
-                hovered_province_ = province;
+                if (j < map_image_.height()) {
+                    const auto color = map_image_.color(i % map_image_.width(), j);
+                    auto &province = data_.province_at(color);
+                    hovered_province_ = province;
+                }
             }
             else { hovered_province_ = std::nullopt; }
 

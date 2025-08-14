@@ -20,9 +20,9 @@ namespace mechanics {
 
         auto operator<=>(const date &other) const -> std::strong_ordering;
 
-        auto operator+(int_fast64_t n_days) const -> date;
+        auto operator+(int n_days) const -> date;
 
-        auto operator-(const date &other) const -> int_fast64_t;
+        auto operator-(const date &other) const -> int;
 
         auto advance() -> tick_t;
 
