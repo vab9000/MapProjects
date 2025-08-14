@@ -6,8 +6,8 @@
 
 namespace {
     auto points_distance(
-        const std::pair<std::pair<uint_fast32_t, uint_fast32_t>, std::pair<uint_fast32_t, uint_fast32_t>> points) ->
-        double_t {
+        const std::pair<std::pair<unsigned int, unsigned int>, std::pair<unsigned int, unsigned int>> points) ->
+        double {
         return sqrt(pow(points.first.first - points.second.first, 2) +
                     pow(points.first.second - points.second.second, 2));
     }
@@ -16,20 +16,20 @@ namespace {
 namespace mechanics {
     province::province() : koppen_(koppen_t::none), elevation_(elevation_t::none), vegetation_(vegetation_t::none),
         soil_(soil_t::none),
-        sea_(sea_t::none), base_color_(0U), color_(0U), id_(0U) {}
+        sea_(sea_t::none), base_color_(0U), id_(0U) {}
 
     province::province(const size_t id, const koppen_t koppen,
         const elevation_t elevation, const vegetation_t vegetation, const soil_t soil, const sea_t sea,
-        const uint_fast32_t color) : koppen_(koppen), elevation_(elevation), vegetation_(vegetation),
-        soil_(soil), sea_(sea), base_color_(color), color_(color), id_(id) {}
+        const unsigned int color) : koppen_(koppen), elevation_(elevation), vegetation_(vegetation),
+        soil_(soil), sea_(sea), base_color_(color), id_(id) {}
 
     auto province::id() const -> size_t { return id_; }
 
-    auto province::finalize(const std::vector<std::array<uint_fast32_t, 2UZ>> &pixels) -> void {
-        size_ = static_cast<uint_fast32_t>(pixels.size());
+    auto province::finalize(const std::vector<std::array<unsigned int, 2UZ>> &pixels) -> void {
+        size_ = static_cast<unsigned int>(pixels.size());
 
-        auto x = std::vector<uint_fast32_t>(size_);
-        auto y = std::vector<uint_fast32_t>(size_);
+        auto x = std::vector<unsigned int>(size_);
+        auto y = std::vector<unsigned int>(size_);
 
         for (const auto &pixel : pixels) {
             x.push_back(pixel[0UZ]);
@@ -58,14 +58,14 @@ namespace mechanics {
             }
         }
 
-        const auto distance = [](const std::array<uint_fast32_t, 2UZ> &a, const std::array<uint_fast32_t, 2UZ> &b) {
+        const auto distance = [](const std::array<unsigned int, 2UZ> &a, const std::array<unsigned int, 2UZ> &b) {
             return sqrt(
-                pow(static_cast<int_fast32_t>(a[0UZ]) - static_cast<int_fast32_t>(b[0UZ]), 2) + pow(
-                    static_cast<int_fast32_t>(a[1UZ]) - static_cast<int_fast32_t>(b[1UZ]), 2));
+                pow(static_cast<int>(a[0UZ]) - static_cast<int>(b[0UZ]), 2) + pow(
+                    static_cast<int>(a[1UZ]) - static_cast<int>(b[1UZ]), 2));
         };
 
         if (center_[0UZ] == 0U && center_[1UZ] == 0U) {
-            auto min_distance = (std::numeric_limits<double_t>::max)();
+            auto min_distance = (std::numeric_limits<double>::max)();
             for (auto i = 0U; i < size_; ++i) {
                 if (const auto dist = distance(pixels[i], {test_center[0UZ], test_center[1UZ]}); dist < min_distance) {
                     min_distance = dist;
@@ -104,7 +104,7 @@ namespace mechanics {
         std::erase_if(pops_, [p](const std::unique_ptr<pop> &elem) { return elem.get() == &p; });
     }
 
-    auto province::add_river_neighbor(province &neighbor, const uint_fast8_t size) -> void {
+    auto province::add_river_neighbor(province &neighbor, const unsigned char size) -> void {
         river_neighbors_[neighbor] = size;
     }
 
@@ -117,7 +117,7 @@ namespace mechanics {
         neighbors_.emplace(neighbor, std::pair{0.0, 1});
     }
 
-    auto province::expand_bounds(const std::array<uint_fast32_t, 2UZ> coords) -> void {
+    auto province::expand_bounds(const std::array<unsigned int, 2UZ> coords) -> void {
         if (size_ == 0U) {
             bounds_[0UZ] = coords[0UZ];
             bounds_[1UZ] = coords[1UZ];
@@ -132,17 +132,17 @@ namespace mechanics {
         else if (coords[1UZ] > bounds_[3UZ]) { bounds_[3UZ] = coords[1UZ]; }
     }
 
-    auto province::base_color() const -> uint_fast32_t { return base_color_; }
+    auto province::base_color() const -> unsigned int { return base_color_; }
 
-    auto province::color() const -> uint_fast32_t {
+    auto province::color() const -> unsigned int {
         switch (map_mode.load()) {
             case map_mode_t::provinces: return base_color_;
             case map_mode_t::owner: return owner_.has_value() ? owner_->get().color() : 0xFFFFFFFF;
-            case map_mode_t::koppen: return static_cast<uint_fast32_t>(koppen_);
-            case map_mode_t::elevation: return static_cast<uint_fast32_t>(elevation_);
-            case map_mode_t::vegetation: return static_cast<uint_fast32_t>(vegetation_);
-            case map_mode_t::soil: return static_cast<uint_fast32_t>(soil_);
-            case map_mode_t::sea: return static_cast<uint_fast32_t>(sea_);
+            case map_mode_t::koppen: return static_cast<unsigned int>(koppen_);
+            case map_mode_t::elevation: return static_cast<unsigned int>(elevation_);
+            case map_mode_t::vegetation: return static_cast<unsigned int>(vegetation_);
+            case map_mode_t::soil: return static_cast<unsigned int>(soil_);
+            case map_mode_t::sea: return static_cast<unsigned int>(sea_);
         }
         return 0U;
     }
@@ -157,7 +157,7 @@ namespace mechanics {
 
     auto province::sea() const -> sea_t { return sea_; }
 
-    auto province::distance(province &other) const -> double_t {
+    auto province::distance(province &other) const -> double {
         if (neighbors_.contains(other)) { return neighbors_.at(other).first; }
         return points_distance({{center_[0UZ], center_[1UZ]}, {other.center_[0UZ], other.center_[1UZ]}});
     }
@@ -169,18 +169,18 @@ namespace mechanics {
         });
     }
 
-    auto province::bounds() const -> const std::array<uint_fast32_t, 4UZ> & { return bounds_; }
+    auto province::bounds() const -> const std::array<unsigned int, 4UZ> & { return bounds_; }
 
-    auto province::center() const -> const std::array<uint_fast32_t, 2UZ> & { return center_; }
+    auto province::center() const -> const std::array<unsigned int, 2UZ> & { return center_; }
 
     auto province::pops() const -> const std::vector<std::unique_ptr<pop>> & { return pops_; }
 
     auto province::pops() -> std::vector<std::unique_ptr<pop>> & { return pops_; }
 
-    auto province::neighbors() const -> const std::map<std::reference_wrapper<province>, std::pair<double_t,
-        uint_fast8_t>> & { return neighbors_; }
+    auto province::neighbors() const -> const std::map<std::reference_wrapper<province>, std::pair<double,
+        unsigned char>> & { return neighbors_; }
 
-    auto province::river_neighbors() const -> const std::map<std::reference_wrapper<province>, uint_fast8_t> & {
+    auto province::river_neighbors() const -> const std::map<std::reference_wrapper<province>, unsigned char> & {
         return river_neighbors_;
     }
 
@@ -190,11 +190,11 @@ namespace mechanics {
 
     auto province::add_impassable_neighbor(province &neighbor) -> void { impassable_neighbors_.insert(neighbor); }
 
-    auto province::size() const -> uint_fast32_t { return size_; }
+    auto province::size() const -> unsigned int { return size_; }
 
-    auto province::value() const -> uint_fast8_t { return value_; }
+    auto province::value() const -> unsigned char { return value_; }
 
-    auto province::set_value(const uint_fast8_t value) -> void { value_ = value; }
+    auto province::set_value(const unsigned char value) -> void { value_ = value; }
 
     auto operator==(const std::reference_wrapper<const province> &lhs,
         const std::reference_wrapper<const province> &rhs) -> bool { return &lhs.get() == &rhs.get(); }

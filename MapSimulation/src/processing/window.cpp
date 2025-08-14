@@ -62,7 +62,7 @@ namespace processing {
         ImGui::SFML::Shutdown();
     }
 
-    auto window::gui_area() -> const std::array<uint_fast32_t, 4UZ> & {
+    auto window::gui_area() -> const std::array<unsigned int, 4UZ> & {
         const auto dimensions = window_dimensions();
         gui_area_[2UZ] = 200U;
         gui_area_[3UZ] = dimensions.y;

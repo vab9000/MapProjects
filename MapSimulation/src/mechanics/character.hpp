@@ -17,7 +17,7 @@ namespace mechanics {
         utils::flags<personality_trait_t> traits_;
         bool alive_{true};
 
-        const uint_fast32_t id_;
+        const unsigned int id_;
 
         static utils::id_generator id_gen_;
 
@@ -26,14 +26,14 @@ namespace mechanics {
 
         ~character() override;
 
-        [[nodiscard]] auto id() const -> uint_fast32_t;
+        [[nodiscard]] auto id() const -> unsigned int;
 
         [[nodiscard]] auto is_alive() const -> bool;
 
         auto kill() -> void;
 
         // The number of years since the character's birthday
-        [[nodiscard]] auto age(const date &current_date) const -> uint_fast32_t;
+        [[nodiscard]] auto age(const date &current_date) const -> unsigned int;
 
         // The character's birthday
         [[nodiscard]] auto birthday() const -> const date &;

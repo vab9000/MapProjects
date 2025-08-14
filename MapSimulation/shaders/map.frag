@@ -5,12 +5,22 @@ uniform int selectedIndex;
 uniform bool drawOutline;
 uniform float dim;
 
-void main() {
-    vec4 center = texture2D(texture, gl_TexCoord[0].xy);
-    int index = int(floor((center.r * 255.0 * 256.0 * 256.0 * 256.0 + center.g * 255.0 * 256.0 * 256.0 + center.b * 255.0 * 256.0 + center.a * 255.0)));
+int indexFromPixel(vec4 pixel) {
+    return int(floor((pixel.r * 255.0 * 256.0 * 256.0 * 256.0 + pixel.g * 255.0 * 256.0 * 256.0 + pixel.b * 255.0 * 256.0 + pixel.a * 255.0)));
+}
 
+vec4 colorForProvince(vec4 pixel) {
+    int index = indexFromPixel(pixel);
     float indexFloat = mod(float(index), dim) / (dim - 1);
     vec4 provinceColor = texture2D(provinceColors, vec2(indexFloat, floor(index / dim) / (dim - 1)));
+    return provinceColor;
+}
+
+void main() {
+    vec4 center = texture2D(texture, gl_TexCoord[0].xy);
+    int index = indexFromPixel(center);
+
+    vec4 provinceColor = colorForProvince(center);
 
     bool outline = false;
 
@@ -25,8 +35,15 @@ void main() {
                 break;
             }
             vec4 neighbor = texture2D(texture, new_pos);
+            vec4 neighborColor = colorForProvince(neighbor);
 
-            if (center != neighbor) {
+            if (index == selectedIndex) {
+                if (center != neighbor) {
+                    outline = true;
+                    break;
+                }
+            }
+            else if (provinceColor != neighborColor) {
                 outline = true;
                 break;
             }
@@ -36,7 +53,7 @@ void main() {
 
     if (outline) {
         if (index == selectedIndex) {
-            gl_FragColor = gl_Color * vec4(abs(1.0 - provinceColor.rgb), 1.0);
+            gl_FragColor = gl_Color * vec4(1.0, 1.0, 1.0, 1.0);
             return;
         }
         if (drawOutline) {

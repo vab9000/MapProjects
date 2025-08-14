@@ -35,7 +35,7 @@ namespace processing {
             const std::vector<uint8_t> &crossing_bytes) -> bool;
 
         // Recalculate the coordinates of the sprites based on the offset and zoom level
-        auto recalculate_sprite_coords(std::array<int_fast32_t, 2UZ> offset, double zoom) -> void;
+        auto recalculate_sprite_coords(std::array<int, 2UZ> offset, double zoom) -> void;
 
         // Draw the loading message on the window
         auto draw_loading_message(sf::RenderWindow &window) const -> void;

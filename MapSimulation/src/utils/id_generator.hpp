@@ -3,12 +3,12 @@
 
 namespace utils {
     class id_generator {
-        std::stack<uint_fast32_t> id_stack_;
-        uint_fast32_t id_counter_{0U};
+        std::stack<unsigned int> id_stack_;
+        unsigned int id_counter_{0U};
 
     public:
-        auto next_id() -> uint_fast32_t;
+        auto next_id() -> unsigned int;
 
-        auto return_id(uint_fast32_t id) -> void;
+        auto return_id(unsigned int id) -> void;
     };
 }

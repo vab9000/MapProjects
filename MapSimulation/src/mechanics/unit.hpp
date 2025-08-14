@@ -33,7 +33,7 @@ namespace mechanics {
         auto pops() -> std::vector<std::reference_wrapper<pop>> &;
 
         // Get the total number of troops in the unit
-        [[nodiscard]] auto size() const -> uint_fast32_t;
+        [[nodiscard]] auto size() const -> unsigned int;
 
         // Get the parent army of the unit
         [[nodiscard]] auto parent() const -> army &;

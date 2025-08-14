@@ -19,7 +19,7 @@ namespace mechanics {
 
     template<typename Self, typename Other>
     auto make_action(std::function<void(Self &, Other &)> &&valid_func,
-        std::function<void(Self &, Other &)> &&action_func, std::function<int_fast32_t(Self &, Other &)> &&weight_func,
+        std::function<void(Self &, Other &)> &&action_func, std::function<int(Self &, Other &)> &&weight_func,
         Self &s_param, Other &o_param) -> std::unique_ptr<action_base> {
         return std::make_unique<action<Self, Other>>(std::move(valid_func), std::move(action_func),
             std::move(weight_func), s_param, o_param);

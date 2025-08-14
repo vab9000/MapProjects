@@ -6,7 +6,7 @@
 namespace mechanics {
     class province;
 
-    enum class map_mode_t : uint_fast8_t {
+    enum class map_mode_t : unsigned char {
         provinces,
         owner,
         koppen,

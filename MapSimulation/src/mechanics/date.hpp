@@ -14,7 +14,7 @@ namespace mechanics {
     public:
         date();
 
-        explicit date(int_fast32_t y, uint_fast32_t m, uint_fast32_t d);
+        explicit date(int y, unsigned int m, unsigned int d);
 
         [[nodiscard]] auto to_string() const -> std::string;
 

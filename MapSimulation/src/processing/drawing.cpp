@@ -1,5 +1,6 @@
 #include "drawing.hpp"
 #include <array>
+#include <format>
 #include <imgui.h>
 #include <ranges>
 #include <thread>
@@ -27,8 +28,8 @@ namespace {
         constexpr static std::array<utils::zstring_view, 7UZ> map_mode_names = {
             "Provinces", "Owner", "Koppen", "Elevation", "Vegetation", "Soil", "Sea"
         };
-        static size_t current_item = static_cast<uint_fast8_t>(mechanics::map_mode_t::provinces);
-        current_item = static_cast<uint_fast8_t>(mechanics::map_mode.load());
+        static size_t current_item = static_cast<unsigned char>(mechanics::map_mode_t::provinces);
+        current_item = static_cast<unsigned char>(mechanics::map_mode.load());
         if (ImGui::BeginChild("Map Mode", {200.0F, 50.0F})) {
             if (ImGui::BeginCombo("Map Mode", map_mode_names[current_item].str())) {
                 for (auto i = 0UZ; i < map_mode_names.size(); ++i) {
@@ -46,31 +47,42 @@ namespace {
         ImGui::EndChild();
     }
 
-    auto draw_selected_province_info(const processing::simulation &sim) -> void {
-        const auto selected_province = sim.selected_province();
-        if (!selected_province.has_value()) { return; }
-        if (ImGui::BeginChild("Selected Province Info", {200.0F, 100.0F})) {
-            const auto koppen_string = koppen_to_string(selected_province->get().koppen());
-            const auto elevation_string = elevation_to_string(selected_province->get().elevation());
-            const auto vegetation_string = vegetation_to_string(selected_province->get().vegetation());
-            const auto soil_string = soil_to_string(selected_province->get().soil());
-            const auto sea_string = sea_to_string(selected_province->get().sea());
-            ImGui::TextWrapped("Province Color: %06X\n"
-                "Id: %d\n"
-                "Climate: %s\n"
-                "Elevation: %s\n"
-                "Vegetation: %s\n"
-                "Soil: %s\n"
-                "Sea: %s\n",
-                selected_province->get().base_color(),
-                selected_province->get().id(),
-                koppen_string.str(),
-                elevation_string.str(),
-                vegetation_string.str(),
-                soil_string.str(),
-                sea_string.str());
+    auto draw_hovered_province_info(const processing::simulation &sim) -> void {
+        const auto hovered_province = sim.hovered_province();
+        if (!hovered_province.has_value()) { return; }
+        const auto color = hovered_province->get().base_color();
+        const auto koppen_string = koppen_to_string(hovered_province->get().koppen()).str();
+        const auto elevation_string = elevation_to_string(hovered_province->get().elevation()).str();
+        const auto vegetation_string = vegetation_to_string(hovered_province->get().vegetation()).str();
+        const auto soil_string = soil_to_string(hovered_province->get().soil()).str();
+        const auto sea_string = sea_to_string(hovered_province->get().sea()).str();
+        constexpr auto format_string = "Province Color: {}\n"
+            "Climate: {}\n"
+            "Elevation: {}\n"
+            "Vegetation: {}\n"
+            "Soil: {}\n"
+            "Sea: {}\n";
+        const auto info = std::vformat(format_string, std::make_format_args(
+            color,
+            koppen_string,
+            elevation_string,
+            vegetation_string,
+            soil_string,
+            sea_string));
+        auto size = ImGui::CalcTextSize(info.c_str(), nullptr, false, 200.0F);
+        size = {size.x * 1.3F, size.y * 1.3F};
+        ImGui::SetNextWindowSize(size);
+        auto window_pos = ImGui::GetMousePos();
+        const auto available_region = ImGui::GetIO().DisplaySize;
+        if (window_pos.x + size.x > available_region.x) { window_pos.x = available_region.x - size.x; }
+        if (window_pos.y + size.y > available_region.y) { window_pos.y = available_region.y - size.y; }
+        if (window_pos.x < 0) { window_pos.x = 0; }
+        if (window_pos.y < 0) { window_pos.y = 0; }
+        ImGui::SetNextWindowPos(window_pos);
+        if (ImGui::Begin("Selected Province", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMouseInputs)) {
+            ImGui::TextWrapped(info.c_str());
         }
-        ImGui::EndChild();
+        ImGui::End();
     }
 }
 
@@ -82,8 +94,8 @@ namespace processing {
         const std::vector<uint8_t> &crossing_bytes) -> bool {
         if (!map_shader_.loadFromFile("shaders/map.frag", sf::Shader::Type::Fragment)) { return false; }
         map_shader_.setUniform("texture", sf::Shader::CurrentTexture);
-        map_shader_.setUniform("size", sf::Vector2f(static_cast<float_t>(map_image.width()),
-            static_cast<float_t>(map_image.height())));
+        map_shader_.setUniform("size", sf::Vector2f(static_cast<float>(map_image.width()),
+            static_cast<float>(map_image.height())));
         map_shader_.setUniform("selectedIndex", -1);
         map_shader_.setUniform("drawOutline", draw_outline_);
         map_shader_.setUniform("dim", static_cast<float>(mechanics::province_colors.getSize().x));
@@ -108,12 +120,12 @@ namespace processing {
         return true;
     }
 
-    auto drawing::recalculate_sprite_coords(const std::array<int_fast32_t, 2UZ> offset, const double_t zoom) -> void {
-        const auto zoom_f = static_cast<float_t>(zoom);
-        map_sprite_.setPosition(sf::Vector2f(static_cast<float_t>(offset[0UZ]), static_cast<float_t>(offset[1UZ])));
+    auto drawing::recalculate_sprite_coords(const std::array<int, 2UZ> offset, const double zoom) -> void {
+        const auto zoom_f = static_cast<float>(zoom);
+        map_sprite_.setPosition(sf::Vector2f(static_cast<float>(offset[0UZ]), static_cast<float>(offset[1UZ])));
         map_sprite_.setScale(sf::Vector2f(zoom_f, zoom_f));
-        crossing_sprite_.setPosition(sf::Vector2f(static_cast<float_t>(offset[0UZ]),
-            static_cast<float_t>(offset[1UZ])));
+        crossing_sprite_.setPosition(sf::Vector2f(static_cast<float>(offset[0UZ]),
+            static_cast<float>(offset[1UZ])));
         crossing_sprite_.setScale(sf::Vector2f(zoom_f, zoom_f));
     }
 
@@ -157,7 +169,7 @@ namespace processing {
 
     auto drawing::draw_gui(const sf::RenderWindow &window) -> void {
         ImGui::SetNextWindowPos({0.0F, 0.0F});
-        ImGui::SetNextWindowSize({200.0F, static_cast<float_t>(window.getSize().y)});
+        ImGui::SetNextWindowSize({200.0F, static_cast<float>(window.getSize().y)});
         if (ImGui::Begin("GUI")) {
             draw_date();
             ImGui::Spacing();
@@ -165,8 +177,8 @@ namespace processing {
             ImGui::Spacing();
             draw_map_mode_selection(simulation_);
             ImGui::Spacing();
-            draw_selected_province_info(simulation_);
         }
         ImGui::End();
+        draw_hovered_province_info(simulation_);
     }
 }

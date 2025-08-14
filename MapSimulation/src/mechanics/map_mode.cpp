@@ -11,7 +11,7 @@ namespace mechanics {
 
     auto set_province_colors_size() -> void {
         const auto num_provinces = data::instance().provinces().size();
-        if (const auto dim = static_cast<uint_fast32_t>(sqrt(num_provinces)) + 1U; !province_colors.resize({dim, dim})) {
+        if (const auto dim = static_cast<unsigned int>(sqrt(num_provinces)) + 1U; !province_colors.resize({dim, dim})) {
             throw std::runtime_error("Failed to allocate memory for provinces.");
         }
         dimensions = province_colors.getSize();

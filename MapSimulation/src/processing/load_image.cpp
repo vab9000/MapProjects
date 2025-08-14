@@ -16,19 +16,19 @@ namespace {
             std::string ignore;
             std::getline(province_file, ignore, ':');
             if (ignore == "\n") { break; }
-            uint_fast32_t color{};
+            unsigned int color{};
             province_file >> color;
             std::getline(province_file, ignore, ':');
-            uint_fast32_t koppen_value{};
+            unsigned int koppen_value{};
             province_file >> koppen_value;
             std::getline(province_file, ignore, ':');
-            uint_fast32_t elevation_value{};
+            unsigned int elevation_value{};
             province_file >> elevation_value;
             std::getline(province_file, ignore, ':');
-            uint_fast32_t vegetation_value{};
+            unsigned int vegetation_value{};
             province_file >> vegetation_value;
             std::getline(province_file, ignore, ':');
-            uint_fast32_t soil_value{};
+            unsigned int soil_value{};
             province_file >> soil_value;
             std::getline(province_file, ignore);
             color = utils::flip_rb(color);
@@ -48,10 +48,10 @@ namespace {
             std::string ignore;
             std::getline(sea_file, ignore, ':');
             if (ignore == "\n") { break; }
-            uint_fast32_t color{};
+            unsigned int color{};
             sea_file >> color;
             std::getline(sea_file, ignore, ':');
-            uint_fast32_t sea_value{};
+            unsigned int sea_value{};
             sea_file >> sea_value;
             color = utils::flip_rb(color);
             d.emplace_province(mechanics::koppen_t::none, mechanics::elevation_t::none,
@@ -70,15 +70,15 @@ namespace {
             std::string ignore;
             std::getline(river_tiles_file, ignore, ':');
             if (ignore == "\n") { break; }
-            uint_fast32_t color{};
+            unsigned int color{};
             river_tiles_file >> color;
             std::getline(river_tiles_file, ignore, ':');
-            uint_fast32_t river_value{};
+            unsigned int river_value{};
             river_tiles_file >> river_value;
             color = utils::flip_rb(color);
             auto &province = d.emplace_province(mechanics::koppen_t::none, mechanics::elevation_t::none,
                 mechanics::vegetation_t::none, mechanics::soil_t::none, mechanics::sea_t::river, color);
-            province.set_value(static_cast<uint_fast8_t>(river_value));
+            province.set_value(static_cast<unsigned char>(river_value));
         }
         river_tiles_file.close();
     }
@@ -90,18 +90,18 @@ namespace {
             std::string ignore;
             std::getline(rivers_file, ignore, ':');
             if (ignore == "\n") { break; }
-            uint_fast32_t color{};
+            unsigned int color{};
             rivers_file >> color;
             std::getline(rivers_file, ignore, ':');
-            uint_fast32_t neighbor_color{};
+            unsigned int neighbor_color{};
             rivers_file >> neighbor_color;
             std::getline(rivers_file, ignore, ':');
-            uint_fast32_t river_value{};
+            unsigned int river_value{};
             rivers_file >> river_value;
             color = utils::flip_rb(color);
             neighbor_color = utils::flip_rb(neighbor_color);
             d.province_at(color).add_river_neighbor(d.province_at(neighbor_color),
-                static_cast<uint_fast8_t>(river_value));
+                static_cast<unsigned char>(river_value));
         }
         rivers_file.close();
     }
@@ -115,10 +115,10 @@ namespace {
             std::string ignore;
             std::getline(impassable_file, ignore, ':');
             if (ignore == "\n") { break; }
-            uint_fast32_t color{};
+            unsigned int color{};
             impassable_file >> color;
             std::getline(impassable_file, ignore, ':');
-            uint_fast32_t neighbor_color{};
+            unsigned int neighbor_color{};
             impassable_file >> neighbor_color;
             color = utils::flip_rb(color);
             neighbor_color = utils::flip_rb(neighbor_color);
@@ -128,13 +128,13 @@ namespace {
     }
 
     auto process_pixel(
-        std::unordered_map<std::reference_wrapper<mechanics::province>, std::vector<std::array<uint_fast32_t, 2UZ>>> &
+        std::unordered_map<std::reference_wrapper<mechanics::province>, std::vector<std::array<unsigned int, 2UZ>>> &
         pixels_by_province,
-        const processing::image &map_image, const mechanics::data &d, const uint_fast32_t color,
-        const std::array<uint_fast32_t, 2UZ> &position,
+        const processing::image &map_image, const mechanics::data &d, const unsigned int color,
+        const std::array<unsigned int, 2UZ> &position,
         std::vector<uint8_t> &crossing_bytes) -> void {
-        const auto i = static_cast<int_fast32_t>(position[0UZ]);
-        const auto j = static_cast<int_fast32_t>(position[1UZ]);
+        const auto i = static_cast<int>(position[0UZ]);
+        const auto j = static_cast<int>(position[1UZ]);
 
         auto &this_province = d.province_at(color);
         this_province.expand_bounds(position);
@@ -142,15 +142,15 @@ namespace {
 
         auto impassable_neighbor = false;
 
-        std::ranges::for_each(std::views::iota(-1, 1 + 1), [&](const int_fast8_t dx) {
-            std::ranges::for_each(std::views::iota(-1, 1 + 1), [&](const int_fast8_t dy) {
+        std::ranges::for_each(std::views::iota(-1, 1 + 1), [&](const int dx) {
+            std::ranges::for_each(std::views::iota(-1, 1 + 1), [&](const int dy) {
                 if (dx == 0 && dy == 0) { return; }
                 const auto ni = i + dx;
                 const auto nj = j + dy;
                 if (ni < 0 || std::cmp_greater_equal(ni, map_image.width()) ||
                     nj < 0 || std::cmp_greater_equal(nj, map_image.height())) { return; }
-                const auto neighbor_color = map_image.color(static_cast<uint_fast32_t>(ni),
-                    static_cast<uint_fast32_t>(nj));
+                const auto neighbor_color = map_image.color(static_cast<unsigned int>(ni),
+                    static_cast<unsigned int>(nj));
                 if (neighbor_color == color) { return; }
                 auto &neighbor = d.province_at(neighbor_color);
                 this_province.add_neighbor(neighbor);
@@ -196,13 +196,13 @@ namespace processing {
 
         map_image = image{"assets/provinces_generated.png"};
 
-        std::unordered_map<std::reference_wrapper<mechanics::province>, std::vector<std::array<uint_fast32_t, 2UZ>>>
+        std::unordered_map<std::reference_wrapper<mechanics::province>, std::vector<std::array<unsigned int, 2UZ>>>
             pixels_by_province;
 
         loading_text = "Processing pixels...";
         crossing_bytes = std::vector<uint8_t>(4UZ * map_image.width() * map_image.height());
-        std::ranges::for_each(std::views::iota(0U, map_image.width()), [&](const uint_fast32_t i) {
-            std::ranges::for_each(std::views::iota(0U, map_image.height()), [&](const uint_fast32_t j) {
+        std::ranges::for_each(std::views::iota(0U, map_image.width()), [&](const unsigned int i) {
+            std::ranges::for_each(std::views::iota(0U, map_image.height()), [&](const unsigned int j) {
                 process_pixel(pixels_by_province, map_image, d, map_image.color(i, j), {i, j}, crossing_bytes);
             });
         });

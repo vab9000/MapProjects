@@ -20,8 +20,8 @@ namespace mechanics {
 
     auto unit::pops() -> std::vector<std::reference_wrapper<pop>> & { return pops_; }
 
-    auto unit::size() const -> uint_fast32_t {
-        return std::accumulate(pops_.begin(), pops_.end(), 0U, [](const uint_fast32_t sum, const pop &p) {
+    auto unit::size() const -> unsigned int {
+        return std::accumulate(pops_.begin(), pops_.end(), 0U, [](const unsigned int sum, const pop &p) {
             return sum + p.size();
         });
     }
@@ -49,7 +49,7 @@ namespace mechanics {
 
     auto unit::path() const -> const std::list<std::reference_wrapper<province>> & { return path_; }
 
-    auto unit::travel_progress() const -> double_t { return travel_progress_; }
+    auto unit::travel_progress() const -> double { return travel_progress_; }
 
     auto unit::retreating() const -> bool { return retreating_; }
 

@@ -20,20 +20,19 @@ namespace mechanics {
     class province final : public tickable {
         std::vector<std::unique_ptr<pop>> pops_;
         std::optional<std::reference_wrapper<tag>> owner_{std::nullopt};
-        std::map<std::reference_wrapper<province>, std::pair<double, uint_fast8_t>> neighbors_;
+        std::map<std::reference_wrapper<province>, std::pair<double, unsigned char>> neighbors_;
         std::set<std::reference_wrapper<province>> impassable_neighbors_;
-        std::map<std::reference_wrapper<province>, uint_fast8_t> river_neighbors_;
-        uint_fast32_t size_{0U};
-        std::array<uint_fast32_t, 4UZ> bounds_{0U, 0U, 0U, 0U};
-        std::array<uint_fast32_t, 2UZ> center_{0U, 0U};
+        std::map<std::reference_wrapper<province>, unsigned char> river_neighbors_;
+        unsigned int size_{0U};
+        std::array<unsigned int, 4UZ> bounds_{0U, 0U, 0U, 0U};
+        std::array<unsigned int, 2UZ> center_{0U, 0U};
         koppen_t koppen_;
         elevation_t elevation_;
         vegetation_t vegetation_;
         soil_t soil_;
         sea_t sea_;
-        uint_fast8_t value_{0U};
-        uint_fast32_t base_color_;
-        uint_fast32_t color_;
+        unsigned char value_{0U};
+        unsigned int base_color_;
         size_t id_;
 
     public:
@@ -42,7 +41,7 @@ namespace mechanics {
         ~province() override = default;
 
         province(size_t id, koppen_t koppen, elevation_t elevation, vegetation_t vegetation,
-            soil_t soil, sea_t sea, uint_fast32_t color);
+            soil_t soil, sea_t sea, unsigned int color);
 
         province(const province &) = delete;
 
@@ -61,7 +60,7 @@ namespace mechanics {
         [[nodiscard]] auto id() const -> size_t;
 
         // Do final calculations after all pixels have been added
-        auto finalize(const std::vector<std::array<uint_fast32_t, 2UZ>> &pixels) -> void;
+        auto finalize(const std::vector<std::array<unsigned int, 2UZ>> &pixels) -> void;
 
         // Calculate the distances to all neighbor provinces
         auto process_distances() -> void;
@@ -82,19 +81,19 @@ namespace mechanics {
         auto remove_pop(pop &p) -> void;
 
         // Add a river boundary to the province with a specific size, linking it to a neighboring province
-        auto add_river_neighbor(province &neighbor, uint_fast8_t size) -> void;
+        auto add_river_neighbor(province &neighbor, unsigned char size) -> void;
 
         // Add a neighboring province to this province
         auto add_neighbor(province &neighbor) -> void;
 
         // Expand the bounds of the province to include a new pixel
-        auto expand_bounds(std::array<uint_fast32_t, 2UZ> coords) -> void;
+        auto expand_bounds(std::array<unsigned int, 2UZ> coords) -> void;
 
         // Get the base color of the province
-        [[nodiscard]] auto base_color() const -> uint_fast32_t;
+        [[nodiscard]] auto base_color() const -> unsigned int;
 
         // Get the color of the province based on the current map mode
-        [[nodiscard]] auto color() const -> uint_fast32_t;
+        [[nodiscard]] auto color() const -> unsigned int;
 
         // Get the koppen climate classification of the province
         [[nodiscard]] auto koppen() const -> koppen_t;
@@ -126,10 +125,10 @@ namespace mechanics {
             const T &param) -> std::list<std::reference_wrapper<province>>;
 
         // Get the bounds of the province as an array of [min_x, min_y, max_x, max_y]
-        [[nodiscard]] auto bounds() const -> const std::array<uint_fast32_t, 4UZ> &;
+        [[nodiscard]] auto bounds() const -> const std::array<unsigned int, 4UZ> &;
 
         // Get the center of the province as an array of [x, y]
-        [[nodiscard]] auto center() const -> const std::array<uint_fast32_t, 2UZ> &;
+        [[nodiscard]] auto center() const -> const std::array<unsigned int, 2UZ> &;
 
         // List of pops that are in this province
         [[nodiscard]] auto pops() const -> const std::vector<std::unique_ptr<pop>> &;
@@ -139,10 +138,10 @@ namespace mechanics {
 
         // Get the neighbors of this province as a map of neighbor province pointers to distances
         [[nodiscard]] auto neighbors() const -> const std::map<std::reference_wrapper<province>, std::pair<double,
-            uint_fast8_t>> &;
+            unsigned char>> &;
 
         // Get the neighbor provinces that are divided by rivers, with the river size
-        [[nodiscard]] auto river_neighbors() const -> const std::map<std::reference_wrapper<province>, uint_fast8_t> &;
+        [[nodiscard]] auto river_neighbors() const -> const std::map<std::reference_wrapper<province>, unsigned char> &;
 
         // Get the neighbors of this province that are impassable
         [[nodiscard]] auto impassable_neighbors() const -> const std::set<std::reference_wrapper<province>> &;
@@ -150,12 +149,12 @@ namespace mechanics {
         // Add an impassable neighbor to this province
         auto add_impassable_neighbor(province &neighbor) -> void;
 
-        [[nodiscard]] auto size() const -> uint_fast32_t;
+        [[nodiscard]] auto size() const -> unsigned int;
 
         // Get some arbitrary value associated with the province, such as the size for a river province
-        [[nodiscard]] auto value() const -> uint_fast8_t;
+        [[nodiscard]] auto value() const -> unsigned char;
 
-        auto set_value(uint_fast8_t value) -> void;
+        auto set_value(unsigned char value) -> void;
 
         auto tick(tick_t tick_type) -> void override;
     };

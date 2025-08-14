@@ -10,22 +10,22 @@ namespace processing {
         int width{};
         int height{};
         uint8_t *arr = stbi_load(path.c_str(), &width, &height, nullptr, 3);
-        width_ = static_cast<uint_fast32_t>(width);
-        height_ = static_cast<uint_fast32_t>(height);
+        width_ = static_cast<unsigned int>(width);
+        height_ = static_cast<unsigned int>(height);
         if (arr == nullptr) { throw std::runtime_error("Failed to load image: " + path); }
         data_ = std::vector(arr, arr + 3UZ * width_ * height_);
     }
 
-    [[nodiscard]] auto image::color(const uint_fast32_t i, const uint_fast32_t j) const -> uint_fast32_t {
+    [[nodiscard]] auto image::color(const unsigned int i, const unsigned int j) const -> unsigned int {
         auto pixel = 0U;
         pixel += data_[3UZ * (i + j * width_)];
-        pixel += static_cast<uint_fast32_t>(data_[3UZ * (i + j * width_) + 1UZ]) << 8;
-        pixel += static_cast<uint_fast32_t>(data_[3UZ * (i + j * width_) + 2UZ]) << 16;
+        pixel += static_cast<unsigned int>(data_[3UZ * (i + j * width_) + 1UZ]) << 8;
+        pixel += static_cast<unsigned int>(data_[3UZ * (i + j * width_) + 2UZ]) << 16;
 
         return pixel;
     }
 
-    auto image::width() const -> uint_fast32_t { return width_; }
+    auto image::width() const -> unsigned int { return width_; }
 
-    auto image::height() const -> uint_fast32_t { return height_; }
+    auto image::height() const -> unsigned int { return height_; }
 }

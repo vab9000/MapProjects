@@ -5,8 +5,8 @@
 namespace processing {
     class image {
         std::vector<uint8_t> data_;
-        uint_fast32_t width_;
-        uint_fast32_t height_;
+        unsigned int width_;
+        unsigned int height_;
 
     public:
         image();
@@ -18,12 +18,12 @@ namespace processing {
         auto operator=(const image &other) -> image & = delete;
 
         // Get the color at a specified coordinate
-        [[nodiscard]] auto color(uint_fast32_t i, uint_fast32_t j) const -> uint_fast32_t;
+        [[nodiscard]] auto color(unsigned int i, unsigned int j) const -> unsigned int;
 
         // Get the width
-        [[nodiscard]] auto width() const -> uint_fast32_t;
+        [[nodiscard]] auto width() const -> unsigned int;
 
         // Get the height
-        [[nodiscard]] auto height() const -> uint_fast32_t;
+        [[nodiscard]] auto height() const -> unsigned int;
     };
 }

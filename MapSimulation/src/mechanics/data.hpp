@@ -10,7 +10,7 @@ namespace mechanics {
     class data {
         date current_date_;
         std::vector<province> provinces_;
-        std::unordered_map<uint_fast32_t, std::reference_wrapper<province>> provinces_map_;
+        std::unordered_map<unsigned int, std::reference_wrapper<province>> provinces_map_;
         std::vector<std::unique_ptr<tag>> tags_;
         std::vector<std::unique_ptr<character>> characters_;
         std::priority_queue<std::unique_ptr<event>, std::vector<std::unique_ptr<event>>, std::greater<>> events_;
@@ -43,7 +43,7 @@ namespace mechanics {
 
         auto lock_provinces() -> void;
 
-        [[nodiscard]] auto province_at(uint_fast32_t color) const -> province &;
+        [[nodiscard]] auto province_at(unsigned int color) const -> province &;
 
         // Get the tags
         [[nodiscard]] auto tags() const -> const std::vector<std::unique_ptr<tag>> &;

@@ -9,13 +9,13 @@ namespace mechanics {
 
     character::~character() { id_gen_.return_id(id_); }
 
-    auto character::id() const -> uint_fast32_t { return id_; }
+    auto character::id() const -> unsigned int { return id_; }
 
     auto character::is_alive() const -> bool { return alive_; }
 
     auto character::kill() -> void { alive_ = false; }
 
-    [[nodiscard]] auto character::age(const date &current_date) const -> uint_fast32_t {
+    [[nodiscard]] auto character::age(const date &current_date) const -> unsigned int {
         return (current_date - birthday_) / 365;
     }
 

@@ -9,12 +9,12 @@ namespace mechanics {
 
     date::date(const year_month_day ymd) : time_{ymd} {}
 
-    date::date(const int_fast32_t y, const uint_fast32_t m, const uint_fast32_t d) : date{year{y}, month{m}, day{d}} {}
+    date::date(const int y, const unsigned int m, const unsigned int d) : date{year{y}, month{m}, day{d}} {}
 
     auto date::to_string() const -> std::string {
-        return std::to_string(static_cast<uint_fast32_t>(time_.day())) + "/" +
-               std::to_string(static_cast<uint_fast32_t>(time_.month())) + "/" + std::to_string(
-                   static_cast<int_fast32_t>(time_.year()));
+        return std::to_string(static_cast<unsigned int>(time_.day())) + "/" +
+               std::to_string(static_cast<unsigned int>(time_.month())) + "/" + std::to_string(
+                   static_cast<int>(time_.year()));
     }
 
     auto date::operator<=>(const date &other) const -> std::strong_ordering { return time_ <=> other.time_; }

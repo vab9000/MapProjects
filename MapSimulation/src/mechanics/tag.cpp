@@ -8,21 +8,21 @@ namespace mechanics {
 
     tag::tag() : tag(0) {}
 
-    tag::tag(const uint_fast32_t color) : color_(color), id_(id_gen_.next_id()) {}
+    tag::tag(const unsigned int color) : color_(color), id_(id_gen_.next_id()) {}
 
     tag::~tag() { id_gen_.return_id(id_); }
 
-    auto tag::id() const -> uint_fast32_t { return id_; }
+    auto tag::id() const -> unsigned int { return id_; }
 
-    auto tag::color() const -> uint_fast32_t { return color_; }
+    auto tag::color() const -> unsigned int { return color_; }
 
-    auto tag::set_color(const uint_fast32_t color) -> void { color_ = color; }
+    auto tag::set_color(const unsigned int color) -> void { color_ = color; }
 
-    auto tag::gold() const -> int_fast32_t { return gold_; }
+    auto tag::gold() const -> int { return gold_; }
 
-    auto tag::add_gold(const int_fast32_t amount) -> void { gold_ += amount; }
+    auto tag::add_gold(const int amount) -> void { gold_ += amount; }
 
-    auto tag::remove_gold(const int_fast32_t amount) -> void { gold_ -= amount; }
+    auto tag::remove_gold(const int amount) -> void { gold_ -= amount; }
 
     [[nodiscard]] auto tag::new_army() -> army & {
         armies_.emplace_back(*this);

@@ -16,7 +16,7 @@ namespace mechanics {
         for (auto &province : provinces_) { provinces_map_.emplace(province.base_color(), province); }
     }
 
-    auto data::province_at(const uint_fast32_t color) const -> province & { return provinces_map_.at(color); }
+    auto data::province_at(const unsigned int color) const -> province & { return provinces_map_.at(color); }
 
     auto data::tags() const -> const std::vector<std::unique_ptr<tag>> & { return tags_; }
 

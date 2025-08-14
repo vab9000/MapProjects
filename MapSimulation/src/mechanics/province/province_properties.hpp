@@ -3,7 +3,7 @@
 #include "../../utils/zstring_view.hpp"
 
 namespace mechanics {
-    enum class koppen_t : uint_fast32_t {
+    enum class koppen_t : unsigned int {
         none = 0U,
         af = utils::to_integer_color(0U, 0U, 255U),
         am = utils::to_integer_color(0U, 120U, 255U),
@@ -37,7 +37,7 @@ namespace mechanics {
         ef = utils::to_integer_color(102U, 102U, 102U),
     };
 
-    enum class elevation_t : uint_fast32_t {
+    enum class elevation_t : unsigned int {
         none = 0U,
         flatland = utils::to_integer_color(0U, 255U, 0U),
         hills = utils::to_integer_color(30U, 200U, 200U),
@@ -46,7 +46,7 @@ namespace mechanics {
         mountains = utils::to_integer_color(50U, 20U, 20U),
     };
 
-    enum class vegetation_t : uint_fast32_t {
+    enum class vegetation_t : unsigned int {
         none = 0U,
         tropical_evergreen_broadleaf_forest = utils::to_integer_color(28U, 85U, 16U),
         tropical_semi_evergreen_broadleaf_forest = utils::to_integer_color(101U, 146U, 8U),
@@ -70,7 +70,7 @@ namespace mechanics {
         prostrate_dwarf_shrub_tundra = utils::to_integer_color(210U, 158U, 150U),
     };
 
-    enum class soil_t : uint_fast32_t {
+    enum class soil_t : unsigned int {
         none = 0U,
         acrisols = utils::to_integer_color(247U, 153U, 29U),
         albeluvisols = utils::to_integer_color(155U, 157U, 87U),
@@ -104,7 +104,7 @@ namespace mechanics {
         vertisols = utils::to_integer_color(158U, 86U, 124U),
     };
 
-    enum class sea_t :uint_fast32_t {
+    enum class sea_t :unsigned int {
         none = 0U,
         coast = utils::to_integer_color(25U, 255U, 255U),
         sea = utils::to_integer_color(100U, 200U, 255U),
