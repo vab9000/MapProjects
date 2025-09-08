@@ -15,7 +15,7 @@ static std::random_device rd;
 static std::default_random_engine rng(rd());
 static std::uniform_real_distribution dis(0.0, 1.0);
 
-constexpr auto province_density = 13;
+constexpr auto province_density = 10;
 constexpr auto null_province = 0;
 
 using provinces_t = std::vector<std::vector<std::pair<int, std::pair<bool,
@@ -265,8 +265,8 @@ inline auto generate_provinces(const image &w_img, const image &base_map) -> voi
     const std::unordered_map<int, int> province_sizes = generate_province_sizes(base_map, provinces);
 
     std::unordered_map<int, int> province_merges;
-    merge_provinces(base_map, province_merges, province_sizes, provinces, 1, 50);
-    merge_provinces(base_map, province_merges, province_sizes, provinces, 15, 15);
+    merge_provinces(base_map, province_merges, province_sizes, provinces, 1, 30);
+    merge_provinces(base_map, province_merges, province_sizes, provinces, 75, 10);
 
     for (auto i = 0; i < base_map.width(); ++i) {
         for (auto j = 0; j < base_map.height(); ++j) {

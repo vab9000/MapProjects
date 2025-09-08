@@ -15,6 +15,7 @@ enum class sea_tile_t :unsigned int {
     southeasterly = to_integer_color(255, 100, 100), northeasterly = to_integer_color(100, 100, 255),
     westerly = to_integer_color(255, 255, 100), polar = to_integer_color(200, 255, 255),
     lake = to_integer_color(255, 150, 255),
+    doldrums = to_integer_color(100, 255, 150)
 };
 
 inline auto generate_neighbors(const image &base_map,
@@ -119,8 +120,10 @@ inline auto gen_types(const image &map_image, const image &base_image) -> std::u
             ? types[color] = sea_tile_t::polar
             : average_y < base_image.height() / 180 * 60
             ? types[color] = sea_tile_t::westerly
-            : average_y < base_image.height() / 180 * 90
+            : average_y < base_image.height() / 180 * 80
             ? types[color] = sea_tile_t::northeasterly
+            : average_y < base_image.height() / 180 * 100
+            ? types[color] = sea_tile_t::doldrums
             : average_y < base_image.height() / 180 * 120
             ? types[color] = sea_tile_t::southeasterly
             : average_y < base_image.height() / 180 * 150

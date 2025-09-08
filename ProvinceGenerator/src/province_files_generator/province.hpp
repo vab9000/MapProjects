@@ -8,7 +8,7 @@
 #include "../common/image.hpp"
 
 struct hash_coords {
-    std::size_t operator()(const std::pair<int, int> &p) const noexcept {
+    auto operator()(const std::pair<int, int> &p) const noexcept -> std::size_t {
         return std::hash<int>()(p.first) ^ (std::hash<int>()(p.second) << 1);
     }
 };

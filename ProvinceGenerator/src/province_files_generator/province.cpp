@@ -1,11 +1,11 @@
 #include "province.hpp"
+#include <iostream>
 #include <map>
 #include <numeric>
-#include <iostream>
-#include <set>
 #include <random>
+#include <set>
 
-constexpr unsigned int to_integer_color(const unsigned char r, const unsigned char g, const unsigned char b) {
+constexpr auto to_integer_color(const unsigned char r, const unsigned char g, const unsigned char b) -> unsigned int {
     return (static_cast<unsigned int>(r) << 16) | (static_cast<unsigned int>(g) << 8) | static_cast<unsigned int>(b);
 }
 
@@ -24,9 +24,16 @@ enum class province::koppen : unsigned int {
 };
 
 enum class province::elevation : unsigned int {
-    none = 0, flatland = to_integer_color(0, 255, 0), hills = to_integer_color(30, 200, 200),
-    plateau = to_integer_color(200, 200, 10), highlands = to_integer_color(200, 10, 10),
-    mountains = to_integer_color(50, 20, 20),
+    none = 0,
+    flat_lowland = to_integer_color(255, 255, 50), // Flatland
+    hill_lowland = to_integer_color(125, 255, 50), // Foothills
+    mountain_lowland = to_integer_color(0, 255, 50), // Low Mountains
+    flat_midland = to_integer_color(255, 125, 50), // Plateau
+    hill_midland = to_integer_color(125, 125, 50), // Hills
+    mountain_midland = to_integer_color(0, 125, 50), // Mountains
+    flat_highland = to_integer_color(255, 0, 50), // Highlands
+    hill_highland = to_integer_color(125, 0, 50), // Rough Highlands
+    mountain_highland = to_integer_color(0, 0, 50), // Peaks
 };
 
 enum class province::vegetation : unsigned int {
@@ -76,9 +83,9 @@ province::province(const unsigned int color, const bool water) : color_(color), 
     vegetation_(vegetation::none), soil_(soil::none),
     water_(water) {}
 
-unsigned int province::color() const { return color_; }
+auto province::color() const -> unsigned int { return color_; }
 
-void province::set_koppen(const std::vector<unsigned int> &koppen_colors) {
+auto province::set_koppen(const std::vector<unsigned int> &koppen_colors) -> void {
     std::map<koppen, int> koppen_count;
     for (const auto &color : koppen_colors) {
         if (const auto koppen_value = static_cast<koppen>(color); koppen_value != koppen::none) {
@@ -87,23 +94,27 @@ void province::set_koppen(const std::vector<unsigned int> &koppen_colors) {
     }
     if (koppen_count.empty()) { koppen_ = koppen::none; }
     else {
-        const auto max_koppen = std::max_element(koppen_count.begin(), koppen_count.end(),
+        const auto max_koppen = std::ranges::max_element(koppen_count,
             [](const auto &a, const auto &b) { return a.second < b.second; });
         koppen_ = max_koppen->first;
     }
 }
 
-unsigned int province::koppen_color() const { return static_cast<unsigned int>(koppen_); }
+auto province::koppen_color() const -> unsigned int { return static_cast<unsigned int>(koppen_); }
 
-inline double mean(const std::vector<int> &vec) {
-    if (vec.empty()) return 0.0;
+auto mean(const std::vector<int> &vec) -> double {
+    if (vec.empty()) {
+        return 0.0;
+    }
     const double sum = std::accumulate(vec.begin(), vec.end(), 0.0);
     return sum / static_cast<double>(vec.size());
 }
 
-inline int roughness_func(const std::vector<int> &elevations) {
+auto roughness_func(const std::vector<int> &elevations) -> int {
     std::multiset sorted_colors(elevations.begin(), elevations.end());
-    if (sorted_colors.size() < 4) return 0.0;
+    if (sorted_colors.size() < 4) {
+        return 0.0;
+    }
     auto it = sorted_colors.begin();
     std::advance(it, static_cast<size_t>(static_cast<double>(sorted_colors.size()) * 0.25));
     const auto first_quarter = *it;
@@ -112,7 +123,7 @@ inline int roughness_func(const std::vector<int> &elevations) {
     return third_quarter - first_quarter;
 }
 
-void province::set_elevation(const std::vector<unsigned int> &elevation_colors) {
+auto province::set_elevation(const std::vector<unsigned int> &elevation_colors) -> void {
     constexpr auto to_elevation = [](unsigned int color) -> int {
         const unsigned char *ptr = reinterpret_cast<unsigned char *>(&color);
         return ptr[1] + ptr[2] + ptr[3];
@@ -129,30 +140,29 @@ void province::set_elevation(const std::vector<unsigned int> &elevation_colors) 
 
     const int roughness = roughness_func(elevation);
     roughness_ = roughness;
-    const int average_elevation = static_cast<int>(mean(elevation));
+    const auto average_elevation = static_cast<int>(mean(elevation));
     average_elevation_ = average_elevation;
 
-    if (average_elevation > 400) { elevation_ = elevation::highlands; }
-    if (roughness > 25) {
-        if (average_elevation < 150) { elevation_ = elevation::hills; }
-        else { elevation_ = elevation::mountains; }
+    if (average_elevation_ < 70) {
+        if (roughness_ < 15) { elevation_ = elevation::flat_lowland; }
+        else if (roughness_ < 30) { elevation_ = elevation::hill_lowland; }
+        else { elevation_ = elevation::mountain_lowland; }
     }
-    else if (roughness > 10) {
-        if (average_elevation < 70) { elevation_ = elevation::flatland; }
-        else if (average_elevation < 150) { elevation_ = elevation::hills; }
-        else if (average_elevation < 300) { elevation_ = elevation::plateau; }
-        else { elevation_ = elevation::highlands; }
+    else if (average_elevation_ < 300) {
+        if (roughness < 25) { elevation_ = elevation::flat_midland; }
+        else if (roughness < 50) { elevation_ = elevation::hill_midland; }
+        else { elevation_ = elevation::mountain_midland; }
     }
     else {
-        if (average_elevation < 70) { elevation_ = elevation::flatland; }
-        else if (average_elevation < 200) { elevation_ = elevation::plateau; }
-        else { elevation_ = elevation::highlands; }
+        if (roughness < 35) { elevation_ = elevation::flat_highland; }
+        else if (roughness < 70) { elevation_ = elevation::hill_highland; }
+        else { elevation_ = elevation::mountain_highland; }
     }
 }
 
-unsigned int province::elevation_color() const { return static_cast<unsigned int>(elevation_); }
+auto province::elevation_color() const -> unsigned int { return static_cast<unsigned int>(elevation_); }
 
-void province::set_vegetation(const std::vector<unsigned int> &vegetation_colors) {
+auto province::set_vegetation(const std::vector<unsigned int> &vegetation_colors) -> void {
     std::map<vegetation, int> vegetation_count;
     for (const auto &color : vegetation_colors) {
         const auto vegetation_value = static_cast<vegetation>(color);
@@ -160,15 +170,15 @@ void province::set_vegetation(const std::vector<unsigned int> &vegetation_colors
     }
     if (vegetation_count.empty()) { vegetation_ = vegetation::none; }
     else {
-        const auto max_vegetation = std::max_element(vegetation_count.begin(), vegetation_count.end(),
+        const auto max_vegetation = std::ranges::max_element(vegetation_count,
             [](const auto &a, const auto &b) { return a.second < b.second; });
         vegetation_ = max_vegetation->first;
     }
 }
 
-unsigned int province::vegetation_color() const { return static_cast<unsigned int>(vegetation_); }
+auto province::vegetation_color() const -> unsigned int { return static_cast<unsigned int>(vegetation_); }
 
-void province::set_soil(const std::vector<unsigned int> &soil_colors) {
+auto province::set_soil(const std::vector<unsigned int> &soil_colors) -> void {
     std::map<soil, int> soil_count;
     for (const auto &color : soil_colors) {
         const auto soil_value = static_cast<soil>(color);
@@ -176,16 +186,18 @@ void province::set_soil(const std::vector<unsigned int> &soil_colors) {
     }
     if (soil_count.empty()) { soil_ = soil::none; }
     else {
-        const auto max_soil = std::max_element(soil_count.begin(), soil_count.end(),
+        const auto max_soil = std::ranges::max_element(soil_count,
             [](const auto &a, const auto &b) { return a.second < b.second; });
         soil_ = max_soil->first;
     }
 }
 
-unsigned int province::soil_color() const { return static_cast<unsigned int>(soil_); }
+auto province::soil_color() const -> unsigned int { return static_cast<unsigned int>(soil_); }
 
-void province::write(std::ofstream &file) const {
-    if (water_) return;
+auto province::write(std::ofstream &file) const -> void {
+    if (water_) {
+        return;
+    }
     file << "color: " << color_ << "\n";
     file << "koppen: " << static_cast<unsigned int>(koppen_) << "\n";
     file << "elevation: " << static_cast<unsigned int>(elevation_) << "\n";
@@ -194,38 +206,38 @@ void province::write(std::ofstream &file) const {
     file << "\n";
 }
 
-void province::add_neighbor(const province *neighbor) { neighbors_.insert(neighbor); }
+auto province::add_neighbor(const province *neighbor) -> void { neighbors_.insert(neighbor); }
 
-const std::unordered_set<const province *> &province::neighbors() const { return neighbors_; }
+auto province::neighbors() const -> const std::unordered_set<const province *> & { return neighbors_; }
 
-void province::add_outline_point(const province *neighbor, int x, int y) { outline_[neighbor].insert({x, y}); }
+auto province::add_outline_point(const province *neighbor, int x, int y) -> void { outline_[neighbor].insert({x, y}); }
 
-const std::unordered_map<const province *, std::unordered_set<std::pair<int, int>, hash_coords>> &
-province::outline() const { return outline_; }
+auto province::outline() const -> const std::unordered_map<const province *, std::unordered_set<std::pair<int, int>,
+    hash_coords>> & { return outline_; }
 
-void province::add_river(const province *neighbor, const int size) { rivers_[neighbor] = size; }
+auto province::add_river(const province *neighbor, const int size) -> void { rivers_[neighbor] = size; }
 
-const std::unordered_map<const province *, int> &province::rivers() const { return rivers_; }
+auto province::rivers() const -> const std::unordered_map<const province *, int> & { return rivers_; }
 
-unsigned int province::river_color(int x, int y) const {
+auto province::river_color(int x, int y) const -> unsigned int {
     for (const auto &[neighbor, outline_pixels] : outline_) {
         if (outline_pixels.contains({x, y})) { if (rivers_.contains(neighbor)) { return rivers_.at(neighbor); } }
     }
     return 0xFFFFFF;
 }
 
-bool province::is_water() const { return water_; }
+auto province::is_water() const -> bool { return water_; }
 
-void province::set_water(bool water) { water_ = water; }
+auto province::set_water(const bool water) -> void { water_ = water; }
 
-bool color_is_water(const image::image_color &color) {
+auto color_is_water(const image::image_color &color) -> bool {
     if (color.r() == 0 && color.g() == 0 && color.b() != 0) { return true; }
     if (color.r() == 255 && color.g() == 0 && color.b() == 255) { return true; }
     if (color.r() == 0 && color.g() == 255 && color.b() == 255) { return true; }
     return false;
 }
 
-std::vector<const province *> province::impassable_neighbors(const image &base_image) const {
+auto province::impassable_neighbors(const image &base_image) const -> std::vector<const province *> {
     std::vector<const province *> impassable;
     if (is_water()) { return impassable; }
     for (auto neighbor : neighbors_) {
@@ -279,13 +291,13 @@ std::vector<const province *> province::impassable_neighbors(const image &base_i
                                                          if (color_is_water(color)) { return sum + average_elevation_; }
                                                          return sum + color.r() + color.g() + color.b();
                                                      }) / static_cast<double>(neighbor_num_points);
-        if (abs(border_elevation - neighbor_border_elevation) > average_elevation_ / 15.0 + 4 || abs(
-                border_elevation - neighbor_border_elevation) > neighbor->average_elevation_ / 15.0 + 4) {
+        if (abs(border_elevation - neighbor_border_elevation) > average_elevation_ / 10.0 + 10 || abs(
+                border_elevation - neighbor_border_elevation) > neighbor->average_elevation_ / 10.0 + 10) {
             impassable.push_back(neighbor);
             continue;
         }
-        if (border_elevation > average_elevation_ * 1.2 + 25 || neighbor_border_elevation > neighbor->average_elevation_
-            * 1.2 + 25) { impassable.push_back(neighbor); }
+        if (border_elevation > average_elevation_ * 1.3 + 15 || neighbor_border_elevation > neighbor->average_elevation_
+            * 1.3 + 15) { impassable.push_back(neighbor); }
     }
     return impassable;
 }
