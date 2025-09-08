@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cstdint>
-
 namespace mechanics {
     class action_base {
     public:

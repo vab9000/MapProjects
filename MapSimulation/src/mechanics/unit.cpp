@@ -11,14 +11,14 @@ namespace mechanics {
         location_(location) {}
 
     unit::~unit() {
-        if (captain_.has_value()) { captain_->get().flags().remove(character_flag_t::captain); }
+        if (captain_ != nullptr) { captain_->roles().remove(role_t::captain); }
     }
 
     auto unit::add_pop(pop& new_pop) -> void { pops_.emplace_back(new_pop); }
 
-    auto unit::pops() const -> const std::vector<std::reference_wrapper<pop>> & { return pops_; }
+    auto unit::pops() const -> const std::vector<utils::ref<pop>> & { return pops_; }
 
-    auto unit::pops() -> std::vector<std::reference_wrapper<pop>> & { return pops_; }
+    auto unit::pops() -> std::vector<utils::ref<pop>> & { return pops_; }
 
     auto unit::size() const -> unsigned int {
         return std::accumulate(pops_.begin(), pops_.end(), 0U, [](const unsigned int sum, const pop &p) {
@@ -31,23 +31,23 @@ namespace mechanics {
     auto unit::set_parent(army &new_parent) -> void { parent_army_ = new_parent; }
 
     auto unit::set_captain(character &new_captain) -> void {
-        if (captain_.has_value()) { captain_->get().flags().remove(character_flag_t::captain); }
-        new_captain.flags().add(character_flag_t::captain);
-        captain_ = new_captain;
+        if (captain_ != nullptr) { captain_->roles().remove(role_t::captain); }
+        new_captain.roles().add(role_t::captain, this);
+        captain_ = &new_captain;
     }
 
     auto unit::remove_captain() -> void {
-        if (captain_.has_value()) {
-            captain_->get().flags().remove(character_flag_t::captain);
-            captain_ = std::nullopt;
+        if (captain_ != nullptr) {
+            captain_->roles().remove(role_t::captain);
+            captain_ = nullptr;
         }
     }
 
-    auto unit::captain() const -> std::optional<std::reference_wrapper<character>> { return captain_; }
+    auto unit::captain() const -> character * { return captain_; }
 
     auto unit::location() const -> province & { return location_; }
 
-    auto unit::path() const -> const std::list<std::reference_wrapper<province>> & { return path_; }
+    auto unit::path() const -> const std::list<utils::ref<province>> & { return path_; }
 
     auto unit::travel_progress() const -> double { return travel_progress_; }
 
@@ -56,12 +56,12 @@ namespace mechanics {
     auto unit::set_destination(province &destination) -> void {
         if (retreating_) { return; }
 
-        const std::function accessible = [](const std::pair<std::reference_wrapper<const province>, std::reference_wrapper<const province>>
+        const province_connection_func<bool, unit> accessible = [](const std::pair<utils::ref<const province>, utils::ref<const province>>
             connection,
             const unit &this_unit) {
             return this_unit.parent().parent().has_army_access(connection.second);
         };
-        const std::function cost_modifier = [](const std::pair<std::reference_wrapper<const province>, std::reference_wrapper<const province>>
+        const province_connection_func<double, unit> cost_modifier = [](const std::pair<utils::ref<const province>, utils::ref<const province>>
             connection,
             const unit &this_unit) {
             return 1.0;

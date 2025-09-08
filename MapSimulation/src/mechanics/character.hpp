@@ -1,9 +1,9 @@
 #pragma once
+#include <flags.hpp>
+#include <reference.hpp>
 #include "ai.hpp"
 #include "date.hpp"
 #include "tickable.hpp"
-#include "../utils/flags.hpp"
-#include "../utils/id_generator.hpp"
 #include "character/character_properties.hpp"
 
 namespace mechanics {
@@ -12,8 +12,8 @@ namespace mechanics {
 
     class character final : public ai, public tickable {
         const date birthday_;
-        std::reference_wrapper<province> location_;
-        utils::flags<character_flag_t> flags_;
+        utils::ref<province> location_;
+        utils::tied_flags<role_t> roles_;
         utils::flags<personality_trait_t> traits_;
         bool alive_{true};
 
@@ -38,9 +38,9 @@ namespace mechanics {
         // Set the character's location to a new province
         auto set_location(province &location) -> void;
 
-        [[nodiscard]] auto flags() const -> const utils::flags<character_flag_t> &;
+        [[nodiscard]] auto roles() const -> const utils::tied_flags<role_t> &;
 
-        auto flags() -> utils::flags<character_flag_t> &;
+        auto roles() -> utils::tied_flags<role_t> &;
 
         [[nodiscard]] auto traits() const -> const utils::flags<personality_trait_t> &;
 

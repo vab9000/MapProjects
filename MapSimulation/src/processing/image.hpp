@@ -4,7 +4,7 @@
 
 namespace processing {
     class image {
-        std::vector<uint8_t> data_;
+        std::vector<unsigned char> data_;
         unsigned int width_;
         unsigned int height_;
 
@@ -25,5 +25,7 @@ namespace processing {
 
         // Get the height
         [[nodiscard]] auto height() const -> unsigned int;
+
+        [[nodiscard]] auto data() const -> const unsigned char *;
     };
 }

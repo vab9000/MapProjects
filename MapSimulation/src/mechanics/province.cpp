@@ -6,8 +6,7 @@
 
 namespace {
     auto points_distance(
-        const std::pair<std::pair<unsigned int, unsigned int>, std::pair<unsigned int, unsigned int>> points) ->
-        double {
+        const std::pair<std::pair<int, int>, std::pair<int, int>> points) -> double {
         return sqrt(pow(points.first.first - points.second.first, 2) +
                     pow(points.first.second - points.second.second, 2));
     }
@@ -26,6 +25,8 @@ namespace mechanics {
     auto province::id() const -> size_t { return id_; }
 
     auto province::finalize(const std::vector<std::array<unsigned int, 2UZ>> &pixels) -> void {
+        std::erase_if(impassable_neighbors_, [&](const utils::ref<province> &p) { return !this->neighbors_.contains(p); });
+
         size_ = static_cast<unsigned int>(pixels.size());
 
         auto x = std::vector<unsigned int>(size_);
@@ -86,22 +87,22 @@ namespace mechanics {
     }
 
     auto province::set_owner(tag &new_owner) -> void {
-        if (owner_.has_value() && owner_->get().has_province(*this)) { owner_->get().remove_province(*this); }
+        if (owner_ != nullptr && owner_->has_province(*this)) { owner_->remove_province(*this); }
         new_owner.add_province(*this);
-        owner_ = new_owner;
+        owner_ = &new_owner;
     }
 
     auto province::remove_owner() -> void {
-        if (owner_.has_value()) { owner_->get().remove_province(*this); }
-        owner_ = std::nullopt;
+        if (owner_ != nullptr) { owner_->remove_province(*this); }
+        owner_ = nullptr;
     }
 
-    auto province::owner() const -> std::optional<std::reference_wrapper<tag>> { return owner_; }
+    auto province::owner() const -> tag * { return owner_; }
 
-    auto province::add_pop(const pop &new_pop) -> void { pops_.emplace_back(std::make_unique<pop>(new_pop)); }
+    auto province::add_pop(pop &&new_pop) -> void { pops_.emplace_back(std::move(std::make_unique<pop>(std::move(new_pop)))); }
 
     auto province::remove_pop(pop &p) -> void {
-        std::erase_if(pops_, [p](const std::unique_ptr<pop> &elem) { return elem.get() == &p; });
+        std::erase_if(pops_, [&p](const std::unique_ptr<pop> &elem) { return elem.get() == &p; });
     }
 
     auto province::add_river_neighbor(province &neighbor, const unsigned char size) -> void {
@@ -137,12 +138,29 @@ namespace mechanics {
     auto province::color() const -> unsigned int {
         switch (map_mode.load()) {
             case map_mode_t::provinces: return base_color_;
-            case map_mode_t::owner: return owner_.has_value() ? owner_->get().color() : 0xFFFFFFFF;
-            case map_mode_t::koppen: return static_cast<unsigned int>(koppen_);
-            case map_mode_t::elevation: return static_cast<unsigned int>(elevation_);
-            case map_mode_t::vegetation: return static_cast<unsigned int>(vegetation_);
-            case map_mode_t::soil: return static_cast<unsigned int>(soil_);
-            case map_mode_t::sea: return static_cast<unsigned int>(sea_);
+            case map_mode_t::owner: return owner_ != nullptr ? owner_->color() : 0xFFFFFFFF;
+            case map_mode_t::koppen: {
+                if (sea_ != sea_t::none) { return 0xFFFFFFFF; }
+                return static_cast<unsigned int>(koppen_);
+            }
+            case map_mode_t::elevation: {
+                if (sea_ != sea_t::none) { return 0xFFFFFFFF; }
+                return static_cast<unsigned int>(elevation_);
+            }
+            case map_mode_t::vegetation: {
+                if (sea_ != sea_t::none) { return 0xFFFFFFFF; }
+                return static_cast<unsigned int>(vegetation_);
+            }
+            case map_mode_t::soil: {
+                if (sea_ != sea_t::none) { return 0xFFFFFFFF; }
+                return static_cast<unsigned int>(soil_);
+            }
+            case map_mode_t::sea: {
+                if (sea_ == sea_t::none) { return 0xFFFFFFFF; }
+                return static_cast<unsigned int>(sea_);
+            }
+            case map_mode_t::river_size: return (value_ == 0U) ? 0xFFFFFFFF
+                    : 0x000000FFU | static_cast<unsigned int>(value_) << 8;
         }
         return 0U;
     }
@@ -164,7 +182,7 @@ namespace mechanics {
 
     auto province::tick(tick_t tick_type) -> void {
         if (sea_ != sea_t::none) { return; }
-        std::for_each(std::execution::unseq, pops_.begin(), pops_.end(), [tick_type](const std::unique_ptr<pop> &elem) {
+        std::for_each(std::execution::seq, pops_.begin(), pops_.end(), [tick_type](const std::unique_ptr<pop> &elem) {
             elem->tick(tick_type);
         });
     }
@@ -177,35 +195,25 @@ namespace mechanics {
 
     auto province::pops() -> std::vector<std::unique_ptr<pop>> & { return pops_; }
 
-    auto province::neighbors() const -> const std::map<std::reference_wrapper<province>, std::pair<double,
+    auto province::neighbors() const -> const std::map<utils::ref<province>, std::pair<double,
         unsigned char>> & { return neighbors_; }
 
-    auto province::river_neighbors() const -> const std::map<std::reference_wrapper<province>, unsigned char> & {
+    auto province::river_neighbors() const -> const std::map<utils::ref<province>, unsigned char> & {
         return river_neighbors_;
     }
 
-    auto province::impassable_neighbors() const -> const std::set<std::reference_wrapper<province>> & {
+    auto province::impassable_neighbors() const -> const std::set<utils::ref<province>> & {
         return impassable_neighbors_;
     }
 
-    auto province::add_impassable_neighbor(province &neighbor) -> void { impassable_neighbors_.insert(neighbor); }
+    auto province::add_impassable_neighbor(province &neighbor) -> void {
+        impassable_neighbors_.insert(neighbor);
+        neighbor.impassable_neighbors_.insert(*this);
+    }
 
     auto province::size() const -> unsigned int { return size_; }
 
     auto province::value() const -> unsigned char { return value_; }
 
     auto province::set_value(const unsigned char value) -> void { value_ = value; }
-
-    auto operator==(const std::reference_wrapper<const province> &lhs,
-        const std::reference_wrapper<const province> &rhs) -> bool { return &lhs.get() == &rhs.get(); }
-
-    auto operator<=>(const std::reference_wrapper<const province> &lhs,
-        const std::reference_wrapper<const province> &rhs) -> std::strong_ordering { return &lhs.get() <=> &rhs.get(); }
-}
-
-namespace std {
-    auto hash<reference_wrapper<mechanics::province>>::operator()(
-        const reference_wrapper<mechanics::province> &rt) const noexcept -> size_t {
-        return hash<mechanics::province *>()(&rt.get());
-    }
 }

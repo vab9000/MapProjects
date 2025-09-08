@@ -5,7 +5,7 @@ namespace mechanics {
         ambitious,
     };
 
-    enum class character_flag_t {
+    enum class role_t {
         commander,
         captain,
     };

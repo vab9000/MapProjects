@@ -1,5 +1,4 @@
 #include "tag.hpp"
-#include <algorithm>
 #include "army.hpp"
 #include "province.hpp"
 
@@ -28,7 +27,7 @@ namespace mechanics {
     auto tag::add_province(province &added_province) -> void { provinces_.emplace_back(added_province); }
 
     auto tag::remove_province(const province &removed_province) -> void {
-        std::erase(provinces_, std::ref(removed_province));
+        std::erase(provinces_, utils::ref(removed_province));
     }
 
     auto tag::has_province(const province &found_province) const -> bool {
@@ -36,15 +35,15 @@ namespace mechanics {
         return false;
     }
 
-    [[nodiscard]] auto tag::provinces() const -> const std::list<std::reference_wrapper<province>> & {
+    [[nodiscard]] auto tag::provinces() const -> const std::list<utils::ref<province>> & {
         return provinces_;
     }
 
-    auto tag::provinces() -> std::list<std::reference_wrapper<province>> & { return provinces_; }
+    auto tag::provinces() -> std::list<utils::ref<province>> & { return provinces_; }
 
     [[nodiscard]] auto tag::has_army_access(const province &access_province) const -> bool {
-        if (!access_province.owner().has_value()) { return true; }
-        return &access_province.owner()->get() == this;
+        if (access_province.owner() == nullptr) { return true; }
+        return access_province.owner() == this;
     }
 
     auto tag::tick(tick_t tick_type) -> void {}

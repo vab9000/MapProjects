@@ -9,7 +9,7 @@ namespace processing {
     image::image(const std::string &path) {
         int width{};
         int height{};
-        uint8_t *arr = stbi_load(path.c_str(), &width, &height, nullptr, 3);
+        unsigned char *arr = stbi_load(path.c_str(), &width, &height, nullptr, 3);
         width_ = static_cast<unsigned int>(width);
         height_ = static_cast<unsigned int>(height);
         if (arr == nullptr) { throw std::runtime_error("Failed to load image: " + path); }
@@ -18,9 +18,9 @@ namespace processing {
 
     [[nodiscard]] auto image::color(const unsigned int i, const unsigned int j) const -> unsigned int {
         auto pixel = 0U;
-        pixel += data_[3UZ * (i + j * width_)];
-        pixel += static_cast<unsigned int>(data_[3UZ * (i + j * width_) + 1UZ]) << 8;
-        pixel += static_cast<unsigned int>(data_[3UZ * (i + j * width_) + 2UZ]) << 16;
+        pixel += static_cast<unsigned int>(data_[3UZ * (i + j * width_)]) << 16U;
+        pixel += static_cast<unsigned int>(data_[3UZ * (i + j * width_) + 1UZ]) << 8U;
+        pixel += static_cast<unsigned int>(data_[3UZ * (i + j * width_) + 2UZ]);
 
         return pixel;
     }
@@ -28,4 +28,6 @@ namespace processing {
     auto image::width() const -> unsigned int { return width_; }
 
     auto image::height() const -> unsigned int { return height_; }
+
+    auto image::data() const -> const unsigned char * { return data_.data(); }
 }

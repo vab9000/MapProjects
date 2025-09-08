@@ -1,4 +1,4 @@
-uniform sampler2D texture;
+uniform sampler2D tex;
 uniform vec2 size;
 uniform sampler2D provinceColors;
 uniform int selectedIndex;
@@ -12,12 +12,12 @@ int indexFromPixel(vec4 pixel) {
 vec4 colorForProvince(vec4 pixel) {
     int index = indexFromPixel(pixel);
     float indexFloat = mod(float(index), dim) / (dim - 1);
-    vec4 provinceColor = texture2D(provinceColors, vec2(indexFloat, floor(index / dim) / (dim - 1)));
+    vec4 provinceColor = texture2D(provinceColors, vec2(indexFloat, floor(float(index) / dim) / (dim - 1)));
     return provinceColor;
 }
 
 void main() {
-    vec4 center = texture2D(texture, gl_TexCoord[0].xy);
+    vec4 center = texture2D(tex, gl_TexCoord[0].xy);
     int index = indexFromPixel(center);
 
     vec4 provinceColor = colorForProvince(center);
@@ -40,7 +40,7 @@ void main() {
                 outline = true;
                 break;
             }
-            vec4 neighbor = texture2D(texture, new_pos);
+            vec4 neighbor = texture2D(tex, new_pos);
             vec4 neighborColor = colorForProvince(neighbor);
 
             if (index == selectedIndex) {
@@ -63,7 +63,7 @@ void main() {
             return;
         }
         if (drawOutline) {
-            gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+            gl_FragColor = gl_Color * vec4(0.0, 0.0, 0.0, 1.0);
             return;
         }
     }

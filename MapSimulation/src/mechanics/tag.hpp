@@ -7,7 +7,7 @@ namespace mechanics {
     class province;
 
     class tag final : public tickable {
-        std::list<std::reference_wrapper<province>> provinces_;
+        std::list<utils::ref<province>> provinces_;
         std::list<army> armies_;
         unsigned int color_;
         int gold_{0};
@@ -47,10 +47,10 @@ namespace mechanics {
         [[nodiscard]] auto has_province(const province &found_province) const -> bool;
 
         // Get the list of provinces owned by the tag
-        [[nodiscard]] auto provinces() const -> const std::list<std::reference_wrapper<province>> &;
+        [[nodiscard]] auto provinces() const -> const std::list<utils::ref<province>> &;
 
         // Get the list of provinces owned by the tag
-        auto provinces() -> std::list<std::reference_wrapper<province>> &;
+        auto provinces() -> std::list<utils::ref<province>> &;
 
         // Check if the tag has army access to a specific province
         [[nodiscard]] auto has_army_access(const province &access_province) const -> bool;

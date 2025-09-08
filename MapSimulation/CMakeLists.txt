@@ -51,7 +51,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(MapSimulation)
 
-target_include_directories(MapSimulation PRIVATE libs/stb_image)
+target_include_directories(MapSimulation PRIVATE libs/stb_image utils)
 
 set_target_properties(MapSimulation PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/bin

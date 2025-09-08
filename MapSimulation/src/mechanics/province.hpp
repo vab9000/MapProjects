@@ -3,8 +3,8 @@
 #include <functional>
 #include <list>
 #include <map>
-#include <optional>
 #include <queue>
+#include <reference.hpp>
 #include <set>
 #include <vector>
 #include "map_mode.hpp"
@@ -16,13 +16,18 @@ namespace mechanics {
     class tag;
     class river;
     class unit;
+    class province;
+
+    template<typename T, typename U>
+    using province_connection_func = std::function<T(
+        std::pair<utils::ref<const province>, utils::ref<const province>>, const U &)>;
 
     class province final : public tickable {
         std::vector<std::unique_ptr<pop>> pops_;
-        std::optional<std::reference_wrapper<tag>> owner_{std::nullopt};
-        std::map<std::reference_wrapper<province>, std::pair<double, unsigned char>> neighbors_;
-        std::set<std::reference_wrapper<province>> impassable_neighbors_;
-        std::map<std::reference_wrapper<province>, unsigned char> river_neighbors_;
+        tag *owner_{nullptr};
+        std::map<utils::ref<province>, std::pair<double, unsigned char>> neighbors_;
+        std::set<utils::ref<province>> impassable_neighbors_;
+        std::map<utils::ref<province>, unsigned char> river_neighbors_;
         unsigned int size_{0U};
         std::array<unsigned int, 4UZ> bounds_{0U, 0U, 0U, 0U};
         std::array<unsigned int, 2UZ> center_{0U, 0U};
@@ -51,12 +56,6 @@ namespace mechanics {
 
         auto operator=(province &&) noexcept -> province & = default;
 
-        friend auto operator==(const std::reference_wrapper<const province> &lhs,
-            const std::reference_wrapper<const province> &rhs) -> bool;
-
-        friend auto operator<=>(const std::reference_wrapper<const province> &lhs,
-            const std::reference_wrapper<const province> &rhs) -> std::strong_ordering;
-
         [[nodiscard]] auto id() const -> size_t;
 
         // Do final calculations after all pixels have been added
@@ -72,10 +71,10 @@ namespace mechanics {
         auto remove_owner() -> void;
 
         // Get the owner of the province
-        [[nodiscard]] auto owner() const -> std::optional<std::reference_wrapper<tag>>;
+        [[nodiscard]] auto owner() const -> tag *;
 
         // Add a pop to the province
-        auto add_pop(const pop &new_pop) -> void;
+        auto add_pop(pop &&new_pop) -> void;
 
         // Remove a pop from the province
         auto remove_pop(pop &p) -> void;
@@ -116,13 +115,9 @@ namespace mechanics {
         // Find the shortest path to another province using Dijkstra's algorithm
         template<typename T>
         [[nodiscard]] auto path_to(province &destination,
-            const std::function<bool(
-                std::pair<std::reference_wrapper<const province>, std::reference_wrapper<const province>>,
-                const T &)> &accessible,
-            const std::function<double(
-                std::pair<std::reference_wrapper<const province>, std::reference_wrapper<const province>>,
-                const T &)> &cost_modifier,
-            const T &param) -> std::list<std::reference_wrapper<province>>;
+            const province_connection_func<bool, T> &accessible,
+            const province_connection_func<double, T> &cost_modifier,
+            const T &param) -> std::list<utils::ref<province>>;
 
         // Get the bounds of the province as an array of [min_x, min_y, max_x, max_y]
         [[nodiscard]] auto bounds() const -> const std::array<unsigned int, 4UZ> &;
@@ -137,14 +132,14 @@ namespace mechanics {
         auto pops() -> std::vector<std::unique_ptr<pop>> &;
 
         // Get the neighbors of this province as a map of neighbor province pointers to distances
-        [[nodiscard]] auto neighbors() const -> const std::map<std::reference_wrapper<province>, std::pair<double,
+        [[nodiscard]] auto neighbors() const -> const std::map<utils::ref<province>, std::pair<double,
             unsigned char>> &;
 
         // Get the neighbor provinces that are divided by rivers, with the river size
-        [[nodiscard]] auto river_neighbors() const -> const std::map<std::reference_wrapper<province>, unsigned char> &;
+        [[nodiscard]] auto river_neighbors() const -> const std::map<utils::ref<province>, unsigned char> &;
 
         // Get the neighbors of this province that are impassable
-        [[nodiscard]] auto impassable_neighbors() const -> const std::set<std::reference_wrapper<province>> &;
+        [[nodiscard]] auto impassable_neighbors() const -> const std::set<utils::ref<province>> &;
 
         // Add an impassable neighbor to this province
         auto add_impassable_neighbor(province &neighbor) -> void;
@@ -161,17 +156,13 @@ namespace mechanics {
 
     template<typename T>
     auto province::path_to(province &destination,
-        const std::function<bool(
-            std::pair<std::reference_wrapper<const province>, std::reference_wrapper<const province>>,
-            const T &)> &accessible,
-        const std::function<double (
-            std::pair<std::reference_wrapper<const province>, std::reference_wrapper<const province>>,
-            const T &)> &cost_modifier,
-        const T &param) -> std::list<std::reference_wrapper<province>> {
-        std::map<std::reference_wrapper<const province>, double> distances;
-        std::map<std::reference_wrapper<province>, std::reference_wrapper<province>> previous;
-        std::priority_queue<std::pair<double, std::reference_wrapper<province>>, std::vector<std::pair<double,
-            std::reference_wrapper<province>>>, std::greater<>> paths;
+        const province_connection_func<bool, T> &accessible,
+        const province_connection_func<double, T> &cost_modifier,
+        const T &param) -> std::list<utils::ref<province>> {
+        std::map<utils::ref<const province>, double> distances;
+        std::map<utils::ref<province>, utils::ref<province>> previous;
+        std::priority_queue<std::pair<double, utils::ref<province>>, std::vector<std::pair<double,
+            utils::ref<province>>>, std::greater<>> paths;
 
         distances.emplace(*this, 0.0);
         paths.emplace(0, *this);
@@ -197,17 +188,19 @@ namespace mechanics {
                                                     neighbor_province)
                                                 ? 10.0
                                                 : 1.0);
-                if (distances.contains(neighbor_province) && new_distance >= distances[neighbor_province]) { continue; }
+                if (distances.contains(neighbor_province) && new_distance >= distances[neighbor_province]) {
+                    continue;
+                }
                 distances.insert_or_assign(neighbor_province, new_distance);
                 previous.insert_or_assign(neighbor_province, current_province);
                 paths.emplace(new_distance, neighbor_province);
             }
         }
 
-        std::list<std::reference_wrapper<province>> path;
+        std::list<utils::ref<province>> path;
         if (!reached) { return path; }
 
-        std::reference_wrapper current_pos = destination;
+        utils::ref current_pos = destination;
         while (previous.contains(current_pos)) {
             path.insert(path.begin(), current_pos);
             current_pos = previous.at(current_pos);
@@ -218,6 +211,6 @@ namespace mechanics {
 }
 
 template<>
-struct std::hash<std::reference_wrapper<mechanics::province>> {
-    auto operator()(const std::reference_wrapper<mechanics::province> &rt) const noexcept -> std::size_t;
+struct std::hash<utils::ref<mechanics::province>> {
+    auto operator()(const utils::ref<mechanics::province> &rt) const noexcept -> std::size_t;
 };

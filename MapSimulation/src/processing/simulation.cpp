@@ -2,7 +2,6 @@
 #include <execution>
 #include <ranges>
 #include <thread>
-#include <utility>
 #include "load_image.hpp"
 
 namespace processing {
@@ -10,30 +9,24 @@ namespace processing {
         return {map_image_.width(), map_image_.height()};
     }
 
-    auto simulation::hovered_province() const -> std::optional<std::reference_wrapper<mechanics::province>> {
+    auto simulation::hovered_province() const -> mechanics::province * {
         return hovered_province_;
     }
 
-    auto simulation::selected_province() const -> std::optional<std::reference_wrapper<mechanics::province>> {
+    auto simulation::selected_province() const -> mechanics::province * {
         return selected_province_;
     }
-
-    auto simulation::select_province(const std::reference_wrapper<mechanics::province> province) -> void {
-        selected_province_ = province;
-    }
-
-    auto simulation::deselect_province() -> void { selected_province_ = std::nullopt; }
 
     auto simulation::start_processing() -> void {
         window_.add_render_func([this](sf::RenderWindow &window) { drawer_.draw_loading_message(window); });
 
-        std::vector<uint8_t> crossing_bytes;
+        std::vector<unsigned char> crossing_bytes;
         load_image(data_, map_image_, crossing_bytes, loading_text_);
 
         mechanics::set_province_colors_size();
         mechanics::update_all_province_colors();
 
-        std::vector<uint8_t> province_ids(4UZ * map_image_.width() * map_image_.height());
+        std::vector<unsigned char> province_ids(4UZ * map_image_.width() * map_image_.height());
 
         const auto x_range = std::views::iota(0U, map_image_.width());
         const auto y_range = std::views::iota(0U, map_image_.height());
@@ -41,10 +34,10 @@ namespace processing {
             for (const auto y : y_range) {
                 const auto index = (y * map_image_.width() + x) * 4UZ;
                 const auto id = data_.province_at(map_image_.color(x, y)).id();
-                province_ids[index + 3UZ] = static_cast<uint8_t>(id % 256U);
-                province_ids[index + 2UZ] = static_cast<uint8_t>(id / 256U % 256U);
-                province_ids[index + 1UZ] = static_cast<uint8_t>(id / 256U / 256U % 256U);
-                province_ids[index] = static_cast<uint8_t>(id / 256U / 256U / 256U % 256U);
+                province_ids[index + 3UZ] = static_cast<unsigned char>(id % 256U);
+                province_ids[index + 2UZ] = static_cast<unsigned char>(id / 256U % 256U);
+                province_ids[index + 1UZ] = static_cast<unsigned char>(id / 256U / 256U % 256U);
+                province_ids[index] = static_cast<unsigned char>(id / 256U / 256U / 256U % 256U);
             }
         }
 
@@ -73,8 +66,7 @@ namespace processing {
     auto simulation::handle_event(const sf::Event &event) -> void {
         const auto in_gui = [&](const int x, const int y) {
             const auto gui_area = window_.gui_area();
-            return std::cmp_greater(x, gui_area[0UZ]) && std::cmp_less(x, gui_area[2UZ]) && std::cmp_greater(y,
-                       gui_area[1UZ]) && std::cmp_less(y, gui_area[3UZ]);
+            return x > gui_area[0UZ] && x < gui_area[2UZ] && y > gui_area[1UZ] && y < gui_area[3UZ];
         };
 
         if (const auto &scroll_data = event.getIf<sf::Event::MouseWheelScrolled>()) {
@@ -138,8 +130,8 @@ namespace processing {
 
             if (loaded_ && y < map_image_.height()) {
                 const auto color = map_image_.color(x % map_image_.width(), y);
-                auto &province = data_.province_at(color);
-                select_province(province);
+                const auto province = &data_.province_at(color);
+                selected_province_ = province;
             }
         }
         else if (const auto &press_data = event.getIf<sf::Event::MouseButtonPressed>()) {
@@ -163,11 +155,11 @@ namespace processing {
 
                 if (j < map_image_.height()) {
                     const auto color = map_image_.color(i % map_image_.width(), j);
-                    auto &province = data_.province_at(color);
+                    const auto province = &data_.province_at(color);
                     hovered_province_ = province;
                 }
             }
-            else { hovered_province_ = std::nullopt; }
+            else { hovered_province_ = nullptr; }
 
             if (!mouse_down_) { return; }
             mouse_moved_ = true;
@@ -193,7 +185,7 @@ namespace processing {
         }
         else if (const auto &key_data = event.getIf<sf::Event::KeyPressed>()) {
             switch (key_data->code) {
-                case sf::Keyboard::Key::Escape: { deselect_province(); }
+                case sf::Keyboard::Key::Escape: { selected_province_ = nullptr; }
                 break;
                 case sf::Keyboard::Key::Space: { paused_ = !paused_; }
                 break;

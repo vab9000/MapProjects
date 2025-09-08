@@ -1,6 +1,5 @@
 #pragma once
 #include <atomic>
-#include <cstdint>
 #include <SFML/Graphics.hpp>
 
 namespace mechanics {
@@ -14,6 +13,7 @@ namespace mechanics {
         vegetation,
         soil,
         sea,
+        river_size,
     };
 
     extern std::atomic<map_mode_t> map_mode;

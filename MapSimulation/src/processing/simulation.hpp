@@ -20,19 +20,13 @@ namespace processing {
 
         image map_image_;
 
-        std::optional<std::reference_wrapper<mechanics::province>> selected_province_{std::nullopt};
-        std::optional<std::reference_wrapper<mechanics::province>> hovered_province_{std::nullopt};
+        mechanics::province *selected_province_{};
+        mechanics::province *hovered_province_{};
 
         mechanics::data &data_{mechanics::data::instance()};
 
         drawing drawer_{*this, loading_text_};
         window window_{[this](const sf::Event &event) { this->handle_event(event); }};
-
-        // Select a province
-        auto select_province(std::reference_wrapper<mechanics::province> province) -> void;
-
-        // Deselect the currently selected province
-        auto deselect_province() -> void;
 
         // Start the game logic thread
         auto start_processing() -> void;
@@ -50,8 +44,8 @@ namespace processing {
         // Get the dimensions of the map
         auto map_dimensions() const -> std::array<unsigned int, 2UZ>;
 
-        auto hovered_province() const -> std::optional<std::reference_wrapper<mechanics::province>>;
+        auto hovered_province() const -> mechanics::province *;
 
-        auto selected_province() const -> std::optional<std::reference_wrapper<mechanics::province>>;
+        auto selected_province() const -> mechanics::province *;
     };
 }

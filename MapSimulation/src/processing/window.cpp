@@ -8,11 +8,14 @@ namespace processing {
     window::window(std::function<void(const sf::Event &)> &&event_func) : window_(sf::RenderWindow(
             sf::VideoMode(sf::Vector2u(800U, 600U)),
             "Map Simulation")),
-        gui_area_{0U, 0U, 200U, 600U},
+        gui_area_{0, 0, 250, 600},
         event_func_(std::move(event_func)) {
         window_.setFramerateLimit(60U);
         // window_.setVerticalSyncEnabled(true);
-        if (!ImGui::SFML::Init(window_)) { throw std::runtime_error("Failed to initialize ImGui-SFML"); }
+        if (!ImGui::SFML::Init(window_, false)) { throw std::runtime_error("Failed to initialize ImGui-SFML"); }
+        const auto &io = ImGui::GetIO();
+        io.Fonts->AddFontFromFileTTF("assets/firafont.ttf", 16.0F);
+        if (!ImGui::SFML::UpdateFontTexture()) { throw std::runtime_error("Failed to load font"); }
     }
 
     auto window::window_dimensions() const -> sf::Vector2u { return window_.getSize(); }
@@ -49,7 +52,7 @@ namespace processing {
                         static_cast<float>(resize_data->size.y)));
                 window_.setView(sf::View(view));
             }
-            else if (event->getIf<sf::Event::Closed>() != nullptr) { stop_event_loop(); }
+            else if (event->getIf<sf::Event::Closed>()) { stop_event_loop(); }
             event_func_(event.value());
         }
     }
@@ -62,10 +65,9 @@ namespace processing {
         ImGui::SFML::Shutdown();
     }
 
-    auto window::gui_area() -> const std::array<unsigned int, 4UZ> & {
+    auto window::gui_area() -> const std::array<int, 4UZ> & {
         const auto dimensions = window_dimensions();
-        gui_area_[2UZ] = 200U;
-        gui_area_[3UZ] = dimensions.y;
+        gui_area_[3UZ] = static_cast<int>(dimensions.y);
         return gui_area_;
     }
 }

@@ -31,8 +31,8 @@ namespace processing {
         explicit drawing(simulation &simulation, const std::string &loading_text);
 
         // Create a texture from the map image and initialize sprites
-        auto init_sprites(const image &map_image, const std::vector<uint8_t> &bytes,
-            const std::vector<uint8_t> &crossing_bytes) -> bool;
+        auto init_sprites(const image &map_image, const std::vector<unsigned char> &bytes,
+            const std::vector<unsigned char> &crossing_bytes) -> bool;
 
         // Recalculate the coordinates of the sprites based on the offset and zoom level
         auto recalculate_sprite_coords(std::array<int, 2UZ> offset, double zoom) -> void;

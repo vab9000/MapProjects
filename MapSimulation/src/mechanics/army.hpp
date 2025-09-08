@@ -1,5 +1,6 @@
 #pragma once
-#include <list>
+#include <memory>
+#include <reference.hpp>
 #include "unit.hpp"
 
 namespace mechanics {
@@ -8,9 +9,9 @@ namespace mechanics {
     class tag;
 
     class army {
-        std::optional<std::reference_wrapper<character>> commander_ = std::nullopt;
-        std::reference_wrapper<tag> parent_tag_;
-        std::list<unit> units_;
+        character *commander_{nullptr};
+        utils::ref<tag> parent_tag_;
+        std::vector<std::unique_ptr<unit>> units_;
 
     public:
         explicit army(tag &parent_tag);
@@ -27,7 +28,7 @@ namespace mechanics {
         auto remove_commander() -> void;
 
         // Returns the commander of the army
-        [[nodiscard]] auto commander() const -> std::optional<std::reference_wrapper<character>>;
+        [[nodiscard]] auto commander() const -> character *;
 
         // Returns the parent tag of the army
         [[nodiscard]] auto parent() const -> tag &;
@@ -36,6 +37,6 @@ namespace mechanics {
         auto set_parent(tag &new_parent) -> void;
 
         // Returns the list of units in the army
-        [[nodiscard]] auto units() const -> const std::list<unit> &;
+        [[nodiscard]] auto units() const -> const std::vector<std::unique_ptr<unit>> &;
     };
 }

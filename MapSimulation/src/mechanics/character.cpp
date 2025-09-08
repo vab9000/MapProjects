@@ -20,9 +20,9 @@ namespace mechanics {
 
     auto character::set_location(province &location) -> void { location_ = location; }
 
-    auto character::flags() const -> const utils::flags<character_flag_t> & { return flags_; }
+    auto character::roles() const -> const utils::tied_flags<role_t> &{ return roles_; }
 
-    auto character::flags() -> utils::flags<character_flag_t> & { return flags_; }
+    auto character::roles() -> utils::tied_flags<role_t> &{ return roles_; }
 
     auto character::traits() const -> const utils::flags<personality_trait_t> & { return traits_; }
 

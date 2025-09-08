@@ -1,6 +1,6 @@
 #pragma once
 #include <list>
-#include <optional>
+#include <reference.hpp>
 #include <vector>
 #include "pop.hpp"
 
@@ -10,11 +10,11 @@ namespace mechanics {
     class character;
 
     class unit {
-        std::vector<std::reference_wrapper<pop>> pops_;
-        std::reference_wrapper<army> parent_army_;
-        std::optional<std::reference_wrapper<character>> captain_{std::nullopt};
-        std::reference_wrapper<province> location_;
-        std::list<std::reference_wrapper<province> > path_;
+        std::vector<utils::ref<pop>> pops_;
+        utils::ref<army> parent_army_;
+        character *captain_{nullptr};
+        utils::ref<province> location_;
+        std::list<utils::ref<province> > path_;
         double travel_progress_{0.0};
         bool retreating_{false};
 
@@ -27,10 +27,10 @@ namespace mechanics {
         auto add_pop(pop &new_pop) -> void;
 
         // List of pops that are in this unit
-        [[nodiscard]] auto pops() const -> const std::vector<std::reference_wrapper<pop>> &;
+        [[nodiscard]] auto pops() const -> const std::vector<utils::ref<pop>> &;
 
         // List of pops that are in this unit
-        auto pops() -> std::vector<std::reference_wrapper<pop>> &;
+        auto pops() -> std::vector<utils::ref<pop>> &;
 
         // Get the total number of troops in the unit
         [[nodiscard]] auto size() const -> unsigned int;
@@ -48,13 +48,13 @@ namespace mechanics {
         auto remove_captain() -> void;
 
         // Get the captain of the unit
-        [[nodiscard]] auto captain() const -> std::optional<std::reference_wrapper<character>>;
+        [[nodiscard]] auto captain() const -> character *;
 
         // Get the location of the unit
         [[nodiscard]] auto location() const -> province &;
 
         // Get the path of the unit
-        [[nodiscard]] auto path() const -> const std::list<std::reference_wrapper<province> > &;
+        [[nodiscard]] auto path() const -> const std::list<utils::ref<province> > &;
 
         // Get the travel progress of the unit to the next province
         [[nodiscard]] auto travel_progress() const -> double;

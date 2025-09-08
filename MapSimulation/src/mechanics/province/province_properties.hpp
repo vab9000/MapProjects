@@ -1,6 +1,6 @@
 #pragma once
-#include "../../utils/colors.hpp"
-#include "../../utils/zstring_view.hpp"
+#include <colors.hpp>
+#include <zstring_view.hpp>
 
 namespace mechanics {
     enum class koppen_t : unsigned int {
@@ -39,11 +39,15 @@ namespace mechanics {
 
     enum class elevation_t : unsigned int {
         none = 0U,
-        flatland = utils::to_integer_color(0U, 255U, 0U),
-        hills = utils::to_integer_color(30U, 200U, 200U),
-        plateau = utils::to_integer_color(200U, 200U, 10U),
-        highlands = utils::to_integer_color(200U, 10U, 10U),
-        mountains = utils::to_integer_color(50U, 20U, 20U),
+        flat_lowland = utils::to_integer_color(255U, 255U, 50U),
+        hill_lowland = utils::to_integer_color(125U, 255U, 50U),
+        mountain_lowland = utils::to_integer_color(0U, 255U, 50U),
+        flat_midland = utils::to_integer_color(255U, 125U, 50U),
+        hill_midland = utils::to_integer_color(125U, 125U, 50U),
+        mountain_midland = utils::to_integer_color(0U, 125U, 50U),
+        flat_highland = utils::to_integer_color(255U, 0U, 50U),
+        hill_highland = utils::to_integer_color(125U, 0U, 50U),
+        mountain_highland = utils::to_integer_color(0U, 0U, 50U),
     };
 
     enum class vegetation_t : unsigned int {
@@ -114,6 +118,7 @@ namespace mechanics {
         polar = utils::to_integer_color(200U, 255U, 255U),
         lake = utils::to_integer_color(255U, 150U, 255U),
         river = utils::to_integer_color(0U, 255U, 0U),
+        doldrums = utils::to_integer_color(100U, 255U, 150U)
     };
 
     inline auto koppen_to_string(const koppen_t value) -> utils::zstring_view {
@@ -180,28 +185,34 @@ namespace mechanics {
                 return "ET";
             case koppen_t::ef:
                 return "EF";
-            default:
-                return "No climate type";
         }
+        return "No koppen type";
     }
 
     inline auto elevation_to_string(const elevation_t value) -> utils::zstring_view {
         switch (value) {
             case elevation_t::none:
                 return "None";
-            case elevation_t::flatland:
-                return "Flatland";
-            case elevation_t::hills:
+            case elevation_t::flat_lowland:
+                return "Lowlands";
+            case elevation_t::hill_lowland:
+                return "Rolling Hills";
+                case elevation_t::mountain_lowland:
+                return "Foothills";
+            case elevation_t::flat_midland:
+                return "Plateaus";
+            case elevation_t::hill_midland:
                 return "Hills";
-            case elevation_t::plateau:
-                return "Plateau";
-            case elevation_t::highlands:
-                return "Highlands";
-            case elevation_t::mountains:
+            case elevation_t::mountain_midland:
                 return "Mountains";
-            default:
-                return "No elevation type";
+            case elevation_t::flat_highland:
+                return "Rough Plateaus";
+            case elevation_t::hill_highland:
+                return "Highlands";
+            case elevation_t::mountain_highland:
+                return "Peaks";
         }
+        return "No elevation type";
     }
 
     inline auto vegetation_to_string(const vegetation_t value) -> utils::zstring_view {
@@ -248,9 +259,8 @@ namespace mechanics {
                 return "Low and High Shrub Tundra";
             case vegetation_t::prostrate_dwarf_shrub_tundra:
                 return "Prostrate Dwarf Shrub Tundra";
-            default:
-                return "No vegetation type";
         }
+        return "No vegetation type";
     }
 
     inline auto soil_to_string(const soil_t value) -> utils::zstring_view {
@@ -317,9 +327,8 @@ namespace mechanics {
                 return "Umbrisols";
             case soil_t::vertisols:
                 return "Vertisols";
-            default:
-                return "No soil type";
         }
+        return "No soil type";
     }
 
     inline auto sea_to_string(const sea_t value) -> utils::zstring_view {
@@ -342,8 +351,9 @@ namespace mechanics {
                 return "Westerly";
             case sea_t::river:
                 return "River";
-            default:
-                return "No sea type";
+            case sea_t::doldrums:
+                return "Doldrums";
         }
+        return "No sea type";
     }
 }

@@ -19,22 +19,26 @@ namespace mechanics {
 
     auto update_province_color(const province &p) -> void {
         const auto color = p.color();
+        const std::array<unsigned char, 4U> color_array{
+            static_cast<unsigned char>(color >> 16), static_cast<unsigned char>(color >> 8),
+            static_cast<unsigned char>(color), 255U
+        };
         const auto index = p.id() * 4U;
-        province_colors.update(reinterpret_cast<const uint8_t *>(&color), {1U, 1U}, {
+        province_colors.update(color_array.data(), {1U, 1U}, {
             static_cast<unsigned int>(index % dimensions.x), static_cast<unsigned int>(index / dimensions.x)
         });
     }
 
     auto update_all_province_colors() -> void {
         const auto &provinces = data::instance().provinces();
-        std::vector<uint8_t> colors(4UZ * dimensions.x * dimensions.y);
+        std::vector<unsigned char> colors(4UZ * dimensions.x * dimensions.y);
         for (const auto &p : provinces) {
             const auto color = p.color();
             const auto index = p.id() * 4UZ;
             colors[index + 3UZ] = 255U;
-            colors[index + 2UZ] = static_cast<uint8_t>(color >> 16);
-            colors[index + 1UZ] = static_cast<uint8_t>(color >> 8);
-            colors[index] = static_cast<uint8_t>(color);
+            colors[index + 2UZ] = static_cast<unsigned char>(color);
+            colors[index + 1UZ] = static_cast<unsigned char>(color >> 8);
+            colors[index] = static_cast<unsigned char>(color >> 16);
         }
         province_colors.update(colors.data(), {dimensions.x, dimensions.y}, {
             0U, 0U

@@ -4,8 +4,6 @@
 #include <ranges>
 
 namespace mechanics {
-    data data::instance_ = data();
-
     auto data::current_date() const -> const date & { return current_date_; }
 
     auto data::provinces() const -> const std::vector<province> & { return provinces_; }
@@ -32,15 +30,18 @@ namespace mechanics {
             (*events_.top())();
             events_.pop();
         }
-        std::for_each(std::execution::unseq, provinces_.begin(), provinces_.end(),
+        std::for_each(std::execution::seq, provinces_.begin(), provinces_.end(),
             [tick_type](province &p) { p.tick(tick_type); });
-        std::for_each(std::execution::unseq, tags_.begin(), tags_.end(),
+        std::for_each(std::execution::seq, tags_.begin(), tags_.end(),
             [tick_type](const std::unique_ptr<tag> &t) { t->tick(tick_type); });
-        std::for_each(std::execution::unseq, characters_.begin(), characters_.end(),
+        std::for_each(std::execution::seq, characters_.begin(), characters_.end(),
             [tick_type](const std::unique_ptr<character> &c) { c->tick(tick_type); });
         std::for_each(std::execution::seq, characters_.begin(), characters_.end(),
             [](const std::unique_ptr<character> &c) { c->run_ai(); });
     }
 
-    auto data::instance() -> data & { return instance_; }
+    auto data::instance() -> data & {
+        static data instance;
+        return instance;
+    }
 }

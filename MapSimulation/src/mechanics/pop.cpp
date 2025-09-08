@@ -1,7 +1,8 @@
 #include "pop.hpp"
+#include "culture.hpp"
 
 namespace mechanics {
-    pop::pop() = default;
+    pop::pop(culture &cul) : culture_(*this, cul.new_pop_link()) {}
 
     auto pop::size() const -> unsigned int { return size_; }
 
