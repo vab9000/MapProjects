@@ -62,7 +62,9 @@ set_target_properties(MapSimulation PROPERTIES
 
 file(GLOB_RECURSE Sources src/*.cpp)
 
-target_sources(MapSimulation PRIVATE ${Sources})
+file(GLOB_RECURSE Headers src/*.hpp)
+
+target_sources(MapSimulation PRIVATE ${Sources} ${Headers})
 
 target_link_libraries(MapSimulation PRIVATE SFML::Graphics SFML::System SFML::Window)
 

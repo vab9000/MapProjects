@@ -33,6 +33,7 @@ namespace utils {
     };
 
     /// A container for enum flags tied to some data.
+    /// @tparam E An enum class type.
     template<is_enum_class E>
     class tied_flags {
         std::map<E, void *> flags_;

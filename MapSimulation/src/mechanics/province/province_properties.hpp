@@ -206,9 +206,9 @@ namespace mechanics {
             case elevation_t::mountain_midland:
                 return "Mountains";
             case elevation_t::flat_highland:
-                return "Rough Plateaus";
-            case elevation_t::hill_highland:
                 return "Highlands";
+            case elevation_t::hill_highland:
+                return "Rough Plateaus";
             case elevation_t::mountain_highland:
                 return "Peaks";
         }

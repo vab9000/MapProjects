@@ -66,20 +66,26 @@ namespace {
                 vegetation_string,
                 soil_string));
         }
-        if (p.sea() != mechanics::sea_t::river) {
-            constexpr auto format_string = "Sea\n"
+        if (p.sea() == mechanics::sea_t::lake) {
+            constexpr auto format_string = "Lake\n"
                 "Color: {:X}\n"
-                "Wind Type: {}\n"
                 "Climate: {}\n";
-            const auto sea_string = sea_to_string(p.sea()).str();
-            return std::vformat(format_string, std::make_format_args(color, sea_string, koppen_string));
+            return std::vformat(format_string, std::make_format_args(color, koppen_string));
         }
-        const auto river_size = static_cast<unsigned int>(p.value());
-        constexpr auto format_string = "River\n"
+        if (p.sea() == mechanics::sea_t::river) {
+            const auto river_size = static_cast<unsigned int>(p.value());
+            constexpr auto format_string = "River\n"
+                "Color: {:X}\n"
+                "River Size: {}\n"
+                "Climate: {}\n";
+            return std::vformat(format_string, std::make_format_args(color, river_size, koppen_string));
+        }
+        constexpr auto format_string = "Sea\n"
             "Color: {:X}\n"
-            "River Size: {}\n"
+            "Wind Type: {}\n"
             "Climate: {}\n";
-        return std::vformat(format_string, std::make_format_args(color, river_size, koppen_string));
+        const auto sea_string = sea_to_string(p.sea()).str();
+        return std::vformat(format_string, std::make_format_args(color, sea_string, koppen_string));
     }
 
     auto draw_hovered_province_info(const processing::simulation &sim) -> void {
@@ -106,35 +112,37 @@ namespace {
 
 namespace processing {
     drawing::drawing(simulation &simulation, const std::string &loading_text) : simulation_(simulation),
-        loading_text_(loading_text) {}
+        loading_text_(loading_text), flags_sprite_{mechanics::pixel_flags} {}
 
-    auto drawing::init_sprites(const image &map_image, const std::vector<unsigned char> &bytes,
-        const std::vector<unsigned char> &crossing_bytes) -> bool {
+    auto drawing::init_sprites(const image &map_image, const std::vector<unsigned char> &bytes) -> bool {
         if (!map_shader_.loadFromFile("shaders/map.vert", "shaders/map.frag")) { return false; }
         map_shader_.setUniform("tex", sf::Shader::CurrentTexture);
         map_shader_.setUniform("size", sf::Vector2f(static_cast<float>(map_image.width()),
             static_cast<float>(map_image.height())));
-        map_shader_.setUniform("selectedIndex", -1);
-        map_shader_.setUniform("drawOutline", draw_outline_);
+        map_shader_.setUniform("selected_index", -1);
+        map_shader_.setUniform("draw_outline", draw_outline_);
         map_shader_.setUniform("dim", static_cast<float>(mechanics::province_colors.getSize().x));
-        map_shader_.setUniform("provinceColors", mechanics::province_colors);
-        if (!texture_.loadFromImage(
+        map_shader_.setUniform("province_colors", mechanics::province_colors);
+
+        if (!map_texture_.loadFromImage(
             sf::Image(sf::Vector2u(map_image.width(), map_image.height()), bytes.data()))) { return false; }
-        map_sprite_.setTexture(texture_);
+        map_sprite_.setTexture(map_texture_);
         map_sprite_.setTextureRect({
             {0, 0},
             {static_cast<int>(map_image.width()), static_cast<int>(map_image.height())}
         });
-        if (!crossing_texture_.loadFromImage({
-            sf::Vector2u(map_image.width(), map_image.height()), crossing_bytes.data()
-        })) { return false; }
-        crossing_sprite_.setTexture(crossing_texture_);
-        crossing_sprite_.setTextureRect({
+
+        flags_sprite_.setTexture(mechanics::pixel_flags);
+        flags_sprite_.setTextureRect({
             {0, 0},
             {static_cast<int>(map_image.width()), static_cast<int>(map_image.height())}
         });
-        if (!crossing_shader_.loadFromFile("shaders/crossings.frag", sf::Shader::Type::Fragment)) { return false; }
-        crossing_shader_.setUniform("borderMask", sf::Shader::CurrentTexture);
+
+        if (!flags_shader_.loadFromFile("shaders/pixel_flags.vert", "shaders/pixel_flags.frag")) { return false; }
+        flags_shader_.setUniform("border_mask", sf::Shader::CurrentTexture);
+        flags_shader_.setUniform("draw_crossings", draw_crossings_);
+        flags_shader_.setUniform("draw_bridges", draw_bridges_);
+        flags_shader_.setUniform("tex_size", sf::Glsl::Vec2{static_cast<float>(map_image.width()), static_cast<float>(map_image.height())});
         return true;
     }
 
@@ -142,9 +150,9 @@ namespace processing {
         const auto zoom_f = static_cast<float>(zoom);
         map_sprite_.setPosition(sf::Vector2f(static_cast<float>(offset[0UZ]), static_cast<float>(offset[1UZ])));
         map_sprite_.setScale(sf::Vector2f(zoom_f, zoom_f));
-        crossing_sprite_.setPosition(sf::Vector2f(static_cast<float>(offset[0UZ]),
+        flags_sprite_.setPosition(sf::Vector2f(static_cast<float>(offset[0UZ]),
             static_cast<float>(offset[1UZ])));
-        crossing_sprite_.setScale(sf::Vector2f(zoom_f, zoom_f));
+        flags_sprite_.setScale(sf::Vector2f(zoom_f, zoom_f));
     }
 
     auto drawing::draw_loading_message(sf::RenderWindow &) const -> void {
@@ -159,33 +167,35 @@ namespace processing {
         if (simulation_.selected_province() == nullptr) {
             if (constexpr auto new_index = -1; new_index != selected_index) {
                 selected_index = new_index;
-                map_shader_.setUniform("selectedIndex", new_index);
+                map_shader_.setUniform("selected_index", new_index);
             }
         }
         else {
             if (const auto new_index = static_cast<int>(simulation_.selected_province()->id());
                 new_index != selected_index) {
                 selected_index = new_index;
-                map_shader_.setUniform("selectedIndex", new_index);
+                map_shader_.setUniform("selected_index", new_index);
             }
         }
         window.draw(map_sprite_, &map_shader_);
-        if (draw_crossings_) { window.draw(crossing_sprite_, &crossing_shader_); }
-        const auto offset = static_cast<float>(texture_.getSize().x) * map_sprite_.getScale().x;
+        window.draw(flags_sprite_, &flags_shader_);
+        const auto offset = static_cast<float>(map_texture_.getSize().x) * map_sprite_.getScale().x;
         map_sprite_.move(sf::Vector2f(offset, 0.0F));
-        crossing_sprite_.move(sf::Vector2f(offset, 0.0F));
+        flags_sprite_.move(sf::Vector2f(offset, 0.0F));
         window.draw(map_sprite_, &map_shader_);
-        if (draw_crossings_) { window.draw(crossing_sprite_, &crossing_shader_); }
+        window.draw(flags_sprite_, &flags_shader_);
         map_sprite_.move(sf::Vector2f(-offset, 0.0F));
-        crossing_sprite_.move(sf::Vector2f(-offset, 0.0F));
+        flags_sprite_.move(sf::Vector2f(-offset, 0.0F));
     }
 
     auto drawing::draw_checkboxes() -> void {
         if (ImGui::BeginChild("Checkboxes", {200.0F, 50.0F},
             ImGuiChildFlags_AutoResizeY | ImGuiChildFlags_AlwaysAutoResize)) {
-            ImGui::Checkbox("Crossings",
-                &draw_crossings_);
-            if (ImGui::Checkbox("Outlines", &draw_outline_)) { map_shader_.setUniform("drawOutline", draw_outline_); }
+            if (ImGui::Checkbox("Crossings", &draw_crossings_)) {
+                flags_shader_.setUniform("draw_crossings", draw_crossings_);
+            }
+            if (ImGui::Checkbox("Outlines", &draw_outline_)) { map_shader_.setUniform("draw_outline", draw_outline_); }
+            if (ImGui::Checkbox("Bridges", &draw_bridges_)) { flags_shader_.setUniform("draw_bridges", draw_bridges_); }
         }
         ImGui::EndChild();
     }

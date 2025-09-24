@@ -9,47 +9,45 @@ namespace processing {
         return {map_image_.width(), map_image_.height()};
     }
 
-    auto simulation::hovered_province() const -> mechanics::province * {
-        return hovered_province_;
-    }
+    auto simulation::hovered_province() const -> mechanics::province * { return hovered_province_; }
 
-    auto simulation::selected_province() const -> mechanics::province * {
-        return selected_province_;
-    }
+    auto simulation::selected_province() const -> mechanics::province * { return selected_province_; }
 
     auto simulation::start_processing() -> void {
-        window_.add_render_func([this](sf::RenderWindow &window) { drawer_.draw_loading_message(window); });
+        auto load_data = [&]() {
+            window_.add_render_func([this](sf::RenderWindow &window) { drawer_.draw_loading_message(window); });
 
-        std::vector<unsigned char> crossing_bytes;
-        load_image(data_, map_image_, crossing_bytes, loading_text_);
+            load_image(data_, map_image_, loading_text_);
 
-        mechanics::set_province_colors_size();
-        mechanics::update_all_province_colors();
+            mechanics::set_province_colors_size();
+            mechanics::update_all_province_colors();
+            mechanics::update_pixel_flags_texture();
 
-        std::vector<unsigned char> province_ids(4UZ * map_image_.width() * map_image_.height());
+            std::vector<unsigned char> province_ids(4UZ * map_image_.width() * map_image_.height());
 
-        const auto x_range = std::views::iota(0U, map_image_.width());
-        const auto y_range = std::views::iota(0U, map_image_.height());
-        for (const auto x : x_range) {
-            for (const auto y : y_range) {
-                const auto index = (y * map_image_.width() + x) * 4UZ;
-                const auto id = data_.province_at(map_image_.color(x, y)).id();
-                province_ids[index + 3UZ] = static_cast<unsigned char>(id % 256U);
-                province_ids[index + 2UZ] = static_cast<unsigned char>(id / 256U % 256U);
-                province_ids[index + 1UZ] = static_cast<unsigned char>(id / 256U / 256U % 256U);
-                province_ids[index] = static_cast<unsigned char>(id / 256U / 256U / 256U % 256U);
+            const auto x_range = std::views::iota(0U, map_image_.width());
+            const auto y_range = std::views::iota(0U, map_image_.height());
+            for (const auto x : x_range) {
+                for (const auto y : y_range) {
+                    const auto index = (y * map_image_.width() + x) * 4UZ;
+                    const auto id = data_.province_at(map_image_.color(x, y)).id();
+                    province_ids[index + 3UZ] = static_cast<unsigned char>(id % 256U);
+                    province_ids[index + 2UZ] = static_cast<unsigned char>(id / 256U % 256U);
+                    province_ids[index + 1UZ] = static_cast<unsigned char>(id / 256U / 256U % 256U);
+                    province_ids[index] = static_cast<unsigned char>(id / 256U / 256U / 256U % 256U);
+                }
             }
-        }
 
-        if (!drawer_.init_sprites(map_image_, province_ids, crossing_bytes)) {
-            throw std::runtime_error("Failed to initialize sprites");
-        }
-        crossing_bytes.clear();
+            if (!drawer_.init_sprites(map_image_, province_ids)) {
+                throw std::runtime_error("Failed to initialize sprites");
+            }
 
-        window_.clear_render_funcs();
-        window_.add_render_func([this](sf::RenderWindow &window) { drawer_.draw_map(window); });
-        window_.add_render_func([this](const sf::RenderWindow &window) { drawer_.draw_gui(window); });
+            window_.clear_render_funcs();
+            window_.add_render_func([this](sf::RenderWindow &window) { drawer_.draw_map(window); });
+            window_.add_render_func([this](const sf::RenderWindow &window) { drawer_.draw_gui(window); });
+        };
 
+        load_data();
         loaded_ = true;
 
         while (open_) {
@@ -125,14 +123,7 @@ namespace processing {
                 return;
             }
 
-            const auto x = static_cast<unsigned int>((release_data->position.x - offset_[0UZ]) / zoom_);
-            const auto y = static_cast<unsigned int>((release_data->position.y - offset_[1UZ]) / zoom_);
-
-            if (loaded_ && y < map_image_.height()) {
-                const auto color = map_image_.color(x % map_image_.width(), y);
-                const auto province = &data_.province_at(color);
-                selected_province_ = province;
-            }
+            if (loaded_) { selected_province_ = hovered_province_; }
         }
         else if (const auto &press_data = event.getIf<sf::Event::MouseButtonPressed>()) {
             if (press_data->button != sf::Mouse::Button::Left) { return; }
@@ -151,9 +142,8 @@ namespace processing {
 
             if (loaded_ && !in_gui(x, y)) {
                 const auto i = static_cast<unsigned int>((x - offset_[0UZ]) / zoom_);
-                const auto j = static_cast<unsigned int>((y - offset_[1UZ]) / zoom_);
 
-                if (j < map_image_.height()) {
+                if (const auto j = static_cast<unsigned int>((y - offset_[1UZ]) / zoom_); j < map_image_.height()) {
                     const auto color = map_image_.color(i % map_image_.width(), j);
                     const auto province = &data_.province_at(color);
                     hovered_province_ = province;

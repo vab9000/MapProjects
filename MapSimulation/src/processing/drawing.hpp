@@ -15,15 +15,15 @@ namespace processing {
         simulation &simulation_;
         const std::string &loading_text_;
 
-        sf::Texture texture_;
-        sf::Sprite map_sprite_{texture_};
+        sf::Texture map_texture_;
+        sf::Sprite map_sprite_{map_texture_};
         sf::Shader map_shader_;
-        sf::Texture crossing_texture_;
-        sf::Sprite crossing_sprite_{crossing_texture_};
-        sf::Shader crossing_shader_;
+        sf::Sprite flags_sprite_;
+        sf::Shader flags_shader_;
 
         bool draw_crossings_{true};
         bool draw_outline_{true};
+        bool draw_bridges_{true};
 
         auto draw_checkboxes() -> void;
 
@@ -31,8 +31,7 @@ namespace processing {
         explicit drawing(simulation &simulation, const std::string &loading_text);
 
         // Create a texture from the map image and initialize sprites
-        auto init_sprites(const image &map_image, const std::vector<unsigned char> &bytes,
-            const std::vector<unsigned char> &crossing_bytes) -> bool;
+        auto init_sprites(const image &map_image, const std::vector<unsigned char> &bytes) -> bool;
 
         // Recalculate the coordinates of the sprites based on the offset and zoom level
         auto recalculate_sprite_coords(std::array<int, 2UZ> offset, double zoom) -> void;

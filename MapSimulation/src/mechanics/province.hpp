@@ -9,12 +9,12 @@
 #include <vector>
 #include "map_mode.hpp"
 #include "pop.hpp"
+#include "settlement.hpp"
 #include "tickable.hpp"
 #include "province/province_properties.hpp"
 
 namespace mechanics {
     class tag;
-    class river;
     class unit;
     class province;
 
@@ -23,22 +23,23 @@ namespace mechanics {
         std::pair<utils::ref<const province>, utils::ref<const province>>, const U &)>;
 
     class province final : public tickable {
-        std::vector<std::unique_ptr<pop>> pops_;
+        size_t id_;
         tag *owner_{nullptr};
-        std::map<utils::ref<province>, std::pair<double, unsigned char>> neighbors_;
-        std::set<utils::ref<province>> impassable_neighbors_;
-        std::map<utils::ref<province>, unsigned char> river_neighbors_;
-        unsigned int size_{0U};
         std::array<unsigned int, 4UZ> bounds_{0U, 0U, 0U, 0U};
         std::array<unsigned int, 2UZ> center_{0U, 0U};
+        unsigned int size_{0U};
+        unsigned int base_color_;
+        unsigned char value_{0U};
         koppen_t koppen_;
         elevation_t elevation_;
         vegetation_t vegetation_;
         soil_t soil_;
         sea_t sea_;
-        unsigned char value_{0U};
-        unsigned int base_color_;
-        size_t id_;
+        std::map<utils::ref<province>, std::pair<double, unsigned char>> neighbors_;
+        std::set<utils::ref<province>> impassable_neighbors_;
+        std::map<utils::ref<province>, unsigned char> river_neighbors_;
+        std::vector<std::unique_ptr<pop>> pops_;
+        std::optional<settlement> settlement_;
 
     public:
         province();
@@ -145,6 +146,8 @@ namespace mechanics {
         auto add_impassable_neighbor(province &neighbor) -> void;
 
         [[nodiscard]] auto size() const -> unsigned int;
+
+        [[nodiscard]] auto settlement() const -> const std::optional<settlement> &;
 
         // Get some arbitrary value associated with the province, such as the size for a river province
         [[nodiscard]] auto value() const -> unsigned char;

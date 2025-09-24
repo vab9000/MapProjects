@@ -7,6 +7,8 @@ namespace mechanics {
 
     sf::Texture province_colors;
 
+    sf::Texture pixel_flags;
+
     static sf::Vector2u dimensions;
 
     auto set_province_colors_size() -> void {
@@ -43,5 +45,39 @@ namespace mechanics {
         province_colors.update(colors.data(), {dimensions.x, dimensions.y}, {
             0U, 0U
         });
+    }
+
+    static sf::Vector2u pixel_flags_dimensions;
+
+    static std::vector<unsigned char> pixel_flags_data;
+
+    auto set_pixel_flags_size(const unsigned int width, const unsigned int height) -> void {
+        pixel_flags_dimensions = {width, height};
+        pixel_flags_data.resize(4UZ * width * height, 0U);
+        if (!pixel_flags.resize({width, height})) {
+            throw std::runtime_error("Failed to allocate memory for pixel flags.");
+        }
+    }
+
+    auto set_pixel_flags(const std::pair<const unsigned int, const unsigned int> pixel, const pixel_flag_t flag,
+        const bool clear) -> void {
+        const auto index = 4UZ * (pixel.first + pixel.second * pixel_flags_dimensions.x);
+        const auto flag_value = static_cast<unsigned int>(flag);
+        if (clear) {
+            pixel_flags_data[index] &= ~flag_value >> 24U;
+            pixel_flags_data[index + 1UZ] &= ~flag_value >> 16U;
+            pixel_flags_data[index + 2UZ] &= ~flag_value >> 8U;
+            pixel_flags_data[index + 3UZ] &= ~flag_value;
+        }
+        else {
+            pixel_flags_data[index] |= flag_value >> 24U;
+            pixel_flags_data[index + 1UZ] |= flag_value >> 16U;
+            pixel_flags_data[index + 2UZ] |= flag_value >> 8U;
+            pixel_flags_data[index + 3UZ] |= flag_value;
+        }
+    }
+
+    auto update_pixel_flags_texture() -> void {
+        pixel_flags.update(pixel_flags_data.data(), {pixel_flags_dimensions.x, pixel_flags_dimensions.y}, {0U, 0U});
     }
 }

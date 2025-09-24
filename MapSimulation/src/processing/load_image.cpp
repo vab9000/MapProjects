@@ -120,15 +120,16 @@ namespace {
     }
 
     auto process_pixel(
-        std::unordered_map<utils::ref<mechanics::province>, std::vector<std::array<unsigned int, 2UZ>>, utils::ref_hash<
-            mechanics::province>> &
-        pixels_by_province,
-        const processing::image &map_image, const mechanics::data &d, const unsigned int color,
-        const std::array<unsigned int, 2UZ> &position,
-        std::vector<unsigned char> &crossing_bytes) -> void {
+        std::unordered_map<utils::ref<mechanics::province>, std::vector<std::array<unsigned int, 2UZ>>,
+            utils::ref_hash<mechanics::province>> &pixels_by_province, const processing::image &map_image,
+        const mechanics::data &d, const unsigned int color, const std::array<unsigned int, 2UZ> &position) -> void {
         auto &this_province = d.province_at(color);
         this_province.expand_bounds(position);
         pixels_by_province[this_province].push_back(position);
+
+        if (this_province.sea() != mechanics::sea_t::none) {
+            set_pixel_flags({position[0UZ], position[1UZ]}, mechanics::pixel_flag_t::water, false);
+        }
 
         auto impassable_neighbor = false;
 
@@ -140,33 +141,23 @@ namespace {
                 const auto nj = position[1UZ] + dy - 1U;
                 if (ni >= map_image.width() ||
                     nj >= map_image.height()) { return; }
-                const auto neighbor_color = map_image.color(static_cast<unsigned int>(ni),
-                    static_cast<unsigned int>(nj));
+                const auto neighbor_color = map_image.color(ni, nj);
                 if (neighbor_color == color) { return; }
                 auto &neighbor = d.province_at(neighbor_color);
                 this_province.add_neighbor(neighbor);
-                if (!impassable_neighbor && this_province.impassable_neighbors()
-                    .contains(neighbor)) { impassable_neighbor = true; }
+                if (!impassable_neighbor && this_province.impassable_neighbors().contains(neighbor)) {
+                    impassable_neighbor = true;
+                }
             });
         });
         if (impassable_neighbor) {
-            crossing_bytes[4UZ * (position[0UZ] + position[1UZ] * map_image.width())] = 255U;
-            crossing_bytes[4UZ * (position[0UZ] + position[1UZ] * map_image.width()) + 1UZ] = 0U;
-            crossing_bytes[4UZ * (position[0UZ] + position[1UZ] * map_image.width()) + 2UZ] = 0U;
-            crossing_bytes[4UZ * (position[0UZ] + position[1UZ] * map_image.width()) + 3UZ] = 255U;
-        }
-        else {
-            crossing_bytes[4UZ * (position[0UZ] + position[1UZ] * map_image.width())] = 0U;
-            crossing_bytes[4UZ * (position[0UZ] + position[1UZ] * map_image.width()) + 1UZ] = 0U;
-            crossing_bytes[4UZ * (position[0UZ] + position[1UZ] * map_image.width()) + 2UZ] = 0U;
-            crossing_bytes[4UZ * (position[0UZ] + position[1UZ] * map_image.width()) + 3UZ] = 0U;
+            set_pixel_flags({position[0UZ], position[1UZ]}, mechanics::pixel_flag_t::impassable, false);
         }
     }
 }
 
 namespace processing {
-    auto load_image(mechanics::data &d, image &map_image, std::vector<unsigned char> &crossing_bytes,
-        std::string &loading_text) -> void {
+    auto load_image(mechanics::data &d, image &map_image, std::string &loading_text) -> void {
         loading_text = "Loading provinces file...";
         load_provinces(d);
 
@@ -187,15 +178,16 @@ namespace processing {
         map_image = image{"assets/provinces_generated.png"};
 
         std::unordered_map<utils::ref<mechanics::province>, std::vector<std::array<unsigned int, 2UZ>>, utils::ref_hash<
-                mechanics::province>>
-            pixels_by_province;
+            mechanics::province>> pixels_by_province;
 
         loading_text = "Processing pixels...";
-        crossing_bytes = std::vector<unsigned char>(4UZ * map_image.width() * map_image.height());
+        mechanics::set_pixel_flags_size(map_image.width(), map_image.height());
+
         std::ranges::for_each(std::views::iota(0U, map_image.width()), [&](const unsigned int i) {
             std::ranges::for_each(std::views::iota(0U, map_image.height()), [&](const unsigned int j) {
-                process_pixel(pixels_by_province, map_image, d, map_image.color(i, j), {i, j}, crossing_bytes);
+                process_pixel(pixels_by_province, map_image, d, map_image.color(i, j), {i, j});
             });
+            loading_text = "Processing pixels..." + std::to_string((i * 100U) / map_image.width()) + "%";
         });
 
         auto &province_values = d.provinces();
@@ -206,7 +198,7 @@ namespace processing {
                 if (province.size() == 0U) { return; }
                 province.finalize(pixels_by_province.at(province));
             });
-        std::for_each(std::execution::par_unseq, province_values.begin(), province_values.end(),
+        std::for_each(std::execution::unseq, province_values.begin(), province_values.end(),
             [](mechanics::province &province) { province.process_distances(); });
 
         loading_text.clear();

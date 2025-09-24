@@ -10,6 +10,5 @@ namespace processing {
     class image;
 
     // Loads data from map image and files
-    auto load_image(mechanics::data &d, image &map_image, std::vector<unsigned char> &crossing_bytes,
-                    std::string &loading_text) -> void;
+    auto load_image(mechanics::data &d, image &map_image, std::string &loading_text) -> void;
 }

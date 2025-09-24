@@ -1,26 +1,33 @@
+#version 460 core
+
 uniform sampler2D tex;
 uniform vec2 size;
-uniform sampler2D provinceColors;
-uniform int selectedIndex;
-uniform bool drawOutline;
+uniform sampler2D province_colors;
+uniform int selected_index;
+uniform bool draw_outline;
 uniform float dim;
 
-int indexFromPixel(vec4 pixel) {
+in vec2 tex_coord;
+in vec4 color;
+
+layout (location = 0) out vec4 frag_color;
+
+int index_from_pixel(vec4 pixel) {
     return int(floor((pixel.r * 255.0 * 256.0 * 256.0 * 256.0 + pixel.g * 255.0 * 256.0 * 256.0 + pixel.b * 255.0 * 256.0 + pixel.a * 255.0)));
 }
 
-vec4 colorForProvince(vec4 pixel) {
-    int index = indexFromPixel(pixel);
-    float indexFloat = mod(float(index), dim) / (dim - 1);
-    vec4 provinceColor = texture2D(provinceColors, vec2(indexFloat, floor(float(index) / dim) / (dim - 1)));
-    return provinceColor;
+vec4 color_for_province(vec4 pixel) {
+    int index = index_from_pixel(pixel);
+    float index_float = mod(float(index), dim) / (dim - 1);
+    vec4 province_color = texture(province_colors, vec2(index_float, floor(float(index) / dim) / (dim - 1)));
+    return province_color;
 }
 
 void main() {
-    vec4 center = texture2D(tex, gl_TexCoord[0].xy);
-    int index = indexFromPixel(center);
+    vec4 center = texture(tex, tex_coord.xy);
+    int index = index_from_pixel(center);
 
-    vec4 provinceColor = colorForProvince(center);
+    vec4 province_color = color_for_province(center);
 
     bool outline = false;
 
@@ -29,7 +36,7 @@ void main() {
             if (dx == 0 && dy == 0) continue;
             if (dx != 0 && dy != 0) continue;
             vec2 offset = vec2(dx, dy) / size / 2.0;
-            vec2 new_pos = gl_TexCoord[0].xy + offset;
+            vec2 new_pos = tex_coord.xy + offset;
             if (new_pos.x < 0.0) {
                 new_pos.x = 1.0;
             }
@@ -40,16 +47,16 @@ void main() {
                 outline = true;
                 break;
             }
-            vec4 neighbor = texture2D(tex, new_pos);
-            vec4 neighborColor = colorForProvince(neighbor);
+            vec4 neighbor = texture(tex, new_pos);
+            vec4 neighbor_color = color_for_province(neighbor);
 
-            if (index == selectedIndex) {
+            if (index == selected_index) {
                 if (center != neighbor) {
                     outline = true;
                     break;
                 }
             }
-            else if (provinceColor != neighborColor) {
+            else if (province_color != neighbor_color) {
                 outline = true;
                 break;
             }
@@ -57,16 +64,14 @@ void main() {
         if (outline) break;
     }
 
-    if (outline) {
-        if (index == selectedIndex) {
-            gl_FragColor = gl_Color * vec4(1.0, 1.0, 1.0, 1.0);
-            return;
-        }
-        if (drawOutline) {
-            gl_FragColor = gl_Color * vec4(0.0, 0.0, 0.0, 1.0);
-            return;
-        }
+    if (index == selected_index && int(tex_coord.x * size.x + tex_coord.y * size.y) % 2 == 0) {
+        frag_color = color * province_color.brga;
+        return;
+    }
+    if (draw_outline && outline) {
+        frag_color = color * vec4(0.0, 0.0, 0.0, 1.0);
+        return;
     }
 
-    gl_FragColor = gl_Color * provinceColor;
+    frag_color = color * province_color;
 }

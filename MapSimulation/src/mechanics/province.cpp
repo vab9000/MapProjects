@@ -25,12 +25,30 @@ namespace mechanics {
     auto province::id() const -> size_t { return id_; }
 
     auto province::finalize(const std::vector<std::array<unsigned int, 2UZ>> &pixels) -> void {
-        std::erase_if(impassable_neighbors_, [&](const utils::ref<province> &p) { return !this->neighbors_.contains(p); });
+        std::erase_if(impassable_neighbors_, [&](const utils::ref<province> &p) {
+            return !this->neighbors_.contains(p);
+        });
+
+        if (sea_ != sea_t::none) {
+            std::unordered_map<koppen_t, int> koppen_types;
+            for (const auto &neighbor : neighbors_ | std::views::keys) {
+                if (neighbor.get().sea_ == sea_t::none) {
+                    if (koppen_types.contains(neighbor.get().koppen_)) { koppen_types.at(neighbor.get().koppen_) += 1; }
+                    else { koppen_types.emplace(neighbor.get().koppen_, 1); }
+                }
+            }
+            if (!koppen_types.empty()) {
+                koppen_ = std::ranges::max_element(koppen_types.begin(), koppen_types.end(),
+                    [](const auto &a, const auto &b) { return a.second < b.second; })->first;
+            }
+        }
 
         size_ = static_cast<unsigned int>(pixels.size());
 
-        auto x = std::vector<unsigned int>(size_);
-        auto y = std::vector<unsigned int>(size_);
+        auto x = std::vector<unsigned int>();
+        x.reserve(size_);
+        auto y = std::vector<unsigned int>();
+        y.reserve(size_);
 
         for (const auto &pixel : pixels) {
             x.push_back(pixel[0UZ]);
@@ -42,14 +60,8 @@ namespace mechanics {
 
         std::array test_center = {0U, 0U};
 
-        if (size_ % 2U == 0U) {
-            test_center[0UZ] = (x[size_ / 2UZ] + x[size_ / 2UZ - 1UZ]) / 2U;
-            test_center[1UZ] = (y[size_ / 2UZ] + y[size_ / 2UZ - 1UZ]) / 2U;
-        }
-        else {
-            test_center[0UZ] = x[size_ / 2UZ];
-            test_center[1UZ] = y[size_ / 2UZ];
-        }
+        test_center[0UZ] = x[size_ / 2UZ];
+        test_center[1UZ] = y[size_ / 2UZ];
 
         for (auto i = 0U; i < size_; ++i) {
             if (pixels[i][0UZ] == test_center[0UZ] && pixels[i][1UZ] == test_center[1UZ]) {
@@ -59,16 +71,12 @@ namespace mechanics {
             }
         }
 
-        const auto distance = [](const std::array<unsigned int, 2UZ> &a, const std::array<unsigned int, 2UZ> &b) {
-            return sqrt(
-                pow(static_cast<int>(a[0UZ]) - static_cast<int>(b[0UZ]), 2) + pow(
-                    static_cast<int>(a[1UZ]) - static_cast<int>(b[1UZ]), 2));
-        };
-
         if (center_[0UZ] == 0U && center_[1UZ] == 0U) {
             auto min_distance = (std::numeric_limits<double>::max)();
             for (auto i = 0U; i < size_; ++i) {
-                if (const auto dist = distance(pixels[i], {test_center[0UZ], test_center[1UZ]}); dist < min_distance) {
+                if (const auto dist = points_distance({
+                    {pixels[i][0UZ], pixels[i][1UZ]}, {test_center[0UZ], test_center[1UZ]}
+                }); dist < min_distance) {
                     min_distance = dist;
                     center_[0UZ] = pixels[i][0UZ];
                     center_[1UZ] = pixels[i][1UZ];
@@ -78,11 +86,43 @@ namespace mechanics {
     }
 
     auto province::process_distances() -> void {
+        if (size_ == 0U) { return; }
+
+        std::erase_if(neighbors_, [&](const auto &pair) { return pair.first.get().size_ == 0U; });
+
         for (const auto neighbor : neighbors_ | std::views::keys) {
             neighbors_.at(neighbor).first = points_distance({
                 {center_[0UZ], center_[1UZ]},
                 {neighbor.get().center_[0UZ], neighbor.get().center_[1UZ]}
             });
+        }
+
+        std::erase_if(river_neighbors_, [&](const auto &pair) { return pair.first.get().size_ == 0U; });
+
+        for (const auto neighbor : river_neighbors_ | std::views::keys) {
+            unsigned int x0 = center_[0UZ];
+            unsigned int y0 = center_[1UZ];
+            const unsigned int x1 = neighbor.get().center_[0UZ];
+            const unsigned int y1 = neighbor.get().center_[1UZ];
+            const auto dx = static_cast<int>(x1 > x0 ? x1 - x0 : x0 - x1);
+            const int sx = x0 < x1 ? 1 : -1;
+            const int dy = -static_cast<int>(y1 > y0 ? y1 - y0 : y0 - y1);
+            const int sy = y0 < y1 ? 1 : -1;
+            int err = dx + dy;
+            int e2{};
+            while (true) {
+                set_pixel_flags({x0, y0}, pixel_flag_t::bridge, false);
+                if (x0 == x1 && y0 == y1) { break; }
+                e2 = 2 * err;
+                if (e2 >= dy) {
+                    err += dy;
+                    x0 = static_cast<unsigned int>(static_cast<int>(x0) + sx);
+                }
+                if (e2 <= dx) {
+                    err += dx;
+                    y0 = static_cast<unsigned int>(static_cast<int>(y0) + sy);
+                }
+            }
         }
     }
 
@@ -99,7 +139,9 @@ namespace mechanics {
 
     auto province::owner() const -> tag * { return owner_; }
 
-    auto province::add_pop(pop &&new_pop) -> void { pops_.emplace_back(std::move(std::make_unique<pop>(std::move(new_pop)))); }
+    auto province::add_pop(pop &&new_pop) -> void {
+        pops_.emplace_back(std::move(std::make_unique<pop>(std::move(new_pop))));
+    }
 
     auto province::remove_pop(pop &p) -> void {
         std::erase_if(pops_, [&p](const std::unique_ptr<pop> &elem) { return elem.get() == &p; });
@@ -140,19 +182,19 @@ namespace mechanics {
             case map_mode_t::provinces: return base_color_;
             case map_mode_t::owner: return owner_ != nullptr ? owner_->color() : 0xFFFFFFFF;
             case map_mode_t::koppen: {
-                if (sea_ != sea_t::none) { return 0xFFFFFFFF; }
+                if (koppen_ == koppen_t::none) { return 0xFFFFFFFF; }
                 return static_cast<unsigned int>(koppen_);
             }
             case map_mode_t::elevation: {
-                if (sea_ != sea_t::none) { return 0xFFFFFFFF; }
+                if (elevation_ == elevation_t::none) { return 0xFFFFFFFF; }
                 return static_cast<unsigned int>(elevation_);
             }
             case map_mode_t::vegetation: {
-                if (sea_ != sea_t::none) { return 0xFFFFFFFF; }
+                if (vegetation_ == vegetation_t::none) { return 0xFFFFFFFF; }
                 return static_cast<unsigned int>(vegetation_);
             }
             case map_mode_t::soil: {
-                if (sea_ != sea_t::none) { return 0xFFFFFFFF; }
+                if (soil_ == soil_t::none) { return 0xFFFFFFFF; }
                 return static_cast<unsigned int>(soil_);
             }
             case map_mode_t::sea: {
@@ -185,6 +227,7 @@ namespace mechanics {
         std::for_each(std::execution::seq, pops_.begin(), pops_.end(), [tick_type](const std::unique_ptr<pop> &elem) {
             elem->tick(tick_type);
         });
+        if (settlement_.has_value()) { settlement_->tick(tick_type); }
     }
 
     auto province::bounds() const -> const std::array<unsigned int, 4UZ> & { return bounds_; }
@@ -212,6 +255,10 @@ namespace mechanics {
     }
 
     auto province::size() const -> unsigned int { return size_; }
+
+    auto province::settlement() const -> const std::optional<mechanics::settlement> & {
+        return settlement_;
+    }
 
     auto province::value() const -> unsigned char { return value_; }
 
