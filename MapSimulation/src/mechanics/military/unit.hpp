@@ -2,7 +2,7 @@
 #include <list>
 #include <reference.hpp>
 #include <vector>
-#include "pop.hpp"
+#include "../life/pop.hpp"
 
 namespace mechanics {
     class army;
@@ -14,8 +14,8 @@ namespace mechanics {
         utils::ref<army> parent_army_;
         character *captain_{nullptr};
         utils::ref<province> location_;
-        std::list<utils::ref<province> > path_;
-        double travel_progress_{0.0};
+        std::vector<utils::ref<province> > path_;
+        float travel_progress_{0.0};
         bool retreating_{false};
 
     public:
@@ -54,10 +54,10 @@ namespace mechanics {
         [[nodiscard]] auto location() const -> province &;
 
         // Get the path of the unit
-        [[nodiscard]] auto path() const -> const std::list<utils::ref<province> > &;
+        [[nodiscard]] auto path() const -> const std::vector<utils::ref<province> > &;
 
         // Get the travel progress of the unit to the next province
-        [[nodiscard]] auto travel_progress() const -> double;
+        [[nodiscard]] auto travel_progress() const -> float;
 
         // Get if the unit is retreating
         [[nodiscard]] auto retreating() const -> bool;

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef UTILS_COLORS
+#define UTILS_COLORS
 
 namespace utils {
     /// Gets the integer representation of an RGB color.
@@ -12,3 +13,4 @@ namespace utils {
         return static_cast<unsigned int>(r) << 16 | static_cast<unsigned int>(g) << 8 | static_cast<unsigned int>(b);
     }
 }
+#endif

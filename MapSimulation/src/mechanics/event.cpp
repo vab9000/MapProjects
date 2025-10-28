@@ -9,3 +9,8 @@ namespace mechanics {
 
     auto event::operator()() const -> void { event_func_(); }
 }
+
+auto operator<=>(const std::unique_ptr<mechanics::event> &lhs,
+    const std::unique_ptr<mechanics::event> &rhs) -> std::strong_ordering {
+    return *lhs <=> *rhs;
+}

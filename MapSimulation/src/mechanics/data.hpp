@@ -1,21 +1,22 @@
-#pragma once
+#ifndef MECHANICS_DATA
+#define MECHANICS_DATA
 #include <unordered_map>
-#include "character.hpp"
-#include "culture.hpp"
+#include "life/character.hpp"
+#include "society/culture.hpp"
 #include "date.hpp"
 #include "event.hpp"
-#include "province.hpp"
-#include "tag.hpp"
+#include "province/province.hpp"
+#include "society/tag.hpp"
 
 namespace mechanics {
     class data {
-        date current_date_;
         std::vector<province> provinces_;
         std::unordered_map<unsigned int, utils::ref<province>> provinces_map_;
         std::vector<std::unique_ptr<tag>> tags_;
         std::vector<std::unique_ptr<character>> characters_;
         std::vector<std::unique_ptr<culture>> cultures_;
         std::priority_queue<std::unique_ptr<event>, std::vector<std::unique_ptr<event>>, std::greater<>> events_;
+        date current_date_;
 
         data() = default;
 
@@ -30,13 +31,12 @@ namespace mechanics {
         // Get the provinces
         [[nodiscard]] auto provinces() const -> const std::vector<province> &;
 
-        // Get the provinces
         auto provinces() -> std::vector<province> &;
 
         // Add a province
         template<typename... Args>
         auto emplace_province(Args &&... args) -> province & {
-            auto &val = provinces_.emplace_back(provinces_.size(), std::forward<Args>(args)...);
+            auto &val = provinces_.emplace_back(std::forward<Args>(args)...);
             return val;
         }
 
@@ -44,17 +44,7 @@ namespace mechanics {
 
         [[nodiscard]] auto province_at(unsigned int color) const -> province &;
 
-        // Get the tags
-        [[nodiscard]] auto tags() const -> const std::vector<std::unique_ptr<tag>> &;
-
-        // Get the tags
-        auto tags() -> std::vector<std::unique_ptr<tag>> &;
-
-        // Get the characters
-        [[nodiscard]] auto characters() const -> const std::vector<std::unique_ptr<character>> &;
-
-        // Get the characters
-        auto characters() -> std::vector<std::unique_ptr<character>> &;
+        auto add_event(event &&e) -> void;
 
         // Advance the simulation
         auto tick() -> void;
@@ -63,3 +53,4 @@ namespace mechanics {
         static auto instance() -> data &;
     };
 }
+#endif

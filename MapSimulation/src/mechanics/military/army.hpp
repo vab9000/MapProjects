@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MECHANICS_ARMY
+#define MECHANICS_ARMY
 #include <memory>
 #include <reference.hpp>
 #include "unit.hpp"
@@ -40,3 +41,4 @@ namespace mechanics {
         [[nodiscard]] auto units() const -> const std::vector<std::unique_ptr<unit>> &;
     };
 }
+#endif

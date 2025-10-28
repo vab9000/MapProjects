@@ -1,4 +1,5 @@
 #pragma once
+#include <future>
 #include <SFML/Graphics.hpp>
 #include "drawing.hpp"
 #include "image.hpp"
@@ -8,31 +9,36 @@
 namespace processing {
     class simulation {
         std::array<int, 2UZ> offset_{0, 0};
-        double zoom_{1.0};
+        double zoom_ = 1.0;
         std::array<int, 2UZ> previous_mouse_{0, 0};
-        bool mouse_down_{false};
-        bool mouse_moved_{false};
-        std::atomic_bool open_{true};
-        std::atomic_bool paused_{true};
-        std::atomic_bool loaded_{false};
 
         std::string loading_text_;
 
         image map_image_;
 
-        mechanics::province *selected_province_{};
-        mechanics::province *hovered_province_{};
+        mechanics::province *selected_province_ = nullptr;
+        mechanics::province *hovered_province_ = nullptr;
 
         mechanics::data &data_{mechanics::data::instance()};
 
         drawing drawer_{*this, loading_text_};
         window window_{[this](const sf::Event &event) { this->handle_event(event); }};
 
+        std::future<void> processing_{};
+
+        bool mouse_down_ = false;
+        bool mouse_moved_ = false;
+        std::atomic_bool open_{true};
+        std::atomic_bool paused_{true};
+        std::atomic_bool loaded_{false};
+
         // Start the game logic thread
         auto start_processing() -> void;
 
         // Process event from the window
         auto handle_event(const sf::Event &event) -> void;
+
+        auto check_process_thread() -> bool;
 
     public:
         // Run the simulation

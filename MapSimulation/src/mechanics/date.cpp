@@ -3,34 +3,31 @@
 namespace mechanics {
     using namespace std::chrono;
 
-    date::date() : date{0, 1U, 1U} {}
-
-    date::date(year y, month m, day d) : date{{y, m, d}} {}
-
-    date::date(const year_month_day ymd) : time_{ymd} {}
-
-    date::date(const int y, const unsigned int m, const unsigned int d) : date{year{y}, month{m}, day{d}} {}
+    date::date() : time_{year_month_day{year{0U}, month{1U}, day{1U}}} {}
 
     auto date::to_string() const -> std::string {
-        return std::to_string(static_cast<unsigned int>(time_.day())) + "/" +
-               std::to_string(static_cast<unsigned int>(time_.month())) + "/" + std::to_string(
-                   static_cast<int>(time_.year()));
+        const year_month_day ymd = time_;
+        return std::to_string(static_cast<unsigned int>(ymd.day())) + "/" +
+               std::to_string(static_cast<unsigned int>(ymd.month())) + "/" + std::to_string(
+                   static_cast<int>(ymd.year()));
     }
 
     auto date::operator<=>(const date &other) const -> std::strong_ordering { return time_ <=> other.time_; }
 
-    auto date::operator+(const int n_days) const -> date {
-        return date{year_month_day{sys_days{time_} + days{n_days}}};
-    }
+    auto date::operator+(const int n_days) const -> date { return date{*this} += n_days; }
 
-    auto date::operator-(const date &other) const -> int {
-        return (sys_days{time_} - sys_days{other.time_}).count();
+    auto date::operator-(const date &other) const -> int { return (time_ - other.time_).count(); }
+
+    auto date::operator+=(const unsigned int n_days) -> date & {
+        time_ += days{n_days};
+        return *this;
     }
 
     auto date::advance() -> tick_t {
-        time_ = sys_days{time_} + days{1};
-        if (time_.day() != day{1U}) { return tick_t::day; }
-        if (time_.month() != month{0U}) { return tick_t::month; }
+        ++time_;
+        const year_month_day ymd = time_;
+        if (ymd.day() != day{1U}) { return tick_t::day; }
+        if (ymd.month() != month{0U}) { return tick_t::month; }
         return tick_t::year;
     }
 

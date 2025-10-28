@@ -1,9 +1,9 @@
 #include "map_mode.hpp"
 #include "data.hpp"
-#include "province.hpp"
+#include "province/province.hpp"
 
 namespace mechanics {
-    std::atomic<map_mode_t> map_mode{map_mode_t::provinces};
+    auto map_mode{map_mode_t::provinces};
 
     sf::Texture province_colors;
 
@@ -25,7 +25,7 @@ namespace mechanics {
             static_cast<unsigned char>(color >> 16), static_cast<unsigned char>(color >> 8),
             static_cast<unsigned char>(color), 255U
         };
-        const auto index = p.id() * 4U;
+        const auto index = p.id() * 4UZ;
         province_colors.update(color_array.data(), {1U, 1U}, {
             static_cast<unsigned int>(index % dimensions.x), static_cast<unsigned int>(index / dimensions.x)
         });

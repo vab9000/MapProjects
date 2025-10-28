@@ -1,8 +1,17 @@
+cmake_minimum_required(VERSION 3.27...3.33)
 include(FetchContent)
 
 set(SFML_VERSION 3.0.0)
 set(IMGUI_VERSION 1.91.1)
 set(IMGUI_SFML_VERSION 3.0)
+
+FetchContent_Declare(
+        Freetype
+        GIT_REPOSITORY "https://github.com/freetype/freetype.git"
+        GIT_TAG "VER-2-14-1"
+)
+
+FetchContent_MakeAvailable(Freetype)
 
 FetchContent_Declare(
         SFML
@@ -43,7 +52,6 @@ option(IMGUI_SFML_FIND_SFML "Use find_package to find SFML" OFF)
 
 FetchContent_MakeAvailable(imgui-sfml)
 
-cmake_minimum_required(VERSION 3.27)
 project(MapSimulation)
 
 set(CMAKE_CXX_STANDARD 23)
@@ -51,7 +59,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(MapSimulation)
 
-target_include_directories(MapSimulation PRIVATE libs/stb_image utils)
+target_include_directories(MapSimulation PRIVATE libs/ utils)
 
 set_target_properties(MapSimulation PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/bin

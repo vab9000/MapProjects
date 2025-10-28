@@ -23,7 +23,7 @@ namespace processing {
 
         bool draw_crossings_{true};
         bool draw_outline_{true};
-        bool draw_bridges_{true};
+        bool draw_bridges_{false};
 
         auto draw_checkboxes() -> void;
 

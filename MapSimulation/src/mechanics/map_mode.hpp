@@ -1,5 +1,5 @@
-#pragma once
-#include <atomic>
+#ifndef MECHANICS_MAP_MODE
+#define MECHANICS_MAP_MODE
 #include <SFML/Graphics.hpp>
 
 namespace mechanics {
@@ -7,15 +7,16 @@ namespace mechanics {
 
     enum class map_mode_t : unsigned char {
         provinces, owner, koppen,
-        elevation, vegetation, soil,
-        sea, river_size,
+        elevation, roughness, vegetation,
+        soil, sea, river_size,
     };
 
     enum class pixel_flag_t : unsigned int {
-        impassable = 0x01000000U, bridge = 0x02000000U, water = 0x00000100U, outline = 0x00000001U,
+        impassable = 0x01000000U, bridge = 0x02000000U, water = 0x00000100U,
+        outline = 0x00000001U,
     };
 
-    extern std::atomic<map_mode_t> map_mode;
+    extern map_mode_t map_mode;
 
     extern sf::Texture province_colors;
 
@@ -34,3 +35,4 @@ namespace mechanics {
 
     auto update_pixel_flags_texture() -> void;
 }
+#endif

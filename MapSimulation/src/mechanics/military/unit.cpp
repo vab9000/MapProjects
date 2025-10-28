@@ -2,19 +2,17 @@
 #include <numeric>
 #include <utility>
 #include "army.hpp"
-#include "character.hpp"
-#include "province.hpp"
-#include "tag.hpp"
+#include "../society/tag.hpp"
+#include "../life/character.hpp"
+#include "../province/province.hpp"
 
 namespace mechanics {
     unit::unit(army &parent_army, province &location) : parent_army_(parent_army),
         location_(location) {}
 
-    unit::~unit() {
-        if (captain_ != nullptr) { captain_->roles().remove(role_t::captain); }
-    }
+    unit::~unit() { if (captain_ != nullptr) { captain_->roles().remove(role_t::captain); } }
 
-    auto unit::add_pop(pop& new_pop) -> void { pops_.emplace_back(new_pop); }
+    auto unit::add_pop(pop &new_pop) -> void { pops_.emplace_back(new_pop); }
 
     auto unit::pops() const -> const std::vector<utils::ref<pop>> & { return pops_; }
 
@@ -32,7 +30,7 @@ namespace mechanics {
 
     auto unit::set_captain(character &new_captain) -> void {
         if (captain_ != nullptr) { captain_->roles().remove(role_t::captain); }
-        new_captain.roles().add(role_t::captain, this);
+        new_captain.roles().add<role_t::captain>(this);
         captain_ = &new_captain;
     }
 
@@ -47,44 +45,47 @@ namespace mechanics {
 
     auto unit::location() const -> province & { return location_; }
 
-    auto unit::path() const -> const std::list<utils::ref<province>> & { return path_; }
+    auto unit::path() const -> const std::vector<utils::ref<province>> & { return path_; }
 
-    auto unit::travel_progress() const -> double { return travel_progress_; }
+    auto unit::travel_progress() const -> float { return travel_progress_; }
 
     auto unit::retreating() const -> bool { return retreating_; }
 
     auto unit::set_destination(province &destination) -> void {
         if (retreating_) { return; }
 
-        const province_connection_func<bool, unit> accessible = [](const std::pair<utils::ref<const province>, utils::ref<const province>>
+        const province_connection_func<bool, unit> accessible = [](
+            const std::pair<utils::ref<const province>, utils::ref<const province>>
             connection,
             const unit &this_unit) {
             return this_unit.parent().parent().has_army_access(connection.second);
         };
-        const province_connection_func<double, unit> cost_modifier = [](const std::pair<utils::ref<const province>, utils::ref<const province>>
-            connection,
-            const unit &this_unit) {
-            return 1.0;
+        const province_connection_func<float, unit> cost_modifier = [](
+            const std::pair<utils::ref<const province>, utils::ref<const province>>,
+            const unit &) {
+            return 1.0F;
         };
-        auto generated_path = location_.get().path_to<unit>(
+        path_ = std::move(location_.get().path_to<unit>(
             destination,
             accessible,
-            cost_modifier, *this);
-        path_ = std::move(generated_path);
+            cost_modifier, *this));
     }
 
     auto unit::move() -> void {
-        travel_progress_ += 1.0;
-        if (travel_progress_ < 100.0) { return; }
+        travel_progress_ += 1.0F / location_.get().distance(path_.back());
+        if (travel_progress_ < 100.0F) { return; }
 
-        if (!parent_army_.get().parent().has_army_access(path_.front())) {
+        if (!parent_army_.get().parent().has_army_access(path_.back())) {
             path_.clear();
-            travel_progress_ = 0.0;
+            travel_progress_ = 0.0F;
             return;
         }
 
-        location_ = path_.front();
-        path_.erase(path_.begin());
-        travel_progress_ = 0.0;
+        location_.get().remove_unit(*this);
+        location_ = path_.back();
+        location_.get().add_unit(*this);
+        for (auto &p : pops_) { p.get().set_location(location_.get()); }
+        path_.pop_back();
+        travel_progress_ = 0.0F;
     }
 }

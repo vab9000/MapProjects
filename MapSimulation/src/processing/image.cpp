@@ -1,7 +1,7 @@
 #include "image.hpp"
 // #define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
 #include <stdexcept>
+#include <stb_image/stb_image.h>
 
 namespace processing {
     image::image() : width_(0U), height_(0U) {}

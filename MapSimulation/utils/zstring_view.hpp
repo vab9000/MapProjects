@@ -1,4 +1,5 @@
-#pragma once
+#ifndef UTILS_ZSTRING_VIEW
+#define UTILS_ZSTRING_VIEW
 #include <string_view>
 
 namespace utils {
@@ -17,8 +18,9 @@ namespace utils {
 
         /// Get the data pointer
         /// @returns The data pointer
-        [[nodiscard]] constexpr auto str() const -> const char * {
-            return data();
-        }
+        [[nodiscard]] constexpr auto str() const -> const char * { return data(); }
     };
+
+    auto constexpr operator ""_zsv(const char *str, size_t) noexcept -> zstring_view { return zstring_view{str}; }
 }
+#endif

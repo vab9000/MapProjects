@@ -1,14 +1,10 @@
-#pragma once
+#ifndef UTILS_FLAGS
+#define UTILS_FLAGS
+#include <enums.hpp>
 #include <map>
-#include <optional>
 #include <set>
 
 namespace utils {
-    /// A concept that checks if a type is an enum class.
-    /// @tparam E The type to check.
-    template<typename E>
-    concept is_enum_class = std::is_enum_v<E> && !std::is_convertible_v<E, int>;
-
     /// A container for enum flags.
     /// @tparam E An enum class type.
     template<is_enum_class E>
@@ -32,9 +28,18 @@ namespace utils {
         auto remove(const E flag) -> void { flags_.erase(flag); }
     };
 
+    /// A concept that checks if a mapping type provides a type for a given enum value to a pointer type.
+    /// @tparam Map The mapping type.
+    /// @tparam E The enum class type.
+    template<typename Map, typename E>
+    concept has_map_type_for = requires {
+        typename Map::template type<static_cast<E>(0)>;
+    } && std::is_convertible_v<typename Map::template type<static_cast<E>(0)>, void *> && is_enum_class<E>;
+
     /// A container for enum flags tied to some data.
     /// @tparam E An enum class type.
-    template<is_enum_class E>
+    /// @tparam Map A mapping type that provides associated data types for each enum value.
+    template<is_enum_class E, has_map_type_for<E> Map>
     class tied_flags {
         std::map<E, void *> flags_;
 
@@ -42,16 +47,21 @@ namespace utils {
         tied_flags() = default;
 
         /// Add a new flag with associated data
-        /// @param flag The flag to add.
+        /// @tparam Flag The flag to add.
         /// @param connection The data to associate with the flag.
-        auto add(const E flag, void *connection) -> void { flags_.emplace(flag, connection); }
+        template<E Flag>
+        auto add(Map::template type<Flag> connection) -> void {
+            static_assert(std::is_convertible_v<typename Map::template type<Flag>, void *>);
+            flags_.emplace(Flag, static_cast<void *>(connection));
+        }
 
         /// Check if a flag is present
-        /// @param flag The flag to check.
+        /// @tparam Flag The flag to check.
         /// @returns the data or nullptr if it doesn't exist.
-        [[nodiscard]] auto at(const E flag) -> void * {
-            auto it = flags_.find(flag);
-            if (it != flags_.end()) { return it->second; }
+        template<E Flag>
+        [[nodiscard]] auto at() -> Map::template type<Flag> {
+            auto it = flags_.find(Flag);
+            if (it != flags_.end()) { return static_cast<Map::template type<Flag>>(it->second); }
             return nullptr;
         }
 
@@ -60,3 +70,4 @@ namespace utils {
         auto remove(const E flag) -> void { flags_.erase(flag); }
     };
 }
+#endif

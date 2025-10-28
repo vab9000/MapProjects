@@ -1,14 +1,15 @@
-#pragma once
-#include <list>
-#include "army.hpp"
-#include "tickable.hpp"
+#ifndef MECHANICS_TAG
+#define MECHANICS_TAG
+#include <numbered.hpp>
+#include "../military/army.hpp"
+#include "../date.hpp"
 
 namespace mechanics {
     class province;
 
-    class tag final : public tickable {
-        std::list<utils::ref<province>> provinces_;
-        std::list<army> armies_;
+    class tag final : utils::numbered<tag> {
+        std::vector<utils::ref<province>> provinces_;
+        std::vector<std::unique_ptr<army>> armies_;
         unsigned int color_;
         int gold_{0};
 
@@ -16,8 +17,6 @@ namespace mechanics {
         tag();
 
         explicit tag(unsigned int color);
-
-        ~tag() override;
 
         // Get the color of the tag
         [[nodiscard]] auto color() const -> unsigned int;
@@ -47,15 +46,16 @@ namespace mechanics {
         [[nodiscard]] auto has_province(const province &found_province) const -> bool;
 
         // Get the list of provinces owned by the tag
-        [[nodiscard]] auto provinces() const -> const std::list<utils::ref<province>> &;
+        [[nodiscard]] auto provinces() const -> const std::vector<utils::ref<province>> &;
 
         // Get the list of provinces owned by the tag
-        auto provinces() -> std::list<utils::ref<province>> &;
+        auto provinces() -> std::vector<utils::ref<province>> &;
 
         // Check if the tag has army access to a specific province
         [[nodiscard]] auto has_army_access(const province &access_province) const -> bool;
 
         // Tick the tag
-        auto tick(tick_t tick_type) -> void override;
+        auto tick(tick_t tick_type) -> void;
     };
 }
+#endif

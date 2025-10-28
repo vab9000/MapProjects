@@ -1,10 +1,7 @@
 #include "character.hpp"
-#include <stack>
 
 namespace mechanics {
     character::character(const date &birthday, province &location) : birthday_(birthday), location_(location) {}
-
-    character::~character() = default;
 
     auto character::is_alive() const -> bool { return alive_; }
 
@@ -20,13 +17,13 @@ namespace mechanics {
 
     auto character::set_location(province &location) -> void { location_ = location; }
 
-    auto character::roles() const -> const utils::tied_flags<role_t> &{ return roles_; }
+    auto character::roles() const -> const utils::tied_flags<role_t, role_type> &{ return roles_; }
 
-    auto character::roles() -> utils::tied_flags<role_t> &{ return roles_; }
+    auto character::roles() -> utils::tied_flags<role_t, role_type> &{ return roles_; }
 
-    auto character::traits() const -> const utils::flags<personality_trait_t> & { return traits_; }
+    auto character::traits() const -> const magic_enum::containers::set<personality_trait_t> &{ return traits_; }
 
-    auto character::traits() -> utils::flags<personality_trait_t> & { return traits_; }
+    auto character::traits() -> magic_enum::containers::set<personality_trait_t> &{ return traits_; }
 
     auto character::tick(tick_t tick_type) -> void {}
 }

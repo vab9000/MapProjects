@@ -1,7 +1,7 @@
 #include "simulation.hpp"
 #include <execution>
+#include <future>
 #include <ranges>
-#include <thread>
 #include "load_image.hpp"
 
 namespace processing {
@@ -12,6 +12,14 @@ namespace processing {
     auto simulation::hovered_province() const -> mechanics::province * { return hovered_province_; }
 
     auto simulation::selected_province() const -> mechanics::province * { return selected_province_; }
+
+    auto simulation::check_process_thread() -> bool {
+        if (processing_.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+            processing_.get();
+            return true;
+        }
+        return false;
+    }
 
     auto simulation::start_processing() -> void {
         auto load_data = [&]() {
@@ -25,10 +33,8 @@ namespace processing {
 
             std::vector<unsigned char> province_ids(4UZ * map_image_.width() * map_image_.height());
 
-            const auto x_range = std::views::iota(0U, map_image_.width());
-            const auto y_range = std::views::iota(0U, map_image_.height());
-            for (const auto x : x_range) {
-                for (const auto y : y_range) {
+            for (const auto x : std::views::iota(0U, map_image_.width())) {
+                for (const auto y : std::views::iota(0U, map_image_.height())) {
                     const auto index = (y * map_image_.width() + x) * 4UZ;
                     const auto id = data_.province_at(map_image_.color(x, y)).id();
                     province_ids[index + 3UZ] = static_cast<unsigned char>(id % 256U);
@@ -66,6 +72,10 @@ namespace processing {
             const auto gui_area = window_.gui_area();
             return x > gui_area[0UZ] && x < gui_area[2UZ] && y > gui_area[1UZ] && y < gui_area[3UZ];
         };
+
+        if (check_process_thread()) {
+            window_.stop_event_loop();
+        }
 
         if (const auto &scroll_data = event.getIf<sf::Event::MouseWheelScrolled>()) {
             const auto dimensions = window_.window_dimensions();
@@ -186,11 +196,11 @@ namespace processing {
     }
 
     auto simulation::start_simulation() -> void {
-        std::thread process_thread(&simulation::start_processing, this);
+        processing_ = std::async(std::launch::async, [this] { this->start_processing(); });
 
         window_.start_event_loop();
 
-        process_thread.join();
+        processing_.wait();
     }
 
     auto simulation::transform_to_screen_coordinates(std::array<int, 4UZ> &coordinates) const -> void {

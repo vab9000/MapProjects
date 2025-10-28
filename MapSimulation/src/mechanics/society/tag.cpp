@@ -1,13 +1,11 @@
 #include "tag.hpp"
-#include "army.hpp"
-#include "province.hpp"
+#include "../military/army.hpp"
+#include "../province/province.hpp"
 
 namespace mechanics {
     tag::tag() : tag(0U) {}
 
     tag::tag(const unsigned int color) : color_(color) {}
-
-    tag::~tag() = default;
 
     auto tag::color() const -> unsigned int { return color_; }
 
@@ -20,8 +18,8 @@ namespace mechanics {
     auto tag::remove_gold(const int amount) -> void { gold_ -= amount; }
 
     [[nodiscard]] auto tag::new_army() -> army & {
-        armies_.emplace_back(*this);
-        return armies_.back();
+        armies_.emplace_back(std::make_unique<army>(*this));
+        return *armies_.back();
     }
 
     auto tag::add_province(province &added_province) -> void { provinces_.emplace_back(added_province); }
@@ -35,11 +33,9 @@ namespace mechanics {
         return false;
     }
 
-    [[nodiscard]] auto tag::provinces() const -> const std::list<utils::ref<province>> & {
-        return provinces_;
-    }
+    [[nodiscard]] auto tag::provinces() const -> const std::vector<utils::ref<province>> & { return provinces_; }
 
-    auto tag::provinces() -> std::list<utils::ref<province>> & { return provinces_; }
+    auto tag::provinces() -> std::vector<utils::ref<province>> & { return provinces_; }
 
     [[nodiscard]] auto tag::has_army_access(const province &access_province) const -> bool {
         if (access_province.owner() == nullptr) { return true; }

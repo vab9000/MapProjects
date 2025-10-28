@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MECHANICS_EVENT
+#define MECHANICS_EVENT
 #include <functional>
 #include "date.hpp"
 
@@ -10,13 +11,18 @@ namespace mechanics {
     public:
         explicit event(std::function<void()> &&func);
 
-        auto operator<=>(const event &other) const -> std::strong_ordering;
+        event(event &&other) noexcept = default;
 
-        friend auto operator<=>(const std::unique_ptr<event> &self,
-            const std::unique_ptr<event> &other) -> std::strong_ordering { return *self <=> *other; }
+        auto operator=(event &&other) noexcept -> event & = default;
+
+        auto operator<=>(const event &other) const -> std::strong_ordering;
 
         [[nodiscard]] auto date() const -> const date &;
 
         auto operator()() const -> void;
     };
 }
+
+auto operator<=>(const std::unique_ptr<mechanics::event> &lhs,
+    const std::unique_ptr<mechanics::event> &rhs) -> std::strong_ordering;
+#endif

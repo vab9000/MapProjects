@@ -1,6 +1,6 @@
 #include "army.hpp"
-#include "character.hpp"
-#include "province.hpp"
+#include "../life/character.hpp"
+#include "../province/province.hpp"
 
 namespace mechanics {
     army::army(tag &parent_tag) : parent_tag_(parent_tag) {}
@@ -14,7 +14,7 @@ namespace mechanics {
 
     auto army::set_commander(character &new_commander) -> void {
         if (commander_ != nullptr) { commander_->roles().remove(role_t::commander); }
-        new_commander.roles().add(role_t::commander, this);
+        new_commander.roles().add<role_t::commander>(this);
         commander_ = &new_commander;
     }
 

@@ -1,8 +1,9 @@
-#pragma once
+#ifndef MECHANICS_AI_HPP
+#define MECHANICS_AI_HPP
 #include <functional>
 #include <memory>
 #include <vector>
-#include "ai/action.hpp"
+#include "action.hpp"
 
 namespace mechanics {
     class ai {
@@ -25,3 +26,4 @@ namespace mechanics {
             std::move(weight_func), s_param, o_param);
     }
 }
+#endif

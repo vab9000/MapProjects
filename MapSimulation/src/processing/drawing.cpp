@@ -3,14 +3,153 @@
 #include <format>
 #include <imgui.h>
 #include <ranges>
-#include <thread>
 #include <zstring_view.hpp>
 #include "image.hpp"
 #include "simulation.hpp"
 #include "../mechanics/map_mode.hpp"
-#include "../mechanics/province.hpp"
+#include "../mechanics/province/province.hpp"
 
 namespace {
+    auto koppen_to_string(const mechanics::koppen_t value) -> utils::zstring_view {
+        switch (value) {
+            case mechanics::koppen_t::none: return "None";
+            case mechanics::koppen_t::af: return "Tropical rainforest";
+            case mechanics::koppen_t::am: return "Tropical monsoon";
+            case mechanics::koppen_t::aw: return "Tropical savannah";
+            case mechanics::koppen_t::bwh: return "Hot desert";
+            case mechanics::koppen_t::bwk: return "Cold desert";
+            case mechanics::koppen_t::bsh: return "Hot semi-arid";
+            case mechanics::koppen_t::bsk: return "Cold semi-arid";
+            case mechanics::koppen_t::csa: return "Hot summer Mediterranean";
+            case mechanics::koppen_t::csb: return "Warm summer Mediterranean";
+            case mechanics::koppen_t::csc: return "Cold summer Mediterranean";
+            case mechanics::koppen_t::cwa: return "Monsoon-influenced humid subtropical";
+            case mechanics::koppen_t::cwb: return "Monsoon-influenced oceanic";
+            case mechanics::koppen_t::cwc: return "Monsoon-influenced subpolar";
+            case mechanics::koppen_t::cfa: return "Humid subtropical";
+            case mechanics::koppen_t::cfb: return "Oceanic";
+            case mechanics::koppen_t::cfc: return "Subpolar oceanic";
+            case mechanics::koppen_t::dsa: return "Mediterranean-influenced hot summer humid continental";
+            case mechanics::koppen_t::dsb: return "Mediterranean-influenced warm summer humid continental";
+            case mechanics::koppen_t::dsc: return "Mediterranean-influenced subarctic";
+            case mechanics::koppen_t::dsd: return "Mediterranean-influenced cold subarctic";
+            case mechanics::koppen_t::dwa: return "Monsoon-influenced hot summer humid continental";
+            case mechanics::koppen_t::dwb: return "Monsoon-influenced warm summer humid continental";
+            case mechanics::koppen_t::dwc: return "Monsoon-influenced subarctic";
+            case mechanics::koppen_t::dwd: return "Monsoon-influenced cold subarctic";
+            case mechanics::koppen_t::dfa: return "Hot summer humid continental";
+            case mechanics::koppen_t::dfb: return "Warm summer humid continental";
+            case mechanics::koppen_t::dfc: return "Subarctic";
+            case mechanics::koppen_t::dfd: return "Cold subarctic";
+            case mechanics::koppen_t::et: return "Tundra";
+            case mechanics::koppen_t::ef: return "Ice cap";
+        }
+        return "No koppen type";
+    }
+
+    auto vegetation_to_string(const mechanics::vegetation_t value) -> utils::zstring_view {
+        switch (value) {
+            case mechanics::vegetation_t::none: return "None";
+            case mechanics::vegetation_t::tropical_evergreen_broadleaf_forest: return
+                    "Tropical Evergreen Broadleaf Forest";
+            case mechanics::vegetation_t::tropical_semi_evergreen_broadleaf_forest: return
+                    "Tropical Semi-Evergreen Broadleaf Forest";
+            case mechanics::vegetation_t::tropical_deciduous_broadleaf_forest_and_woodland: return
+                    "Tropical Deciduous Broadleaf Forest and Woodland";
+            case mechanics::vegetation_t::warm_temperate_evergreen_and_mixed_forest: return
+                    "Warm Temperate Evergreen and Mixed Forest";
+            case mechanics::vegetation_t::cool_temperate_rainforest: return "Cool Temperate Rainforest";
+            case mechanics::vegetation_t::cool_evergreen_needleleaf_forest: return "Cool Evergreen Needleleaf Forest";
+            case mechanics::vegetation_t::cool_mixed_forest: return "Cool Mixed Forest";
+            case mechanics::vegetation_t::temperate_deciduous_broadleaf_forest: return
+                    "Temperate Deciduous Broadleaf Forest";
+            case mechanics::vegetation_t::cold_deciduous_forest: return "Cold Deciduous Forest";
+            case mechanics::vegetation_t::cold_evergreen_needleleaf_forest: return "Cold Evergreen Needleleaf Forest";
+            case mechanics::vegetation_t::temperate_sclerophyll_woodland_and_shrubland: return
+                    "Temperate Sclerophyll Woodland and Shrubland";
+            case mechanics::vegetation_t::temperate_evergreen_needleleaf_open_woodland: return
+                    "Temperate Evergreen Needleleaf Open Woodland";
+            case mechanics::vegetation_t::tropical_savanna: return "Tropical Savanna";
+            case mechanics::vegetation_t::xerophytic_woods_scrub: return "Xerophytic Woods Scrub";
+            case mechanics::vegetation_t::steppe: return "Steppe";
+            case mechanics::vegetation_t::desert: return "Desert";
+            case mechanics::vegetation_t::graminoid_and_forb_tundra: return "Graminoid and Forb Tundra";
+            case mechanics::vegetation_t::erect_dwarf_shrub_tundra: return "Erect Dwarf Shrub Tundra";
+            case mechanics::vegetation_t::low_and_high_shrub_tundra: return "Low and High Shrub Tundra";
+            case mechanics::vegetation_t::prostrate_dwarf_shrub_tundra: return "Prostrate Dwarf Shrub Tundra";
+        }
+        return "No vegetation type";
+    }
+
+    inline auto soil_to_string(const mechanics::soil_t value) -> utils::zstring_view {
+        switch (value) {
+            case mechanics::soil_t::none: return "None";
+            case mechanics::soil_t::acrisols: return "Acrisols";
+            case mechanics::soil_t::albeluvisols: return "Albeluvisols";
+            case mechanics::soil_t::alisols: return "Alisols";
+            case mechanics::soil_t::andosols: return "Andosols";
+            case mechanics::soil_t::arenosols: return "Arenosols";
+            case mechanics::soil_t::calcisols: return "Calcisols";
+            case mechanics::soil_t::cambisols: return "Cambisols";
+            case mechanics::soil_t::chernozems: return "Chernozems";
+            case mechanics::soil_t::cryosols: return "Cryosols";
+            case mechanics::soil_t::durisols: return "Durisols";
+            case mechanics::soil_t::ferrasols: return "Ferrasols";
+            case mechanics::soil_t::fluvisols: return "Fluvisols";
+            case mechanics::soil_t::gleysols: return "Gleysols";
+            case mechanics::soil_t::gypsisols: return "Gypsisols";
+            case mechanics::soil_t::histosols: return "Histosols";
+            case mechanics::soil_t::kastanozems: return "Kastanozems";
+            case mechanics::soil_t::leptosols: return "Leptosols";
+            case mechanics::soil_t::lixisols: return "Lixisols";
+            case mechanics::soil_t::luvisols: return "Luvisols";
+            case mechanics::soil_t::nitisols: return "Nitisols";
+            case mechanics::soil_t::phaeozems: return "Phaeozems";
+            case mechanics::soil_t::planosols: return "Planosols";
+            case mechanics::soil_t::plinthosols: return "Plinthosols";
+            case mechanics::soil_t::podzols: return "Podzols";
+            case mechanics::soil_t::regosols: return "Regosols";
+            case mechanics::soil_t::solonchaks: return "Solonchaks";
+            case mechanics::soil_t::solonetz: return "Solonetz";
+            case mechanics::soil_t::stagnosols: return "Stagnosols";
+            case mechanics::soil_t::umbrisols: return "Umbrisols";
+            case mechanics::soil_t::vertisols: return "Vertisols";
+        }
+        return "No soil type";
+    }
+
+    auto elevation_to_string(const mechanics::elevation_level_t value) -> utils::zstring_view {
+        switch (value) {
+            case mechanics::elevation_level_t::lowland: return "Lowland";
+            case mechanics::elevation_level_t::midland: return "Midland";
+            case mechanics::elevation_level_t::highland: return "Highland";
+        }
+        return "No elevation level";
+    }
+
+    auto roughness_to_string(const mechanics::roughness_t value) -> utils::zstring_view {
+        switch (value) {
+            case mechanics::roughness_t::flat: return "Flat";
+            case mechanics::roughness_t::hilly: return "Hilly";
+            case mechanics::roughness_t::mountainous: return "Mountainous";
+        }
+        return "No roughness type";
+    }
+
+    auto sea_to_string(const mechanics::sea_t value) -> utils::zstring_view {
+        switch (value) {
+            case mechanics::sea_t::coast: return "Coast";
+            case mechanics::sea_t::lake: return "Lake";
+            case mechanics::sea_t::polar: return "Polar";
+            case mechanics::sea_t::northeasterly: return "Northeasterly";
+            case mechanics::sea_t::southeasterly: return "Southeasterly";
+            case mechanics::sea_t::sea: return "Sea";
+            case mechanics::sea_t::westerly: return "Westerly";
+            case mechanics::sea_t::doldrums: return "Doldrums";
+        }
+        return "No sea type";
+    }
+
     auto draw_date() -> void {
         static mechanics::date current_date;
         static std::string date_str = std::move(current_date.to_string());
@@ -24,12 +163,18 @@ namespace {
         ImGui::EndChild();
     }
 
-    auto draw_map_mode_selection(processing::simulation &sim) -> void {
-        constexpr static std::array<utils::zstring_view, 8UZ> map_mode_names = {
-            "Provinces", "Owner", "Koppen", "Elevation", "Vegetation", "Soil", "Sea", "River"
+    constexpr auto map_mode_names_array() {
+        using namespace utils;
+        return std::array{
+            "Provinces"_zsv, "Owner"_zsv, "Koppen"_zsv, "Elevation"_zsv, "Roughness"_zsv, "Vegetation"_zsv, "Soil"_zsv,
+            "Sea"_zsv, "River Size"_zsv
         };
+    }
+
+    auto draw_map_mode_selection(processing::simulation &sim) -> void {
+        constexpr static std::array map_mode_names = map_mode_names_array();
         static size_t current_item = static_cast<unsigned char>(mechanics::map_mode_t::provinces);
-        current_item = static_cast<unsigned char>(mechanics::map_mode.load());
+        current_item = static_cast<unsigned char>(mechanics::map_mode);
         if (ImGui::BeginChild("Map Mode", {250.0F, 50.0F})) {
             if (ImGui::BeginCombo("Map Mode", map_mode_names[current_item].str())) {
                 for (auto i = 0UZ; i < map_mode_names.size(); ++i) {
@@ -47,45 +192,57 @@ namespace {
         ImGui::EndChild();
     }
 
-    auto province_string(const mechanics::province &p) {
+    auto province_string(const mechanics::province &p) -> std::string {
         const auto color = p.base_color();
-        const auto koppen_string = koppen_to_string(p.koppen()).str();
-        if (p.sea() == mechanics::sea_t::none) {
+        if (p.type() == mechanics::location_type_t::province) {
             constexpr auto format_string = "Land\n"
                 "Color: {:X}\n"
-                "Climate: {}\n"
-                "Elevation: {}\n"
+                "Koppen: {}\n"
+                "Elevation: {} {}\n"
                 "Vegetation: {}\n"
-                "Soil: {}\n";
-            const auto elevation_string = elevation_to_string(p.elevation()).str();
-            const auto vegetation_string = vegetation_to_string(p.vegetation()).str();
-            const auto soil_string = soil_to_string(p.soil()).str();
-            return std::vformat(format_string, std::make_format_args(color,
+                "Soil: {}";
+            const auto [elevation, roughness, koppen, vegetation, soil] = p.properties<
+                mechanics::location_type_t::province>();
+            const auto koppen_string = koppen_to_string(koppen).str();
+            const auto roughness_string = roughness_to_string(roughness).str();
+            const auto elevation_string = elevation_to_string(elevation).str();
+            const auto vegetation_string = vegetation_to_string(vegetation).str();
+            const auto soil_string = soil_to_string(soil).str();
+            return std::format(format_string, color,
                 koppen_string,
-                elevation_string,
+                roughness_string, elevation_string,
                 vegetation_string,
-                soil_string));
+                soil_string);
         }
-        if (p.sea() == mechanics::sea_t::lake) {
-            constexpr auto format_string = "Lake\n"
-                "Color: {:X}\n"
-                "Climate: {}\n";
-            return std::vformat(format_string, std::make_format_args(color, koppen_string));
-        }
-        if (p.sea() == mechanics::sea_t::river) {
-            const auto river_size = static_cast<unsigned int>(p.value());
+        if (p.type() == mechanics::location_type_t::river) {
+            const auto [koppen, width] = p.properties<mechanics::location_type_t::river>();
+            const auto river_size = static_cast<unsigned int>(width);
             constexpr auto format_string = "River\n"
                 "Color: {:X}\n"
-                "River Size: {}\n"
-                "Climate: {}\n";
-            return std::vformat(format_string, std::make_format_args(color, river_size, koppen_string));
+                "Koppen: {}\n"
+                "River Size: {}";
+            const auto koppen_string = koppen_to_string(koppen).str();
+            return std::format(format_string, color,
+                koppen_string,
+                river_size);
+        }
+        const auto [sea_type, koppen] = p.properties<mechanics::location_type_t::sea>();
+        const auto sea_string = sea_to_string(sea_type).str();
+        if (sea_type == mechanics::sea_t::coast ||
+            sea_type == mechanics::sea_t::lake) {
+            constexpr auto format_string = "Sea\n"
+                "Color: {:X}\n"
+                "Koppen: {}\n"
+                "Type: {}";
+            const auto koppen_string = koppen_to_string(koppen).str();
+            return std::format(format_string, color,
+                koppen_string,
+                sea_string);
         }
         constexpr auto format_string = "Sea\n"
             "Color: {:X}\n"
-            "Wind Type: {}\n"
-            "Climate: {}\n";
-        const auto sea_string = sea_to_string(p.sea()).str();
-        return std::vformat(format_string, std::make_format_args(color, sea_string, koppen_string));
+            "Wind Type: {}";
+        return std::format(format_string, color, sea_string);
     }
 
     auto draw_hovered_province_info(const processing::simulation &sim) -> void {
@@ -121,7 +278,7 @@ namespace processing {
             static_cast<float>(map_image.height())));
         map_shader_.setUniform("selected_index", -1);
         map_shader_.setUniform("draw_outline", draw_outline_);
-        map_shader_.setUniform("dim", static_cast<float>(mechanics::province_colors.getSize().x));
+        map_shader_.setUniform("dim", static_cast<int>(mechanics::province_colors.getSize().x));
         map_shader_.setUniform("province_colors", mechanics::province_colors);
 
         if (!map_texture_.loadFromImage(
@@ -142,7 +299,9 @@ namespace processing {
         flags_shader_.setUniform("border_mask", sf::Shader::CurrentTexture);
         flags_shader_.setUniform("draw_crossings", draw_crossings_);
         flags_shader_.setUniform("draw_bridges", draw_bridges_);
-        flags_shader_.setUniform("tex_size", sf::Glsl::Vec2{static_cast<float>(map_image.width()), static_cast<float>(map_image.height())});
+        flags_shader_.setUniform("tex_size", sf::Glsl::Vec2{
+            static_cast<float>(map_image.width()), static_cast<float>(map_image.height())
+        });
         return true;
     }
 

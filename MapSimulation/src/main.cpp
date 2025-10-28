@@ -1,9 +1,15 @@
+#include <print>
+#include <stdexcept>
 #include "processing/simulation.hpp"
 
 auto main() -> int {
-    processing::simulation sim;
-
-    sim.start_simulation();
+    try {
+        processing::simulation sim;
+        sim.start_simulation();
+    } catch (std::runtime_error &e) {
+        std::println("Runtime error: {}", e.what());
+        return 1;
+    }
 
     return 0;
 }

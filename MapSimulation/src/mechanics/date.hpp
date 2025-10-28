@@ -1,20 +1,20 @@
-#pragma once
+#ifndef MECHANICS_DATE
+#define MECHANICS_DATE
 #include <chrono>
 #include <string>
-#include "tickable.hpp"
 
 namespace mechanics {
+    enum class tick_t : unsigned char {
+        day, month, year
+    };
+
     class date {
-        std::chrono::year_month_day time_;
-
-        date(std::chrono::year y, std::chrono::month m, std::chrono::day d);
-
-        explicit date(std::chrono::year_month_day ymd);
+        std::chrono::sys_days time_;
 
     public:
         date();
 
-        explicit date(int y, unsigned int m, unsigned int d);
+        date(const date &other) = default;
 
         [[nodiscard]] auto to_string() const -> std::string;
 
@@ -24,8 +24,11 @@ namespace mechanics {
 
         auto operator-(const date &other) const -> int;
 
+        auto operator+=(unsigned int n_days) -> date &;
+
         auto advance() -> tick_t;
 
-        auto operator==(const date & date) const -> bool;
+        auto operator==(const date &date) const -> bool;
     };
 }
+#endif

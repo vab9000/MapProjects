@@ -5,7 +5,7 @@ uniform vec2 size;
 uniform sampler2D province_colors;
 uniform int selected_index;
 uniform bool draw_outline;
-uniform float dim;
+uniform int dim;
 
 in vec2 tex_coord;
 in vec4 color;
@@ -18,8 +18,11 @@ int index_from_pixel(vec4 pixel) {
 
 vec4 color_for_province(vec4 pixel) {
     int index = index_from_pixel(pixel);
-    float index_float = mod(float(index), dim) / (dim - 1);
-    vec4 province_color = texture(province_colors, vec2(index_float, floor(float(index) / dim) / (dim - 1)));
+    float index_float = float(index % dim) / float(dim - 1);
+    if (index_float == 1.0 || index_float == 0.0) {
+
+    }
+    vec4 province_color = texture(province_colors, vec2(index_float, float(index / dim) / float(dim - 1)));
     return province_color;
 }
 
@@ -65,7 +68,7 @@ void main() {
     }
 
     if (index == selected_index && int(tex_coord.x * size.x + tex_coord.y * size.y) % 2 == 0) {
-        frag_color = color * province_color.brga;
+        frag_color = color * vec4(1.0 - province_color.brg, 1.0);
         return;
     }
     if (draw_outline && outline) {

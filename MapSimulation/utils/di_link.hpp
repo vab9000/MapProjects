@@ -1,4 +1,5 @@
-#pragma once
+#ifndef UTILS_DI_LINK
+#define UTILS_DI_LINK
 #include "reference.hpp"
 
 namespace utils {
@@ -26,9 +27,7 @@ namespace utils {
         /// Create a new link and link it to another object.
         /// @param value The owner object.
         /// @param other The link stored in the other object to connect to.
-        di_link(T &value, di_link<U, T> &other) : value_(value), link_(&other) {
-            other.link_ = this;
-        }
+        di_link(T &value, di_link<U, T> &other) : value_(value), link_(&other) { other.link_ = this; }
 
         di_link(di_link &&other) noexcept : value_(other.value_) {
             auto link = other.link_;
@@ -44,18 +43,12 @@ namespace utils {
             value_ = other.value_;
             auto link = other.link_;
             other.link_ = nullptr;
-            if (link != nullptr) {
-                link->link_ = this;
-            }
+            if (link != nullptr) { link->link_ = this; }
             link_ = link;
             return *this;
         }
 
-        ~di_link() {
-            if (link_ != nullptr) {
-                link_->link_ = nullptr;
-            }
-        }
+        ~di_link() { if (link_ != nullptr) { link_->link_ = nullptr; } }
 
         di_link(const di_link &) = delete;
 
@@ -87,3 +80,4 @@ namespace utils {
         }
     };
 }
+#endif
