@@ -14,6 +14,8 @@ A custom image editor for me to make maps to run with MapSimulation. It has spec
 
 All features are working as intended currently.
 
+![Alt text](MapEditor/readme/example.png)
+
 ### ProvinceGenerator
 
 An algorithmic generator of a map for MapSimulation. Created as a temporary stopgap, while I create a custom map using the editor.
