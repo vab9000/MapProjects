@@ -17,5 +17,41 @@ vec4 color_from_palette(vec4 pixel) {
 }
 
 void main() {
-    frag_color = vec4(color_from_palette(texture(tex, tex_coord.xy)).rgb, 1.0);
+    ivec2 texSize = textureSize(tex, 0);
+
+    vec4 center_px = texture(tex, tex_coord);
+    int center = index_from_pixel(center_px);
+
+    // Texture-space step equivalent to 1 screen pixel
+    vec2 dtx = vec2(abs(dFdx(tex_coord.x)), 0.0);
+    vec2 dty = vec2(0.0, abs(dFdy(tex_coord.y)));
+
+    bool edge = false;
+
+    vec2 offsets[4] = vec2[](
+    -dtx,
+    dtx,
+    -dty,
+    dty
+    );
+
+    for (int i = 0; i < 4; ++i) {
+        vec2 uv = tex_coord + offsets[i];
+
+        // Clamp to valid range
+        uv = clamp(uv, vec2(0.0), vec2(0.999999));
+
+        int neighbor = index_from_pixel(texture(tex, uv));
+
+        if (neighbor != center) {
+            edge = true;
+            break;
+        }
+    }
+
+    vec3 color = color_from_palette(center_px).rgb;
+    if (edge)
+    color = vec3(0.0);
+
+    frag_color = vec4(color, 1.0);
 }

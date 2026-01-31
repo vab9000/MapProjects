@@ -5,7 +5,8 @@
 #include <cstddef>
 #include <filesystem>
 #include <fstream>
-#include <istream>
+#include <iostream>
+#include <print>
 #include <sstream>
 #include <stb_image_write.h>
 #include <stdexcept>
@@ -21,34 +22,34 @@
 namespace logic {
     static auto save_properties(std::ofstream &file) {
         const auto properties = location::properties();
-        file << "PROPERTIES\n";
+        std::println(file, "PROPERTIES");
         for (const auto &[values, name] : properties) {
-            file << name << '\n';
-            file << values.size() << '\n';
+            std::println(file, "{}", name);
+            std::println(file, "{}", values.size());
             for (const auto &[color, value_name] : values) {
-                file << value_name << '\n';
-                file << static_cast<int>(color.at(0)) << ' '
-                    << static_cast<int>(color.at(1)) << ' '
-                    << static_cast<int>(color.at(2)) << ' '
-                    << static_cast<int>(color.at(3)) << '\n';
+                std::println(file, "{}", value_name);
+                std::println(file, "{} {} {} {}", static_cast<int>(color.at(0)),
+                    static_cast<int>(color.at(1)),
+                    static_cast<int>(color.at(2)),
+                    static_cast<int>(color.at(3)));
             }
         }
     }
 
     static auto save_locations(std::ofstream &file) {
-        file << "LOCATIONS\n";
+        std::println(file, "LOCATIONS");
         for (const auto &loc : location::locations()) {
-            file << "LOCATION\n";
-            file << loc.name() << '\n';
+            std::println(file, "LOCATION");
+            std::println(file, "{}", loc.name());
             const auto color = loc.base_color();
-            file << static_cast<int>(color.at(0)) << ' '
-                << static_cast<int>(color.at(1)) << ' '
-                << static_cast<int>(color.at(2)) << ' '
-                << static_cast<int>(color.at(3)) << '\n';
+            std::println(file, "{} {} {} {}", static_cast<int>(color.at(0)),
+                static_cast<int>(color.at(1)),
+                static_cast<int>(color.at(2)),
+                static_cast<int>(color.at(3)));
             const auto properties = location::properties();
             for (size_t i = 0; i < properties.size(); ++i) {
                 if (loc.prop_value(i) == 0) { continue; }
-                file << i << ": " << loc.prop_value(i) << '\n';
+                std::println(file, "{}: {}", i, loc.prop_value(i));
             }
         }
     }
@@ -191,6 +192,12 @@ namespace logic {
                 const auto loc_index = color_to_location.at(color_array);
                 location::locations_.at(loc_index).size_ += 1;
                 data.at(col + row * dims.at(0)) = loc_index;
+            }
+        }
+        for (const location &loc : location::locations_) {
+            if (loc.size_ == 0) {
+                location::free_locations_.emplace_back(loc.idx_);
+                std::println("Warning: Location '{}' has size 0 and has been marked as free.", loc.idx());
             }
         }
         canvas.edit(data, {0, 0}, dims.at(0));

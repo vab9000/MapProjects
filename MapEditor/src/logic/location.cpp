@@ -146,7 +146,6 @@ namespace logic {
         size_t idx = {};
         if (!free_locations_.empty()) {
             idx = free_locations_.back();
-            free_locations_.pop_back();
             locations_.at(idx).property_values_.resize(properties_.size(), 0);
             if (on_color_change_) {
                 const std::span<const location> locs = locations_;
@@ -156,6 +155,7 @@ namespace logic {
         }
         idx = locations_.size();
         locations_.emplace_back(idx);
+        free_locations_.emplace_back(idx);
         if (on_color_change_) {
             const std::span<const location> locs = locations_;
             on_color_change_(locs.subspan(idx, 1));
@@ -165,6 +165,9 @@ namespace logic {
 
     auto location::change_size(const size_t location_idx, const int delta) -> void {
         auto &loc = locations_.at(location_idx);
+        if (loc.size_ == 0 && delta >= 0) {
+            std::erase(free_locations_, loc.idx_);
+        }
         loc.size_ += delta;
         if (loc.size_ <= 0 && loc.idx_ != max_size_t) {
             loc.name_ = "";
