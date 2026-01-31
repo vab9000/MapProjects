@@ -1,57 +1,49 @@
 #pragma once
 #include <future>
 #include <SFML/Graphics.hpp>
-#include "drawing.hpp"
 #include "image.hpp"
-#include "window.hpp"
 #include "../mechanics/data.hpp"
 
 namespace processing {
     class simulation {
-        std::array<int, 2UZ> offset_{0, 0};
-        double zoom_ = 1.0;
-        std::array<int, 2UZ> previous_mouse_{0, 0};
+        inline static std::array<int, 2UZ> offset_{0, 0};
+        inline static auto zoom_ = 1.0;
+        inline static std::array<int, 2UZ> previous_mouse_{0, 0};
 
-        std::string loading_text_;
+        inline static std::string loading_text_{};
 
-        image map_image_;
+        inline static image map_image_{};
 
-        mechanics::province *selected_province_ = nullptr;
-        mechanics::province *hovered_province_ = nullptr;
+        inline static mechanics::province *hovered_province_ = nullptr;
 
-        mechanics::data &data_{mechanics::data::instance()};
+        inline static std::future<void> processing_{};
 
-        drawing drawer_{*this, loading_text_};
-        window window_{[this](const sf::Event &event) { this->handle_event(event); }};
-
-        std::future<void> processing_{};
-
-        bool mouse_down_ = false;
-        bool mouse_moved_ = false;
-        std::atomic_bool open_{true};
-        std::atomic_bool paused_{true};
-        std::atomic_bool loaded_{false};
+        inline static auto mouse_down_ = false;
+        inline static auto mouse_moved_ = false;
+        inline static std::atomic_bool open_{true};
+        inline static std::atomic_bool paused_{true};
+        inline static std::atomic_bool loaded_{false};
 
         // Start the game logic thread
-        auto start_processing() -> void;
+        static auto start_processing() -> void;
 
-        // Process event from the window
-        auto handle_event(const sf::Event &event) -> void;
-
-        auto check_process_thread() -> bool;
+        static auto check_process_thread() -> bool;
 
     public:
         // Run the simulation
-        auto start_simulation() -> void;
+        static auto start_simulation() -> void;
 
         // Transform coordinates from map to screen
-        auto transform_to_screen_coordinates(std::array<int, 4UZ> &coordinates) const -> void;
+        static auto transform_to_screen_coordinates(std::array<int, 4UZ> &coordinates) -> void;
 
         // Get the dimensions of the map
-        auto map_dimensions() const -> std::array<unsigned int, 2UZ>;
+        static auto map_dimensions() -> std::array<unsigned int, 2UZ>;
 
-        auto hovered_province() const -> mechanics::province *;
+        static auto hovered_province() -> mechanics::province *;
 
-        auto selected_province() const -> mechanics::province *;
+        // Process event from the window
+        static auto handle_event(const sf::Event &event) -> void;
+
+        static auto loading_text() -> const std::string &;
     };
 }

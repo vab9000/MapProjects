@@ -15,14 +15,21 @@ static std::random_device rd;
 static std::default_random_engine rng(rd());
 static std::uniform_real_distribution dis(0.0, 1.0);
 
-constexpr auto province_density = 10;
+constexpr auto province_density = 12;
 constexpr auto null_province = 0;
 
 using provinces_t = std::vector<std::vector<std::pair<int, std::pair<bool,
     bool>>>>;
 
+inline auto density(const int x, const int y, const image &density_image) -> unsigned int {
+    const auto density_color = density_image(x, y);
+    return density_color.r() + density_color.g() + density_color.b();
+}
+
 inline auto seed_provinces(int &filled_pixels, const image &base_map, provinces_t &provinces) -> int {
     auto next_id = 1;
+
+    // const image density_image{"images/density.png"};
 
     for (int i = province_density / 2; i < base_map.width(); i += province_density) {
         for (int j = province_density / 2; j < base_map.height(); j += province_density) {
@@ -36,7 +43,11 @@ inline auto seed_provinces(int &filled_pixels, const image &base_map, provinces_
                           position.second < 0 || position.second >= base_map.height())) {
                         if (provinces[position.first][position.second].first == null_province &&
                             !is_water(base_map(position.first, position.second))) {
+                            // if (density(position.first, position.second, density_image) == 0 && dis(rng) > 0.3) {
+                            //     break;
+                            // }
                             provinces[position.first][position.second].first = next_id;
+                            next_id++;
                             filled_pixels++;
                             break;
                         }
@@ -70,7 +81,12 @@ inline auto seed_provinces(int &filled_pixels, const image &base_map, provinces_
                             new_position = {i, j};
                         }
                         if (is_water(base_map(new_position.first, new_position.second))) { new_position = {i, j}; }
+                        // if (density(new_position.first, new_position.second, density_image) == 0 && dis(rng) > 0.3) {
+                        //     break;
+                        // }
                         provinces[new_position.first][new_position.second].first = next_id;
+                        next_id++;
+                        filled_pixels++;
                         break;
                     }
                 }
@@ -83,10 +99,13 @@ inline auto seed_provinces(int &filled_pixels, const image &base_map, provinces_
                 if (new_position.first < 0 || new_position.first >= base_map.width() ||
                     new_position.second < 0 || new_position.second >= base_map.height()) { new_position = {i, j}; }
                 if (is_water(base_map(new_position.first, new_position.second))) { new_position = {i, j}; }
+                // if (density(new_position.first, new_position.second, density_image) == 0 && dis(rng) > 0.3) {
+                //     continue;
+                // }
                 provinces[new_position.first][new_position.second].first = next_id;
+                next_id++;
+                filled_pixels++;
             }
-            next_id++;
-            filled_pixels++;
         }
     }
     return next_id;
@@ -96,10 +115,16 @@ enum class stage {
     land, rivers, ocean,
 };
 
+inline auto density(const image::image_color &color) -> int {
+    return color.r() + color.g() + color.b();
+}
+
 inline auto fill_provinces(int &filled_pixels, const image &base_map, provinces_t &provinces, const stage current_stage,
     const bool do_corners) -> void {
     auto changed = true;
     auto nudge = 0.8;
+
+    const image density_image{"images/density.png"};
 
     std::pair recent_changed_pixel = {0, 0};
     auto start = std::chrono::high_resolution_clock::now();
@@ -153,12 +178,16 @@ inline auto fill_provinces(int &filled_pixels, const image &base_map, provinces_
                     const int this_elevation = elevation(base_map(i, j));
                     const int neighbor_elevation = elevation(base_map(neighbor.first, neighbor.second));
 
+                    const int this_density = density(density_image(i, j));
+                    const int neighbor_density = density(density_image(neighbor.first, neighbor.second));
+                    const int density_difference = current_stage == stage::land ? std::abs(this_density - neighbor_density) : 0;
+
                     const int elevation_difference = this_elevation < 0 || neighbor_elevation < 0
                         ? 20
                         : std::abs(this_elevation - neighbor_elevation);
 
-                    if (constexpr auto randomness = 2;
-                        std::pow(dis(rng), nudge) < 1.0 / (randomness + elevation_difference * elevation_difference)) {
+                    if (constexpr auto randomness = 5.0;
+                        std::pow(dis(rng), nudge) < 1.0 / (randomness + elevation_difference * elevation_difference + density_difference)) {
                         provinces[neighbor.first][neighbor.second].first = provinces[i][j].first;
                         filled_pixels++;
                         recent_changed_pixel = neighbor;
@@ -197,7 +226,7 @@ inline auto merge_provinces(const image &base_map, std::unordered_map<int, int> 
                 province_sizes.at(provinces[i][j].first) < min_province_size) {
                 if (is_water(base_map(i, j))) { continue; }
 
-                const std::function is_valid_pixel = [&](const int x, const int y) {
+                const std::function<bool(int, int)> is_valid_pixel = [&](const int x, const int y) {
                     if (x < 0 || x >= base_map.width() ||
                         y < 0 || y >= base_map.height()) { return false; }
                     if (is_water(base_map(x, y))) { return false; }
@@ -265,8 +294,8 @@ inline auto generate_provinces(const image &w_img, const image &base_map) -> voi
     const std::unordered_map<int, int> province_sizes = generate_province_sizes(base_map, provinces);
 
     std::unordered_map<int, int> province_merges;
-    merge_provinces(base_map, province_merges, province_sizes, provinces, 1, 30);
-    merge_provinces(base_map, province_merges, province_sizes, provinces, 75, 10);
+    merge_provinces(base_map, province_merges, province_sizes, provinces, 1, 25);
+    merge_provinces(base_map, province_merges, province_sizes, provinces, 75, 20);
 
     for (auto i = 0; i < base_map.width(); ++i) {
         for (auto j = 0; j < base_map.height(); ++j) {

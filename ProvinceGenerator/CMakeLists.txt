@@ -38,11 +38,24 @@ set_target_properties(SeaTileGenerator PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${CMAKE_BINARY_DIR}/bin
 )
 
+file (GLOB_RECURSE SEA_MAP_GENERATOR_SOURCE_FILES src/sea_map_generator/*.cpp)
+
+add_executable(SeaMapGenerator ${SEA_MAP_GENERATOR_SOURCE_FILES} ${COMMON_SOURCE_FILES})
+
+set_target_properties(SeaMapGenerator PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/bin
+        RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/bin
+        RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL ${CMAKE_BINARY_DIR}/bin
+        RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${CMAKE_BINARY_DIR}/bin
+)
+
 target_include_directories(ProvinceGenerator PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs/stb)
 
 target_include_directories(ProvinceFilesGenerator PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs/stb)
 
 target_include_directories(SeaTileGenerator PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs/stb)
+
+target_include_directories(SeaMapGenerator PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs/stb)
 
 file(GLOB_RECURSE IMAGES "images/*")
 

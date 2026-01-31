@@ -4,12 +4,8 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/System.hpp>
 
-namespace processing {
-    window::window(std::function<void(const sf::Event &)> &&event_func) : window_(sf::RenderWindow(
-            sf::VideoMode(sf::Vector2u(800U, 600U)),
-            "Map Simulation")),
-        gui_area_{0, 0, 250, 600},
-        event_func_(std::move(event_func)) {
+namespace ui {
+    auto window::init_window() -> void {
         window_.setFramerateLimit(60U);
         // window_.setVerticalSyncEnabled(true);
         if (!ImGui::SFML::Init(window_, false)) { throw std::runtime_error("Failed to initialize ImGui-SFML"); }
@@ -18,7 +14,7 @@ namespace processing {
         if (!ImGui::SFML::UpdateFontTexture()) { throw std::runtime_error("Failed to load font"); }
     }
 
-    auto window::window_dimensions() const -> sf::Vector2u { return window_.getSize(); }
+    auto window::window_dimensions() -> sf::Vector2u { return window_.getSize(); }
 
     auto window::stop_event_loop() -> void { if (window_.isOpen()) { window_.close(); } }
 

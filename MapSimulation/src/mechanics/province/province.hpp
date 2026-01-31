@@ -98,16 +98,13 @@ namespace mechanics {
         // Get the base color of the province
         [[nodiscard]] auto base_color() const -> unsigned int;
 
-        // Get the color of the province based on the current map mode
-        [[nodiscard]] auto color() const -> unsigned int;
-
         template<location_type_t T>
         [[nodiscard]] auto properties() const -> const location_properties_t::type<T> &;
 
         [[nodiscard]] auto type() const -> location_type_t;
 
         // Get the distance to another province
-        [[nodiscard]] auto distance(province &other) const -> float;
+        [[nodiscard]] auto distance(const province &other) const -> float;
 
         // Find the shortest path to another province using Dijkstra's algorithm
         template<typename T>
@@ -115,6 +112,12 @@ namespace mechanics {
             const province_connection_func<bool, T> &accessible,
             const province_connection_func<float, T> &cost_modifier,
             const T &param) -> std::vector<utils::ref<province>>;
+
+        template<typename T>
+        [[nodiscard]] auto path_to(const province &destination,
+            const province_connection_func<bool, T> &accessible,
+            const province_connection_func<float, T> &cost_modifier,
+            const T &param) const -> std::vector<utils::ref<const province>>;
 
         // Get the bounds of the province as an array of [min_x, min_y, max_x, max_y]
         [[nodiscard]] auto bounds() const -> const std::array<unsigned int, 4UZ> &;
@@ -188,6 +191,54 @@ namespace mechanics {
         }
 
         std::vector<utils::ref<province>> path;
+        if (!reached) { return path; }
+
+        utils::ref current_pos = destination;
+        while (previous.contains(current_pos)) {
+            path.push_back(current_pos);
+            current_pos = previous.at(current_pos);
+        }
+
+        return path;
+    }
+
+    template<typename T>
+    auto province::path_to(const province &destination, const province_connection_func<bool, T> &accessible,
+        const province_connection_func<float, T> &cost_modifier,
+        const T &param) const -> std::vector<utils::ref<const province>> {
+        std::map<utils::ref<const province>, float> distances;
+        std::map<utils::ref<const province>, utils::ref<const province>> previous;
+        std::priority_queue<std::pair<float, utils::ref<const province>>, std::vector<std::pair<float,
+            utils::ref<const province>>>, std::greater<>> paths;
+
+        distances.emplace(*this, 0.0F);
+        paths.emplace(0.0F, *this);
+
+        auto reached = false;
+
+        while (!paths.empty()) {
+            auto [current_distance, current_province] = paths.top();
+            paths.pop();
+
+            if (&current_province.get() == &destination) {
+                reached = true;
+                break;
+            }
+
+            for (const auto &[neighbor_province, n_info] : current_province.get().neighbors()) {
+                auto is_accessible = accessible({*this, neighbor_province.get()}, param);
+                auto c_modifier = cost_modifier({*this, neighbor_province.get()}, param);
+                if (!is_accessible || c_modifier < 0) { continue; }
+                const float new_distance = current_distance + c_modifier
+                                           * n_info.distance * (n_info.impassable ? 10.0F : 1.0F);
+                if (distances.contains(neighbor_province) && new_distance >= distances[neighbor_province]) { continue; }
+                distances.insert_or_assign(neighbor_province, new_distance);
+                previous.insert_or_assign(neighbor_province, current_province);
+                paths.emplace(new_distance, neighbor_province);
+            }
+        }
+
+        std::vector<utils::ref<const province>> path;
         if (!reached) { return path; }
 
         utils::ref current_pos = destination;

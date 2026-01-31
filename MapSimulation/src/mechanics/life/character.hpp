@@ -4,9 +4,9 @@
 #include <numbered.hpp>
 #include <reference.hpp>
 #include <magic_enum/magic_enum_containers.hpp>
-#include "../ai/ai.hpp"
-#include "../date.hpp"
 #include "character_properties.hpp"
+#include "../date.hpp"
+#include "../ai/ai.hpp"
 
 namespace mechanics {
     class army;

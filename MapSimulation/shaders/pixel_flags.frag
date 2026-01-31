@@ -40,5 +40,4 @@ void main() {
         frag_color = color * vec4(0.0, 0.0, 0.0, 0.3);
         return;
     }
-    frag_color = color * vec4(0.0, 0.0, 0.0, 0.0);
 }

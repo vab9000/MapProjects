@@ -144,18 +144,18 @@ auto province::set_elevation(const std::vector<unsigned int> &elevation_colors) 
     average_elevation_ = average_elevation;
 
     if (average_elevation_ < 70) {
-        if (roughness_ < 15) { elevation_ = elevation::flat_lowland; }
-        else if (roughness_ < 30) { elevation_ = elevation::hill_lowland; }
+        if (roughness_ < 10) { elevation_ = elevation::flat_lowland; }
+        else if (roughness_ < 25) { elevation_ = elevation::hill_lowland; }
         else { elevation_ = elevation::mountain_lowland; }
     }
-    else if (average_elevation_ < 300) {
-        if (roughness < 25) { elevation_ = elevation::flat_midland; }
-        else if (roughness < 50) { elevation_ = elevation::hill_midland; }
+    else if (average_elevation_ < 200) {
+        if (roughness < 15) { elevation_ = elevation::flat_midland; }
+        else if (roughness < 30) { elevation_ = elevation::hill_midland; }
         else { elevation_ = elevation::mountain_midland; }
     }
     else {
-        if (roughness < 35) { elevation_ = elevation::flat_highland; }
-        else if (roughness < 70) { elevation_ = elevation::hill_highland; }
+        if (roughness < 20) { elevation_ = elevation::flat_highland; }
+        else if (roughness < 35) { elevation_ = elevation::hill_highland; }
         else { elevation_ = elevation::mountain_highland; }
     }
 }
@@ -291,13 +291,13 @@ auto province::impassable_neighbors(const image &base_image) const -> std::vecto
                                                          if (color_is_water(color)) { return sum + average_elevation_; }
                                                          return sum + color.r() + color.g() + color.b();
                                                      }) / static_cast<double>(neighbor_num_points);
-        if (abs(border_elevation - neighbor_border_elevation) > average_elevation_ / 10.0 + 10 || abs(
-                border_elevation - neighbor_border_elevation) > neighbor->average_elevation_ / 10.0 + 10) {
+        if (abs(border_elevation - neighbor_border_elevation) > average_elevation_ / 10.0 + 15 || abs(
+                border_elevation - neighbor_border_elevation) > neighbor->average_elevation_ / 10.0 + 15) {
             impassable.push_back(neighbor);
             continue;
         }
-        if (border_elevation > average_elevation_ * 1.3 + 15 || neighbor_border_elevation > neighbor->average_elevation_
-            * 1.3 + 15) { impassable.push_back(neighbor); }
+        if (border_elevation > average_elevation_ + 30 || neighbor_border_elevation > neighbor->average_elevation_
+            + 30) { impassable.push_back(neighbor); }
     }
     return impassable;
 }

@@ -7,7 +7,7 @@
 #include <ranges>
 #include "image.hpp"
 #include "../mechanics/data.hpp"
-#include "../mechanics/map_mode.hpp"
+#include "../ui/map_view.hpp"
 
 namespace {
     enum class koppen_value_t : unsigned int {
@@ -260,7 +260,7 @@ namespace {
         return props;
     }
 
-    auto load_provinces(mechanics::data &d) -> void {
+    auto load_provinces() -> void {
         std::ifstream province_file("assets/provinces.txt");
         if (!province_file.is_open()) { throw std::runtime_error("Failed to open province file: " "provinces.txt"); }
         while (!province_file.eof()) {
@@ -282,7 +282,7 @@ namespace {
             unsigned int soil_value{};
             province_file >> soil_value;
             std::getline(province_file, ignore);
-            d.emplace_province(properties_from_values(static_cast<koppen_value_t>(koppen_value),
+            mechanics::data::emplace_province(properties_from_values(static_cast<koppen_value_t>(koppen_value),
                 static_cast<elevation_t>(elevation_value),
                 static_cast<vegetation_value_t>(vegetation_value),
                 static_cast<soil_value_t>(soil_value)), color);
@@ -306,7 +306,7 @@ namespace {
         throw std::runtime_error("Invalid sea_t value");
     }
 
-    auto load_seas(mechanics::data &d) -> void {
+    auto load_seas() -> void {
         std::ifstream sea_file("assets/sea_tiles.txt");
         if (!sea_file.is_open()) { throw std::runtime_error("Failed to open sea tiles file: " "sea_tiles.txt"); }
         while (!sea_file.eof()) {
@@ -318,14 +318,14 @@ namespace {
             std::getline(sea_file, ignore, ':');
             unsigned int sea_value{};
             sea_file >> sea_value;
-            d.emplace_province(mechanics::sea_properties_t{
+            mechanics::data::emplace_province(mechanics::sea_properties_t{
                 .sea_type = convert_sea_types(static_cast<sea_value_t>(sea_value))
             }, color);
         }
         sea_file.close();
     }
 
-    auto load_river_tiles(mechanics::data &d) -> void {
+    auto load_river_tiles() -> void {
         std::ifstream river_tiles_file("assets/river_tiles.txt");
         if (!river_tiles_file.is_open()) {
             throw std::runtime_error("Failed to open river tiles file: " "river_tiles.txt");
@@ -339,12 +339,12 @@ namespace {
             std::getline(river_tiles_file, ignore, ':');
             unsigned int river_value{};
             river_tiles_file >> river_value;
-            d.emplace_province(mechanics::river_properties_t{.width = static_cast<unsigned char>(river_value)}, color);
+            mechanics::data::emplace_province(mechanics::river_properties_t{.width = static_cast<unsigned char>(river_value)}, color);
         }
         river_tiles_file.close();
     }
 
-    auto load_river_borders(const mechanics::data &d) -> void {
+    auto load_river_borders() -> void {
         std::ifstream rivers_file("assets/rivers.txt");
         if (!rivers_file.is_open()) { throw std::runtime_error("Failed to open rivers file: " "rivers.txt"); }
         while (!rivers_file.eof()) {
@@ -359,13 +359,13 @@ namespace {
             std::getline(rivers_file, ignore, ':');
             unsigned int river_value{};
             rivers_file >> river_value;
-            d.province_at(color).add_river_neighbor(d.province_at(neighbor_color),
+            mechanics::data::province_at(color).add_river_neighbor(mechanics::data::province_at(neighbor_color),
                 static_cast<unsigned char>(river_value));
         }
         rivers_file.close();
     }
 
-    auto load_impassable_neighbors(const mechanics::data &d) -> void {
+    auto load_impassable_neighbors() -> void {
         std::ifstream impassable_file("assets/impassable_crossings.txt");
         if (!impassable_file.is_open()) {
             throw std::runtime_error("Failed to open impassable neighbors file: " "impassable_crossings.txt");
@@ -379,7 +379,7 @@ namespace {
             std::getline(impassable_file, ignore, ':');
             unsigned int neighbor_color{};
             impassable_file >> neighbor_color;
-            d.province_at(color).add_impassable_neighbor(d.province_at(neighbor_color));
+            mechanics::data::province_at(color).add_impassable_neighbor(mechanics::data::province_at(neighbor_color));
         }
         impassable_file.close();
     }
@@ -387,14 +387,14 @@ namespace {
     auto process_pixel(
         std::unordered_map<utils::ref<mechanics::province>, std::vector<std::array<unsigned int, 2UZ>>, utils::ref<
             mechanics::province>::hash> &pixels_by_province, const processing::image &map_image,
-        const mechanics::data &d, const unsigned int color, const std::array<unsigned int, 2UZ> &position) -> void {
-        auto &this_province = d.province_at(color);
+        const unsigned int color, const std::array<unsigned int, 2UZ> &position) -> void {
+        auto &this_province = mechanics::data::province_at(color);
         this_province.expand_bounds(position);
         pixels_by_province[this_province].push_back(position);
 
         if (this_province.type() == mechanics::location_type_t::sea || this_province.type() ==
             mechanics::location_type_t::river) {
-            set_pixel_flags({position[0UZ], position[1UZ]}, mechanics::pixel_flag_t::water, false);
+            ui::map_view::set_pixel_flags({position[0UZ], position[1UZ]}, ui::pixel_flag_t::water, false);
         }
 
         auto impassable_neighbor = false;
@@ -409,7 +409,7 @@ namespace {
                     nj >= map_image.height()) { return; }
                 const auto neighbor_color = map_image.color(ni, nj);
                 if (neighbor_color == color) { return; }
-                auto &neighbor = d.province_at(neighbor_color);
+                auto &neighbor = mechanics::data::province_at(neighbor_color);
                 this_province.add_neighbor(neighbor);
                 if (!impassable_neighbor && this_province.neighbors().at(neighbor).impassable) {
                     impassable_neighbor = true;
@@ -417,29 +417,29 @@ namespace {
             });
         });
         if (impassable_neighbor) {
-            set_pixel_flags({position[0UZ], position[1UZ]}, mechanics::pixel_flag_t::impassable, false);
+            ui::map_view::set_pixel_flags({position[0UZ], position[1UZ]}, ui::pixel_flag_t::impassable, false);
         }
     }
 }
 
 namespace processing {
-    auto load_image(mechanics::data &d, image &map_image, std::string &loading_text) -> void {
+    auto load_image(image &map_image, std::string &loading_text) -> void {
         loading_text = "Loading provinces file...";
-        load_provinces(d);
+        load_provinces();
 
         loading_text = "Loading sea tiles file...";
-        load_seas(d);
+        load_seas();
 
         loading_text = "Loading river tiles file...";
-        load_river_tiles(d);
+        load_river_tiles();
 
-        d.lock_provinces();
+        mechanics::data::lock_provinces();
 
         loading_text = "Loading rivers file...";
-        load_river_borders(d);
+        load_river_borders();
 
         loading_text = "Loading impassable neighbors file...";
-        load_impassable_neighbors(d);
+        load_impassable_neighbors();
 
         map_image = image{"assets/provinces_generated.png"};
 
@@ -447,16 +447,16 @@ namespace processing {
             mechanics::province>::hash> pixels_by_province;
 
         loading_text = "Processing pixels...";
-        mechanics::set_pixel_flags_size(map_image.width(), map_image.height());
+        ui::map_view::set_pixel_flags_size(map_image.width(), map_image.height());
 
         std::ranges::for_each(std::views::iota(0U, map_image.height()), [&](const unsigned int j) {
             std::ranges::for_each(std::views::iota(0U, map_image.width()), [&](const unsigned int i) {
-                process_pixel(pixels_by_province, map_image, d, map_image.color(i, j), {i, j});
+                process_pixel(pixels_by_province, map_image, map_image.color(i, j), {i, j});
             });
             loading_text = "Processing pixels..." + std::to_string((j * 100U) / map_image.height()) + "%";
         });
 
-        auto &province_values = d.provinces();
+        auto &province_values = mechanics::data::provinces();
 
         loading_text = "Finalizing provinces...";
         std::for_each(std::execution::unseq, province_values.begin(), province_values.end(),

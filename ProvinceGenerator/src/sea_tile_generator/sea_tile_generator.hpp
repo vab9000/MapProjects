@@ -168,7 +168,7 @@ inline auto spread_ocean_tiles(const image &base_map, sea_tile_id_map &sea_tile_
                         if (dx == 0 && dy == 0) {
                             continue;
                         }
-                        if (do_corners && (dx != 0 && dy != 0)) {
+                        if (!do_corners && dx != 0 && dy != 0) {
                             continue;
                         }
                         const int ni = i + dx;

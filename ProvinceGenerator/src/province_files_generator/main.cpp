@@ -171,6 +171,9 @@ inline auto load_vegetation(const image &base_map, provinces_map &provinces,
                         valid_vegetation_color(new_color)) {
                         vegetation_data[color].push_back(static_cast<unsigned int>(new_color));
                     }
+                    else {
+                        vegetation_data[color].push_back(0);
+                    }
                 }
                 else { vegetation_data[color].push_back(static_cast<unsigned int>(vegetation_color)); }
             }
@@ -268,11 +271,11 @@ inline auto find_river(
         }
     };
 
-    for (const auto &[x, y] : search_province->outline().at(const_cast<province * const>(neighbor))) {
+    for (const auto &[x, y] : search_province->outline().at(neighbor)) {
         if (valid_river_color(river_image(x, y))) { if (data.insert({x, y}).second) { search_neighbors(x, y); } }
     }
 
-    for (const auto &[x, y] : neighbor->outline().at(const_cast<province * const>(search_province))) {
+    for (const auto &[x, y] : neighbor->outline().at(search_province)) {
         if (valid_river_color(river_image(x, y))) { if (data.insert({x, y}).second) { search_neighbors(x, y); } }
     }
 
@@ -397,7 +400,7 @@ inline auto find_entire_river(const image &base_map, int x,
     std::unordered_set<std::pair<int, int>, hash_coords> river_points;
     river_points.insert({x, y});
 
-    const std::function valid_river_color = [](const image::image_color color) {
+    const std::function<bool(image::image_color)> valid_river_color = [](const image::image_color color) {
         return color.b() != 0 && color.r() == 0 && color.g() == 0;
     };
 

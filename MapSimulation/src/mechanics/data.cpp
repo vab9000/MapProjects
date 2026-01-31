@@ -3,9 +3,7 @@
 #include <execution>
 
 namespace mechanics {
-    auto data::current_date() const -> const date & { return current_date_; }
-
-    auto data::provinces() const -> const std::vector<province> & { return provinces_; }
+    auto data::current_date() -> const date & { return current_date_; }
 
     auto data::provinces() -> std::vector<province> & { return provinces_; }
 
@@ -13,7 +11,7 @@ namespace mechanics {
         for (auto &province : provinces_) { provinces_map_.emplace(province.base_color(), province); }
     }
 
-    auto data::province_at(const unsigned int color) const -> province & { return provinces_map_.at(color); }
+    auto data::province_at(const unsigned int color) -> province & { return provinces_map_.at(color); }
 
     auto data::add_event(event &&e) -> void { events_.emplace(std::make_unique<event>(std::move(e))); }
 
@@ -31,10 +29,5 @@ namespace mechanics {
             [tick_type](const std::unique_ptr<character> &c) { if (c != nullptr) { c->tick(tick_type); } });
         std::for_each(std::execution::seq, characters_.begin(), characters_.end(),
             [](const std::unique_ptr<character> &c) { if (c != nullptr) { c->run_ai(); } });
-    }
-
-    auto data::instance() -> data & {
-        static data instance;
-        return instance;
     }
 }

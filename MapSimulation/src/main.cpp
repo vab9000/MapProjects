@@ -4,8 +4,7 @@
 
 auto main() -> int {
     try {
-        processing::simulation sim;
-        sim.start_simulation();
+        processing::simulation::start_simulation();
     } catch (std::runtime_error &e) {
         std::println("Runtime error: {}", e.what());
         return 1;

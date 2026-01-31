@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MECHANICS_ACTION_BASE
+#define MECHANICS_ACTION_BASE
 
 namespace mechanics {
     class action_base {
@@ -12,3 +13,4 @@ namespace mechanics {
         virtual auto operator()() const -> void = 0;
     };
 }
+#endif

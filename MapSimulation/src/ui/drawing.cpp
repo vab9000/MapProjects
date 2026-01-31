@@ -4,10 +4,10 @@
 #include <imgui.h>
 #include <ranges>
 #include <zstring_view.hpp>
-#include "image.hpp"
-#include "simulation.hpp"
-#include "../mechanics/map_mode.hpp"
+#include "map_view.hpp"
 #include "../mechanics/province/province.hpp"
+#include "../processing/image.hpp"
+#include "../processing/simulation.hpp"
 
 namespace {
     auto koppen_to_string(const mechanics::koppen_t value) -> utils::zstring_view {
@@ -154,7 +154,7 @@ namespace {
         static mechanics::date current_date;
         static std::string date_str = std::move(current_date.to_string());
         if (ImGui::BeginChild("Date", {200.0F, 50.0F}, ImGuiChildFlags_AutoResizeY)) {
-            if (const auto &date = mechanics::data::instance().current_date(); date != current_date) {
+            if (const auto &date = mechanics::data::current_date(); date != current_date) {
                 current_date = date;
                 date_str = std::move(date.to_string());
             }
@@ -165,24 +165,25 @@ namespace {
 
     constexpr auto map_mode_names_array() {
         using namespace utils;
-        return std::array{
+        return std::array {
             "Provinces"_zsv, "Owner"_zsv, "Koppen"_zsv, "Elevation"_zsv, "Roughness"_zsv, "Vegetation"_zsv, "Soil"_zsv,
             "Sea"_zsv, "River Size"_zsv
         };
     }
 
-    auto draw_map_mode_selection(processing::simulation &sim) -> void {
+    auto draw_map_mode_selection() -> void {
         constexpr static std::array map_mode_names = map_mode_names_array();
-        static size_t current_item = static_cast<unsigned char>(mechanics::map_mode_t::provinces);
-        current_item = static_cast<unsigned char>(mechanics::map_mode);
+        static_assert(map_mode_names.size() == magic_enum::enum_count<ui::map_mode_t>());
+        static size_t current_item = static_cast<unsigned char>(ui::map_mode_t::provinces);
+        current_item = static_cast<unsigned char>(ui::map_view::map_mode);
         if (ImGui::BeginChild("Map Mode", {250.0F, 50.0F})) {
             if (ImGui::BeginCombo("Map Mode", map_mode_names[current_item].str())) {
                 for (auto i = 0UZ; i < map_mode_names.size(); ++i) {
                     const bool is_selected = current_item == i;
                     if (ImGui::Selectable(map_mode_names[i].str(), is_selected)) {
                         current_item = i;
-                        mechanics::map_mode = static_cast<mechanics::map_mode_t>(i);
-                        mechanics::update_all_province_colors();
+                        ui::map_view::map_mode = static_cast<ui::map_mode_t>(i);
+                        ui::map_view::update_all_province_colors();
                     }
                     if (is_selected) { ImGui::SetItemDefaultFocus(); }
                 }
@@ -245,8 +246,8 @@ namespace {
         return std::format(format_string, color, sea_string);
     }
 
-    auto draw_hovered_province_info(const processing::simulation &sim) -> void {
-        const auto hovered_province = sim.hovered_province();
+    auto draw_hovered_province_info() -> void {
+        const auto hovered_province = processing::simulation::hovered_province();
         if (hovered_province == nullptr) { return; }
         const auto info = province_string(*hovered_province);
         auto size = ImGui::CalcTextSize(info.c_str(), nullptr, false, 200.0F);
@@ -267,19 +268,16 @@ namespace {
     }
 }
 
-namespace processing {
-    drawing::drawing(simulation &simulation, const std::string &loading_text) : simulation_(simulation),
-        loading_text_(loading_text), flags_sprite_{mechanics::pixel_flags} {}
-
-    auto drawing::init_sprites(const image &map_image, const std::vector<unsigned char> &bytes) -> bool {
+namespace ui {
+    auto drawing::init_sprites(const processing::image &map_image, const std::vector<unsigned char> &bytes) -> bool {
         if (!map_shader_.loadFromFile("shaders/map.vert", "shaders/map.frag")) { return false; }
         map_shader_.setUniform("tex", sf::Shader::CurrentTexture);
         map_shader_.setUniform("size", sf::Vector2f(static_cast<float>(map_image.width()),
             static_cast<float>(map_image.height())));
         map_shader_.setUniform("selected_index", -1);
         map_shader_.setUniform("draw_outline", draw_outline_);
-        map_shader_.setUniform("dim", static_cast<int>(mechanics::province_colors.getSize().x));
-        map_shader_.setUniform("province_colors", mechanics::province_colors);
+        map_shader_.setUniform("dim", static_cast<int>(map_view::province_colors.getSize().x));
+        map_shader_.setUniform("province_colors", map_view::province_colors);
 
         if (!map_texture_.loadFromImage(
             sf::Image(sf::Vector2u(map_image.width(), map_image.height()), bytes.data()))) { return false; }
@@ -289,7 +287,7 @@ namespace processing {
             {static_cast<int>(map_image.width()), static_cast<int>(map_image.height())}
         });
 
-        flags_sprite_.setTexture(mechanics::pixel_flags);
+        flags_sprite_.setTexture(map_view::pixel_flags);
         flags_sprite_.setTextureRect({
             {0, 0},
             {static_cast<int>(map_image.width()), static_cast<int>(map_image.height())}
@@ -314,23 +312,23 @@ namespace processing {
         flags_sprite_.setScale(sf::Vector2f(zoom_f, zoom_f));
     }
 
-    auto drawing::draw_loading_message(sf::RenderWindow &) const -> void {
+    auto drawing::draw_loading_message(sf::RenderWindow &) -> void {
         ImGui::SetNextWindowPos(ImVec2(0.0F, 0.0F));
         ImGui::SetNextWindowSize(ImVec2(500.0F, 100.0F));
-        if (ImGui::Begin("Loading")) { ImGui::TextWrapped("%s", loading_text_.c_str()); }
+        if (ImGui::Begin("Loading")) { ImGui::TextWrapped("%s", loading_text.c_str()); }
         ImGui::End();
     }
 
     auto drawing::draw_map(sf::RenderWindow &window) -> void {
         static int selected_index = -1;
-        if (simulation_.selected_province() == nullptr) {
+        if (map_view::selected_province() == nullptr) {
             if (constexpr auto new_index = -1; new_index != selected_index) {
                 selected_index = new_index;
                 map_shader_.setUniform("selected_index", new_index);
             }
         }
         else {
-            if (const auto new_index = static_cast<int>(simulation_.selected_province()->id());
+            if (const auto new_index = static_cast<int>(map_view::selected_province()->id());
                 new_index != selected_index) {
                 selected_index = new_index;
                 map_shader_.setUniform("selected_index", new_index);
@@ -368,10 +366,10 @@ namespace processing {
             ImGui::Spacing();
             draw_checkboxes();
             ImGui::Spacing();
-            draw_map_mode_selection(simulation_);
+            draw_map_mode_selection();
             ImGui::Spacing();
         }
         ImGui::End();
-        draw_hovered_province_info(simulation_);
+        draw_hovered_province_info();
     }
 }

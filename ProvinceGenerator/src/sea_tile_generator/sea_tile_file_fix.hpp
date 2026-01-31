@@ -120,9 +120,9 @@ inline auto gen_types(const image &map_image, const image &base_image) -> std::u
             ? types[color] = sea_tile_t::polar
             : average_y < base_image.height() / 180 * 60
             ? types[color] = sea_tile_t::westerly
-            : average_y < base_image.height() / 180 * 80
+            : average_y < base_image.height() / 180 * 85
             ? types[color] = sea_tile_t::northeasterly
-            : average_y < base_image.height() / 180 * 100
+            : average_y < base_image.height() / 180 * 95
             ? types[color] = sea_tile_t::doldrums
             : average_y < base_image.height() / 180 * 120
             ? types[color] = sea_tile_t::southeasterly

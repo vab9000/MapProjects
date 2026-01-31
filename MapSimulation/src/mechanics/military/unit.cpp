@@ -2,9 +2,9 @@
 #include <numeric>
 #include <utility>
 #include "army.hpp"
-#include "../society/tag.hpp"
 #include "../life/character.hpp"
 #include "../province/province.hpp"
+#include "../society/tag.hpp"
 
 namespace mechanics {
     unit::unit(army &parent_army, province &location) : parent_army_(parent_army),
@@ -84,7 +84,6 @@ namespace mechanics {
         location_.get().remove_unit(*this);
         location_ = path_.back();
         location_.get().add_unit(*this);
-        for (auto &p : pops_) { p.get().set_location(location_.get()); }
         path_.pop_back();
         travel_progress_ = 0.0F;
     }

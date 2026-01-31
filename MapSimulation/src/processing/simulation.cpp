@@ -3,15 +3,16 @@
 #include <future>
 #include <ranges>
 #include "load_image.hpp"
+#include "../ui/drawing.hpp"
+#include "../ui/map_view.hpp"
+#include "../ui/window.hpp"
 
 namespace processing {
-    auto simulation::map_dimensions() const -> std::array<unsigned int, 2UZ> {
+    auto simulation::map_dimensions() -> std::array<unsigned int, 2UZ> {
         return {map_image_.width(), map_image_.height()};
     }
 
-    auto simulation::hovered_province() const -> mechanics::province * { return hovered_province_; }
-
-    auto simulation::selected_province() const -> mechanics::province * { return selected_province_; }
+    auto simulation::hovered_province() -> mechanics::province * { return hovered_province_; }
 
     auto simulation::check_process_thread() -> bool {
         if (processing_.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
@@ -23,20 +24,20 @@ namespace processing {
 
     auto simulation::start_processing() -> void {
         auto load_data = [&]() {
-            window_.add_render_func([this](sf::RenderWindow &window) { drawer_.draw_loading_message(window); });
+            ui::window::add_render_func([](sf::RenderWindow &window) { ui::drawing::draw_loading_message(window); });
 
-            load_image(data_, map_image_, loading_text_);
+            load_image(map_image_, loading_text_);
 
-            mechanics::set_province_colors_size();
-            mechanics::update_all_province_colors();
-            mechanics::update_pixel_flags_texture();
+            ui::map_view::set_province_colors_size();
+            ui::map_view::update_all_province_colors();
+            ui::map_view::update_pixel_flags_texture();
 
             std::vector<unsigned char> province_ids(4UZ * map_image_.width() * map_image_.height());
 
             for (const auto x : std::views::iota(0U, map_image_.width())) {
                 for (const auto y : std::views::iota(0U, map_image_.height())) {
                     const auto index = (y * map_image_.width() + x) * 4UZ;
-                    const auto id = data_.province_at(map_image_.color(x, y)).id();
+                    const auto id = mechanics::data::province_at(map_image_.color(x, y)).id();
                     province_ids[index + 3UZ] = static_cast<unsigned char>(id % 256U);
                     province_ids[index + 2UZ] = static_cast<unsigned char>(id / 256U % 256U);
                     province_ids[index + 1UZ] = static_cast<unsigned char>(id / 256U / 256U % 256U);
@@ -44,13 +45,13 @@ namespace processing {
                 }
             }
 
-            if (!drawer_.init_sprites(map_image_, province_ids)) {
+            if (!ui::drawing::init_sprites(map_image_, province_ids)) {
                 throw std::runtime_error("Failed to initialize sprites");
             }
 
-            window_.clear_render_funcs();
-            window_.add_render_func([this](sf::RenderWindow &window) { drawer_.draw_map(window); });
-            window_.add_render_func([this](const sf::RenderWindow &window) { drawer_.draw_gui(window); });
+            ui::window::clear_render_funcs();
+            ui::window::add_render_func([](sf::RenderWindow &window) { ui::drawing::draw_map(window); });
+            ui::window::add_render_func([](const sf::RenderWindow &window) { ui::drawing::draw_gui(window); });
         };
 
         load_data();
@@ -61,24 +62,22 @@ namespace processing {
                 sleep(sf::milliseconds(100));
                 continue;
             }
-            data_.tick();
+            mechanics::data::tick();
         }
 
-        window_.stop_event_loop();
+        ui::window::stop_event_loop();
     }
 
     auto simulation::handle_event(const sf::Event &event) -> void {
-        const auto in_gui = [&](const int x, const int y) {
-            const auto gui_area = window_.gui_area();
+        const auto in_gui = [&](const int x, const int y) -> bool {
+            const auto gui_area = ui::window::gui_area();
             return x > gui_area[0UZ] && x < gui_area[2UZ] && y > gui_area[1UZ] && y < gui_area[3UZ];
         };
 
-        if (check_process_thread()) {
-            window_.stop_event_loop();
-        }
+        if (check_process_thread()) { ui::window::stop_event_loop(); }
 
         if (const auto &scroll_data = event.getIf<sf::Event::MouseWheelScrolled>()) {
-            const auto dimensions = window_.window_dimensions();
+            const auto dimensions = ui::window::window_dimensions();
             if (in_gui(scroll_data->position.x,
                 scroll_data->position.y)) { return; }
 
@@ -120,7 +119,7 @@ namespace processing {
                 offset_[1UZ] = static_cast<int>(-(map_image_.height() * zoom_ - dimensions.y));
             }
 
-            drawer_.recalculate_sprite_coords(offset_, zoom_);
+            ui::drawing::recalculate_sprite_coords(offset_, zoom_);
         }
         else if (const auto &release_data = event.getIf<sf::Event::MouseButtonReleased>()) {
             if (release_data->button != sf::Mouse::Button::Left) { return; }
@@ -133,7 +132,7 @@ namespace processing {
                 return;
             }
 
-            if (loaded_) { selected_province_ = hovered_province_; }
+            if (loaded_) { ui::map_view::select_province(*hovered_province_); }
         }
         else if (const auto &press_data = event.getIf<sf::Event::MouseButtonPressed>()) {
             if (press_data->button != sf::Mouse::Button::Left) { return; }
@@ -155,7 +154,7 @@ namespace processing {
 
                 if (const auto j = static_cast<unsigned int>((y - offset_[1UZ]) / zoom_); j < map_image_.height()) {
                     const auto color = map_image_.color(i % map_image_.width(), j);
-                    const auto province = &data_.province_at(color);
+                    const auto province = &mechanics::data::province_at(color);
                     hovered_province_ = province;
                 }
             }
@@ -167,7 +166,7 @@ namespace processing {
             offset_[0UZ] += x - previous_mouse_[0UZ];
             offset_[1UZ] += y - previous_mouse_[1UZ];
 
-            const auto dimensions = window_.window_dimensions();
+            const auto dimensions = ui::window::window_dimensions();
 
             if (offset_[0UZ] > 0) { offset_[0UZ] -= static_cast<int>(map_image_.width() * zoom_); }
             if (offset_[1UZ] > 0) { offset_[1UZ] = 0; }
@@ -181,11 +180,11 @@ namespace processing {
             previous_mouse_[0UZ] = x;
             previous_mouse_[1UZ] = y;
 
-            drawer_.recalculate_sprite_coords(offset_, zoom_);
+            ui::drawing::recalculate_sprite_coords(offset_, zoom_);
         }
         else if (const auto &key_data = event.getIf<sf::Event::KeyPressed>()) {
             switch (key_data->code) {
-                case sf::Keyboard::Key::Escape: { selected_province_ = nullptr; }
+                case sf::Keyboard::Key::Escape: { ui::map_view::unselect_province(); }
                 break;
                 case sf::Keyboard::Key::Space: { paused_ = !paused_; }
                 break;
@@ -195,15 +194,19 @@ namespace processing {
         else if (event.getIf<sf::Event::Closed>()) { open_ = false; }
     }
 
-    auto simulation::start_simulation() -> void {
-        processing_ = std::async(std::launch::async, [this] { this->start_processing(); });
+    auto simulation::loading_text() -> const std::string & { return loading_text_; }
 
-        window_.start_event_loop();
+    auto simulation::start_simulation() -> void {
+        ui::window::init_window();
+
+        processing_ = std::async(std::launch::async, [] { start_processing(); });
+
+        ui::window::start_event_loop();
 
         processing_.wait();
     }
 
-    auto simulation::transform_to_screen_coordinates(std::array<int, 4UZ> &coordinates) const -> void {
+    auto simulation::transform_to_screen_coordinates(std::array<int, 4UZ> &coordinates) -> void {
         coordinates[0UZ] = static_cast<int>(coordinates[0UZ] * zoom_ + offset_[0UZ]);
         coordinates[2UZ] = static_cast<int>(coordinates[2UZ] * zoom_ + offset_[0UZ]);
         if (coordinates[2UZ] < 0) {

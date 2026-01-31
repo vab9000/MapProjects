@@ -1,14 +1,14 @@
 #ifndef MECHANICS_CULTURE
 #define MECHANICS_CULTURE
-#include <di_link.hpp>
 #include <numbered.hpp>
-#include <vector>
+#include <reference.hpp>
+#include <unordered_set>
 
 namespace mechanics {
     class pop;
 
     class culture : public utils::numbered<culture> {
-        std::vector<utils::di_link<culture, pop>> pops_;
+        std::unordered_set<utils::ref<pop>, utils::ref<pop>::hash> pops_;
 
     public:
         culture();
@@ -17,7 +17,9 @@ namespace mechanics {
 
         auto operator=(const culture &other) -> culture & = delete;
 
-        auto new_pop_link() -> utils::di_link<culture, pop> &;
+        auto add_pop(pop &p) -> void;
+
+        auto remove_pop(pop &p) -> void;
     };
 }
 #endif

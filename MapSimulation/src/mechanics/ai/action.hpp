@@ -1,15 +1,16 @@
-#pragma once
+#ifndef MECHANICS_ACTION
+#define MECHANICS_ACTION
 #include <functional>
 #include "action_base.hpp"
 
 namespace mechanics {
     template<typename Self, typename Other>
     class action final : public action_base {
-        std::function<bool(Self &, Other &)> valid_func_;
-        std::function<void(Self &, Other &)> action_func_;
-        std::function<int(Self &, Other &)> weight_func_;
-        Self &s_param_;
-        Other &o_param_;
+        const std::function<bool(Self &, Other &)> valid_func_;
+        const std::function<void(Self &, Other &)> action_func_;
+        const std::function<int(Self &, Other &)> weight_func_;
+        const Self &s_param_;
+        const Other &o_param_;
 
     public:
         action(std::function<bool(Self &, Other &)> &&valid, std::function<void(Self &, Other &)> &&action,
@@ -26,3 +27,4 @@ namespace mechanics {
         explicit operator bool() const override { return valid_func_(s_param_, o_param_); }
     };
 }
+#endif

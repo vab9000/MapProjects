@@ -10,6 +10,9 @@
     <ItemGroup>
       <PackageReference Include="OpenCvSharp4" Version="4.10.0.20241108" />
       <PackageReference Include="OpenCvSharp4.Windows" Version="4.10.0.20241108" />
+      <PackageReference Include="StbImageSharp" Version="2.30.15" />
+      <PackageReference Include="StbImageWriteSharp" Version="1.16.7" />
+      <PackageReference Include="System.Numerics.Vectors" Version="4.6.1" />
     </ItemGroup>
 
     <ItemGroup>

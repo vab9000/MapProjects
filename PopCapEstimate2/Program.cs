@@ -1,104 +1,96 @@
-﻿using System.Collections.Concurrent;
-using OpenCvSharp;
-using PopCapEstimate2;
+﻿using PopCapEstimate2;
 
 var baseMap = new MapImage("images/base.png");
+
+var keyCombinations = new KeyCombination[baseMap.Width, baseMap.Height];
+
+{
+    var koppenMap = new MapImage("images/koppen.png");
+    foreach (var pixel in koppenMap)
+    {
+        ref var key = ref keyCombinations[pixel.First, pixel.Second];
+        key.KoppenKey = koppenMap[pixel.First, pixel.Second];
+    }
+}
+{
+    var soilMap = new MapImage("images/soil.png");
+    foreach (var pixel in soilMap)
+    {
+        ref var key = ref keyCombinations[pixel.First, pixel.Second];
+        key.SoilKey = soilMap[pixel.First, pixel.Second];
+    }
+}
+{
+    var vegetationMap = new MapImage("images/vegetation.png");
+    foreach (var pixel in vegetationMap)
+    {
+        ref var key = ref keyCombinations[pixel.First, pixel.Second];
+        key.VegetationKey = vegetationMap[pixel.First, pixel.Second];
+    }
+}
+
+foreach (var line in File.ReadAllLines("classifications/koppen.csv")[1..])
+{
+    var parts = line.Split(',');
+    var color = (byte.Parse(parts[3]), byte.Parse(parts[2]), byte.Parse(parts[1]));
+    var classification = parts[0];
+    KeyCombination.KoppenTable[color] = classification;
+}
+
+foreach (var line in File.ReadAllLines("classifications/soil.csv")[1..])
+{
+    var parts = line.Split(',');
+    var color = (byte.Parse(parts[3]), byte.Parse(parts[2]), byte.Parse(parts[1]));
+    var classification = parts[0];
+    KeyCombination.SoilTable[color] = classification;
+}
+
+foreach (var line in File.ReadAllLines("classifications/vegetation.csv")[1..])
+{
+    var parts = line.Split(',');
+    var color = (byte.Parse(parts[3]), byte.Parse(parts[2]), byte.Parse(parts[1]));
+    var classification = parts[0];
+    KeyCombination.VegetationTable[color] = classification;
+}
+
+var nullVal = ((byte)0, (byte)0, (byte)0);
+
+Dictionary<KeyCombination, List<int>> table = new();
 var densityMap = new MapImage("images/density.png");
-// var elevationMap = new MapImage("images/elevation.png");
-var koppenMap = new MapImage("images/koppen.png");
-var soilMap = new MapImage("images/soil.png");
-var vegetationMap = new MapImage("images/vegetation.png");
 
-Dictionary<Vec3b, string> koppenTable = new();
+foreach (var pair in baseMap)
 {
-    var koppenCsv = File.ReadAllLines("classifications/koppen.csv");
+    var (x, y) = (pair.First, pair.Second);
 
-    foreach (var line in koppenCsv[1..])
+    if (!baseMap[x, y].Equals(nullVal))
     {
-        var parts = line.Split(',');
-        var color = new Vec3b(byte.Parse(parts[3]), byte.Parse(parts[2]), byte.Parse(parts[1]));
-        var classification = string.Intern(parts[0]);
-        koppenTable[color] = classification;
-    }
-}
-
-Dictionary<Vec3b, string> soilTable = new();
-{
-    var soilCsv = File.ReadAllLines("classifications/soil.csv");
-    foreach (var line in soilCsv[1..])
-    {
-        var parts = line.Split(',');
-        var color = new Vec3b(byte.Parse(parts[3]), byte.Parse(parts[2]), byte.Parse(parts[1]));
-        var classification = string.Intern(parts[0]);
-        soilTable[color] = classification;
-    }
-}
-
-Dictionary<Vec3b, string> vegetationTable = new();
-{
-    var vegetationCsv = File.ReadAllLines("classifications/vegetation.csv");
-    foreach (var line in vegetationCsv[1..])
-    {
-        var parts = line.Split(',');
-        var color = new Vec3b(byte.Parse(parts[3]), byte.Parse(parts[2]), byte.Parse(parts[1]));
-        var classification = string.Intern(parts[0]);
-        vegetationTable[color] = classification;
-    }
-}
-
-var table = new ConcurrentDictionary<KeyCombination, Pair<int, int>>();
-
-Parallel.ForEach(baseMap, (pair) =>
-{
-    var (x, y) = pair;
-    
-    var baseColor = baseMap[x, y];
-
-    if (!baseColor.Equals(new Vec3b(0, 0, 0)))
-    {
-        return;
+        continue;
     }
 
-    var densityColor = densityMap[x, y];
-    // var elevationColor = elevationMap[x, y];
-    var koppenColor = koppenMap[x, y];
-    var soilColor = soilMap[x, y];
-    var vegetationColor = vegetationMap[x, y];
+    var key = keyCombinations[x, y];
 
-    var koppenKey = koppenTable[koppenColor];
-    if (koppenKey.Equals("None"))
+    if (key.KoppenKey.Equals(nullVal))
     {
-        return;
+        continue;
     }
 
-    var soilKey = soilTable[soilColor];
-    if (soilKey.Equals("None"))
-    {
-        return;
-    }
-
-    var vegetationKey = vegetationTable[vegetationColor];
-    if (vegetationKey.Equals("None"))
-    {
-        return;
-    }
-
-    var key = new KeyCombination(koppenKey, soilKey, vegetationKey);
     if (!table.TryGetValue(key, out var value))
     {
-        value = new Pair<int, int>(0, 0);
+        value = [];
         table[key] = value;
     }
 
-    value.First++;
-    value.Second += (densityColor.Item0 + densityColor.Item1 + densityColor.Item2);
-});
+    var densityColor = densityMap[x, y];
 
-var output = new List<string> { "Koppen,Soil,Vegetation,Count,Average" };
+    value.Add(densityColor.Item1 + densityColor.Item2 + densityColor.Item3);
+}
+
+var output = new List<string> { "Koppen,Soil,Vegetation,Count,Average,Deviation" };
 foreach (var (key, value) in table)
 {
-    var average = (double)value.Second / value.First;
-    output.Add($"{key},{value.First},{average}");
+    var average = value.Average();
+    var deviation = Math.Sqrt(value.Average(v => Math.Pow(v - average, 2)));
+    output.Add($"{key},{value.Count},{average},{deviation}");
 }
 
 File.WriteAllLines("output.csv", output);
