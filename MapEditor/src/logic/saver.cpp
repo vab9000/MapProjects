@@ -1,6 +1,6 @@
 #include "saver.hpp"
 #include <functional>
-#include "D:/MapProjects/MapEditor/src/graphics/image.hpp"
+#include "../graphics/image.hpp"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <array>
 #include <cstddef>
