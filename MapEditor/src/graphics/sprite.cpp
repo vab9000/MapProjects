@@ -6,10 +6,10 @@
 #include "image.hpp"
 #include "paletted_texture.hpp"
 #include "shader.hpp"
-#include "texture.hpp"
+#include "texture_base.hpp"
 
 namespace graphics {
-    sprite::sprite(std::shared_ptr<texture> &&texture, std::shared_ptr<shader> &&shader, const space space,
+    sprite::sprite(std::shared_ptr<texture_base> &&texture, std::shared_ptr<shader> &&shader, const space space,
         const dimensions window_dims) : vao_{}, vbo_{}, ebo_{},
         window_dims_{window_dims}, space_{space}, shader_{std::move(shader)}, texture_{std::move(texture)} {
         const std::array bounds = {
@@ -151,7 +151,7 @@ namespace graphics {
     auto sprite::create_paletted(std::shared_ptr<paletted_texture> &&tex, const space space,
         const dimensions window_dims) -> sprite {
         const std::shared_ptr paletted_texture = tex;
-        auto spr = sprite{std::static_pointer_cast<texture>(std::move(tex)), get_paletted_shader(), space, window_dims};
+        auto spr = sprite{std::static_pointer_cast<texture_base>(std::move(tex)), get_paletted_shader(), space, window_dims};
         spr.set_uniform("dim"_zsv, std::array{
             static_cast<unsigned int>(paletted_texture::palette_size),
             static_cast<unsigned int>(paletted_texture::palette_size)
@@ -170,7 +170,7 @@ namespace graphics {
     }
 
     auto sprite::create_from_image(const image &img, const space space, const dimensions window_dims) -> sprite {
-        auto spr = sprite{std::make_shared<texture>(img), get_image_shader(), space, window_dims};
+        auto spr = sprite{std::make_shared<image_texture>(img), get_image_shader(), space, window_dims};
         spr.set_uniform("opacity"_zsv, 1.0F);
         return spr;
     }

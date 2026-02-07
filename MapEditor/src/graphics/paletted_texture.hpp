@@ -2,11 +2,12 @@
 #define MAPEDITOR_PALETTED_TEXTURE_HPP
 #include <array>
 #include <span>
+#include "basic_texture.hpp"
 #include "editable_texture.hpp"
-#include "image.hpp"
+#include "image_texture.hpp"
 
 namespace graphics {
-    class paletted_texture : public editable_texture {
+    class paletted_texture : public editable_texture<basic_texture_type::mono_uint> {
     public:
         static constexpr int palette_size = 16 * 256;
 
@@ -24,16 +25,14 @@ namespace graphics {
 
         [[nodiscard]] auto color(unsigned int index) const -> std::array<unsigned char, 4>;
 
-        [[nodiscard]] auto index(image::dimensions position) const -> unsigned int;
+        [[nodiscard]] auto index(std::array<GLsizei, 2> position) const -> unsigned int;
 
         auto set_color(unsigned int index, std::array<unsigned char, 4> color) -> void;
 
-        auto edit(std::span<const unsigned int> indices, image::dimensions position, int width) -> void;
-
-        [[nodiscard]] auto palette() const -> const editable_texture &;
+        [[nodiscard]] auto palette() const -> const image_texture &;
 
     private:
-        editable_texture palette_;
+        image_texture palette_;
     };
 } // namespace graphics
 

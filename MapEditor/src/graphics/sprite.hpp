@@ -7,7 +7,7 @@
 #include "image.hpp"
 #include "paletted_texture.hpp"
 #include "shader.hpp"
-#include "texture.hpp"
+#include "texture_base.hpp"
 
 namespace graphics {
     class sprite {
@@ -19,7 +19,7 @@ namespace graphics {
             dimensions size;
         };
 
-        sprite(std::shared_ptr<texture> &&texture, std::shared_ptr<shader> &&shader, space space,
+        sprite(std::shared_ptr<texture_base> &&texture, std::shared_ptr<shader> &&shader, space space,
             dimensions window_dims);
 
         sprite(sprite &&other) noexcept;
@@ -57,7 +57,7 @@ namespace graphics {
         dimensions window_dims_;
         space space_;
         std::shared_ptr<shader> shader_;
-        std::shared_ptr<texture> texture_;
+        std::shared_ptr<texture_base> texture_;
 
         auto resize_buffers() const -> void;
     };

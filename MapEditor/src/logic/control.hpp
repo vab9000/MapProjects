@@ -12,7 +12,6 @@
 
 namespace graphics {
     class paletted_texture;
-    class texture;
 } // namespace graphics
 
 namespace logic {

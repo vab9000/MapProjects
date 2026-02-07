@@ -1,5 +1,6 @@
 #include "saver.hpp"
 #include <functional>
+#include "D:/MapProjects/MapEditor/src/graphics/image.hpp"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <array>
 #include <cstddef>
@@ -56,7 +57,7 @@ namespace logic {
 
     static auto save_image(const zstring_view filepath) {
         const auto &canvas = control::canvas();
-        const auto dims = canvas.img().dims();
+        const auto dims = canvas.dims();
         auto data = std::vector<unsigned char>(4UZ * dims.at(0) * dims.at(1));
         for (auto row = 0; row < dims.at(1); ++row) {
             for (auto col = 0; col < dims.at(0); ++col) {
@@ -175,7 +176,7 @@ namespace logic {
 
     auto saver::load_image(const zstring_view filepath) -> void {
         auto &canvas = control::canvas();
-        const auto dims = canvas.img().dims();
+        const auto dims = canvas.dims();
         graphics::image img{filepath};
         std::unordered_map<std::array<unsigned char, 4>, size_t, color_hash> color_to_location;
         for (size_t loc_idx = 0; loc_idx < location::locations_.size(); ++loc_idx) {

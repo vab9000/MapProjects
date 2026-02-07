@@ -91,9 +91,7 @@ namespace logic {
 
             std::vector<unsigned int> indices(count, current_location);
 
-            canvas.edit(indices,
-                {x1, y},
-                count);
+            canvas.edit(indices, {x1, y}, count);
         }
 
         // update sizes once
