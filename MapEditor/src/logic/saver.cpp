@@ -1,5 +1,4 @@
 #include "saver.hpp"
-#include <functional>
 #include "../graphics/image.hpp"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <array>
@@ -165,40 +164,37 @@ namespace logic {
         }
     }
 
-    struct color_hash {
-        auto operator()(const std::array<unsigned char, 4> &color) const -> std::size_t {
-            return std::hash<unsigned int>::operator()(static_cast<unsigned int>(color.at(0)) << 24) |
-                   static_cast<unsigned int>(color.at(1)) << 16 |
-                   static_cast<unsigned int>(color.at(2)) << 8 |
-                   static_cast<unsigned int>(color.at(3));
-        }
-    };
+    static auto color_to_number(const std::span<const unsigned char, 4> color) -> unsigned int {
+        return static_cast<unsigned int>(color[0]) << 24 |
+               static_cast<unsigned int>(color[1]) << 16 |
+               static_cast<unsigned int>(color[2]) << 8 |
+               static_cast<unsigned int>(color[3]);
+    }
 
     auto saver::load_image(const zstring_view filepath) -> void {
         auto &canvas = control::canvas();
         const auto dims = canvas.dims();
         graphics::image img{filepath};
-        std::unordered_map<std::array<unsigned char, 4>, size_t, color_hash> color_to_location;
+        std::unordered_map<unsigned int, size_t> color_to_location;
         for (size_t loc_idx = 0; loc_idx < location::locations_.size(); ++loc_idx) {
             const auto loc_color = location::locations_.at(loc_idx).base_color();
-            color_to_location[loc_color] = loc_idx;
+            color_to_location[color_to_number(loc_color)] = loc_idx;
         }
+        std::vector location_sizes(location::locations_.size(), 0);
         std::vector<unsigned int> data(static_cast<size_t>(dims.at(0) * dims.at(1)));
         for (auto row = 0; row < dims.at(1); ++row) {
             for (auto col = 0; col < dims.at(0); ++col) {
                 const auto color = img.at({col, row});
-                const auto color_array = std::array{
-                    color[0], color[1], color[2], color[3]
-                };
-                const auto loc_index = color_to_location.at(color_array);
-                location::locations_.at(loc_index).size_ += 1;
+                const auto loc_index = color_to_location.at(color_to_number(color));
+                location_sizes.at(loc_index) += 1;
                 data.at(col + row * dims.at(0)) = loc_index;
             }
         }
-        for (const location &loc : location::locations_) {
-            if (loc.size_ == 0) {
-                location::free_locations_.emplace_back(loc.idx_);
-                std::println("Warning: Location '{}' has size 0 and has been marked as free.", loc.idx());
+        for (size_t i = 0; i < location_sizes.size(); ++i) {
+            location::locations_.at(i).size_ = location_sizes.at(i);
+            if (location_sizes.at(i) == 0) {
+                location::free_locations_.emplace_back(i);
+                std::println("Warning: Location '{}' has size 0 and has been marked as free.", i);
             }
         }
         canvas.edit(data, {0, 0}, dims.at(0));

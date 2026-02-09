@@ -39,9 +39,15 @@ namespace graphics {
             glTextureSubImage2D(basic_texture<Type>::id(), 0, position.at(0), position.at(1), width,
                 height, format, type, data.data());
 
-            for (size_t i = 0; i < data.size(); ++i) {
-                const auto pixel_index = (position.at(1) * width + position.at(0)) * values_per_pixel + i;
-                if (pixel_index < data_.size()) { data_.at(pixel_index) = data[i]; }
+            for (size_t i = 0; i < data.size() / values_per_pixel; ++i) {
+                const auto pixel_index = ((i / width + position.at(1)) * width_ + position.at(0) + i % width) * values_per_pixel;
+                if (pixel_index < data_.size()) {
+                    std::copy_n(data.begin() + i, values_per_pixel, data_.begin() + pixel_index);
+                }
+                else {
+                    std::println("Warning: Attempted to edit texture out of bounds at index {} (position: {}, {})",
+                        i, position.at(0) + i % width, position.at(1) + i / width);
+                }
             }
         }
 
