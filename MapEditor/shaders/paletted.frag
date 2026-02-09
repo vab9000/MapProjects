@@ -14,23 +14,16 @@ vec4 color_from_palette(uint index) {
 void main() {
     uint center = texture(tex, tex_coord).r;
 
-    // Texture-space step equivalent to 1 screen pixel
     vec2 dtx = vec2(abs(dFdx(tex_coord.x)), 0.0);
     vec2 dty = vec2(0.0, abs(dFdy(tex_coord.y)));
 
     bool edge = false;
 
-    vec2 offsets[4] = vec2[](
-    -dtx,
-    dtx,
-    -dty,
-    dty
-    );
+    vec2 offsets[4] = vec2[](-dtx, dtx, -dty, dty);
 
     for (int i = 0; i < 4; ++i) {
         vec2 uv = tex_coord + offsets[i];
 
-        // Clamp to valid range
         uv = clamp(uv, vec2(0.0), vec2(0.999999));
 
         uint neighbor = texture(tex, uv).r;
