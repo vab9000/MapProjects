@@ -89,6 +89,7 @@ namespace logic {
         location::locations_.clear();
         location::free_locations_.clear();
         location::current_property_ = location::base_color_index;
+        control::current_location_ = 0;
         control::selected_idx_ = location::base_color_index;
         control::property_value_idx_ = 0;
         const std::filesystem::path folder_path{folder.string()};

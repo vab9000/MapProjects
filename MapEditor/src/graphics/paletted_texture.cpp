@@ -1,6 +1,5 @@
 #include "paletted_texture.hpp"
 #include <array>
-#include <cstddef>
 #include <span>
 #include <glad/glad.h>
 #include "editable_texture.hpp"

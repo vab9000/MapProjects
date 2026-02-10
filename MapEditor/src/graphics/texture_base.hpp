@@ -5,7 +5,7 @@
 namespace graphics {
     class texture_base {
     public:
-        explicit texture_base(const GLuint tex_id);
+        explicit texture_base(GLuint tex_id);
 
         texture_base(texture_base &&other) noexcept;
 

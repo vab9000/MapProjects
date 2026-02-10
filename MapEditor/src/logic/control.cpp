@@ -108,6 +108,7 @@ namespace logic {
         auto spr = std::make_shared<graphics::sprite>(graphics::sprite::create_paletted(std::move(texture),
             {.position = {0, 0}, .size = {static_cast<int>(width), static_cast<int>(height)}},
             {static_cast<int>(width), static_cast<int>(height)}));
+        canvas_sprite_ = spr;
         graphics::window::add_sprite(std::move(spr));
         running_ = true;
         cursors_.at(0) = graphics::window::create_cursor(graphics::image("images/gui.png"_zsv), 0, 0);
@@ -120,8 +121,9 @@ namespace logic {
         location::set_color_change_callback(color_change_callback);
         const auto &current_location = location::new_location();
         current_location_ = current_location.idx();
+        canvas_sprite_.lock()->set_uniform("selected_idx"_zsv, static_cast<unsigned int>(current_location_));
         location::change_size(current_location_, width * height);
-        if (const auto canvas = canvas_.lock()) { canvas->set_color(current_location_, current_location.base_color()); }
+        canvas_.lock()->set_color(current_location_, current_location.base_color());
     }
 
     auto control::end() -> void { running_ = false; }
@@ -173,7 +175,12 @@ namespace logic {
                             location::change_size(canvas->index({canvas_x, canvas_y}), -1);
                             canvas->edit(indices, {canvas_x, canvas_y}, 1);
                         }
-                        else if (mode_ == mode::select) { current_location_ = canvas->index({canvas_x, canvas_y}); }
+                        else if (mode_ == mode::select) {
+                            current_location_ = canvas->index({canvas_x, canvas_y});
+                            if (const auto canvas_spr = canvas_sprite_.lock()) {
+                                canvas_spr->set_uniform("selected_idx"_zsv, static_cast<unsigned int>(current_location_));
+                            }
+                        }
                         else if (mode_ == mode::fill) { fill(canvas_x, canvas_y, *canvas, current_location_); }
                     }
                 }
@@ -214,8 +221,7 @@ namespace logic {
             offset_.at(1) += y_offset;
 
             for (const auto &sprite : graphics::window::sprites()) {
-                const auto pos = sprite->position();
-                sprite->set_position({pos.at(0) + x_offset, pos.at(1) + y_offset});
+                sprite->set_position({static_cast<int>(offset_.at(0)), static_cast<int>(offset_.at(1))});
             }
         }
         else if (dragging_ && mode_ == mode::paint) {
@@ -242,27 +248,21 @@ namespace logic {
     }
 
     auto control::scroll_callback(const double x_offset, const double y_offset) -> void {
-        static std::array<double, 2> sprite_sizes = {width, height};
-        static std::array sprite_positions = {0.0, 0.0};
-
         constexpr auto zoom_factor = 0.1;
         const auto zoom = 1.0 + y_offset * zoom_factor;
         if (zoom == 1.0) { return; }
 
-        sprite_sizes.at(0) *= zoom;
-        sprite_sizes.at(1) *= zoom;
+        sprite_sizes_.at(0) *= zoom;
+        sprite_sizes_.at(1) *= zoom;
 
         offset_.at(0) = last_cursor_pos_.at(0) - (last_cursor_pos_.at(0) - offset_.at(0)) * zoom;
         offset_.at(1) = last_cursor_pos_.at(1) - (last_cursor_pos_.at(1) - offset_.at(1)) * zoom;
 
-        sprite_positions.at(0) = last_cursor_pos_.at(0) - (last_cursor_pos_.at(0) - sprite_positions.at(0)) * zoom;
-        sprite_positions.at(1) = last_cursor_pos_.at(1) - (last_cursor_pos_.at(1) - sprite_positions.at(1)) * zoom;
-
         for (const auto &sprite : graphics::window::sprites()) {
-            sprite->set_position({static_cast<int>(sprite_positions.at(0)), static_cast<int>(sprite_positions.at(1))});
+            sprite->set_position({static_cast<int>(offset_.at(0)), static_cast<int>(offset_.at(1))});
             sprite->set_size({
-                static_cast<int>(sprite_sizes.at(0)),
-                static_cast<int>(sprite_sizes.at(1)),
+                static_cast<int>(sprite_sizes_.at(0)),
+                static_cast<int>(sprite_sizes_.at(1)),
             });
         }
 

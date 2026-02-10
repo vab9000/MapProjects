@@ -66,9 +66,11 @@ namespace logic {
         static inline std::array<double, 2> offset_ = {0, 0};
         static inline auto zoom_ = 1.0;
         static inline std::weak_ptr<graphics::paletted_texture> canvas_ = {};
+        static inline std::weak_ptr<graphics::sprite> canvas_sprite_ = {};
         static inline size_t selected_idx_ = location::base_color_index;
         static inline size_t property_value_idx_ = 0;
         static inline std::vector<image_ref> images_ = {};
+        static inline std::array<double, 2> sprite_sizes_ = {width, height};
     };
 } // namespace logic
 

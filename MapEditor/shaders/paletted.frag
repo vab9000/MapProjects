@@ -6,6 +6,7 @@ layout (location = 0) out vec4 frag_color;
 layout (binding = 0) uniform usampler2D tex;
 layout (binding = 1) uniform sampler2D palette;
 uniform uvec2 dim;
+uniform uint selected_idx;
 
 vec4 color_from_palette(uint index) {
     return texture(palette, vec2(float(index % int(dim.x)) / float(dim.x - 1), float(index / int(dim.x)) / float(dim.y - 1)));
@@ -35,8 +36,14 @@ void main() {
     }
 
     vec3 color = color_from_palette(center).rgb;
-    if (edge)
-    color = vec3(0.0);
+    if (edge) {
+        if (selected_idx == center) {
+            color = vec3(1.0, 1.0, 1.0);
+        }
+        else {
+            color = vec3(0.0);
+        }
+    }
 
     frag_color = vec4(color, 1.0);
 }
