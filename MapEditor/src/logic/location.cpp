@@ -116,6 +116,10 @@ namespace logic {
             loc.property_values_.erase(loc.property_values_.begin() +
                                        static_cast<std::ptrdiff_t>(index));
         }
+        if (current_property_ == index) {
+            current_property_ = base_color_index;
+            if (on_color_change_) { on_color_change_(locations_); }
+        }
     }
 
     auto location::add_property_value(std::string &&name, const std::array<unsigned char, 4> color) -> size_t {
@@ -126,6 +130,18 @@ namespace logic {
     auto location::remove_property_value(const size_t prop_index, const size_t value_index) -> void {
         properties_.at(prop_index).values.erase(
             properties_.at(prop_index).values.begin() + static_cast<std::ptrdiff_t>(value_index));
+        for (auto &loc : locations_) {
+            if (loc.property_values_.at(prop_index) == value_index) {
+                loc.property_values_.at(prop_index) = 0;
+                if (on_color_change_) {
+                    const std::span<const location> locs = std::span{&loc, 1};
+                    on_color_change_(locs);
+                }
+            }
+            else if (loc.property_values_.at(prop_index) > value_index) {
+                --loc.property_values_.at(prop_index);
+            }
+        }
     }
 
     auto location::change_property_color(const size_t prop_index, const size_t value_index,

@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <filesystem>
 #include <format>
 #include <imgui.h>
 #include <limits>
@@ -154,6 +155,14 @@ namespace logic {
             }
             else if (key == GLFW_KEY_S && (mods & GLFW_MOD_CONTROL) != 0) { saver::save("saves/default"_zsv); }
             else if (key == GLFW_KEY_L && (mods & GLFW_MOD_CONTROL) != 0) { saver::load("saves/default"_zsv); }
+            else if (key == GLFW_KEY_D && (mods & GLFW_MOD_CONTROL) != 0) {
+                auto backup_num = 1;
+                std::string backup_name = std::format("saves/backup_{}.png", backup_num);
+                while (std::filesystem::exists(backup_name)) {
+                    backup_name = std::format("saves/backup_{}.png", ++backup_num);
+                }
+                saver::save(zstring_view(backup_name));
+            }
             dragging_ = false;
         }
     }
@@ -178,7 +187,8 @@ namespace logic {
                         else if (mode_ == mode::select) {
                             current_location_ = canvas->index({canvas_x, canvas_y});
                             if (const auto canvas_spr = canvas_sprite_.lock()) {
-                                canvas_spr->set_uniform("selected_idx"_zsv, static_cast<unsigned int>(current_location_));
+                                canvas_spr->set_uniform("selected_idx"_zsv,
+                                    static_cast<unsigned int>(current_location_));
                             }
                         }
                         else if (mode_ == mode::fill) { fill(canvas_x, canvas_y, *canvas, current_location_); }
@@ -297,7 +307,7 @@ namespace logic {
         static std::string property_name;
         static std::array color_data = {0.0F, 0.0F, 0.0F};
         ImGui::InputText("New Property", &property_name);
-        if (ImGui::Button("Add Property")) { location::add_property(std::move(property_name)); }
+        if (ImGui::Button("Add Property") && !property_name.empty()) { location::add_property(std::move(property_name)); }
         if (ImGui::BeginCombo("Properties", selected_idx == location::base_color_index ? "Base Color" :
             location::properties()[selected_idx].name.c_str())) {
             const auto properties = location::properties();
@@ -318,11 +328,19 @@ namespace logic {
                 location::properties()[selected_idx].values.at(property_value_idx).name.c_str())) {
             const auto &prop_values = location::prop(selected_idx).values;
             for (size_t i = 0; i < prop_values.size(); ++i) {
-                if (ImGui::Selectable(prop_values.at(i).name.c_str(), i == property_value_idx)) { property_value_idx = i; }
+                if (ImGui::Selectable(prop_values.at(i).name.c_str(), i == property_value_idx)) {
+                    property_value_idx = i;
+                }
             }
             ImGui::EndCombo();
         }
         if (selected_idx != location::base_color_index) {
+            if (ImGui::Button("Remove Property")) {
+                location::remove_property(selected_idx);
+                location::change_current_property(location::base_color_index);
+                selected_idx = location::base_color_index;
+                property_value_idx = 0;
+            }
             const auto &[color, name] = location::prop_value(selected_idx, property_value_idx);
             color_data = {
                 static_cast<float>(color.at(0)) / max_color_f,
@@ -337,9 +355,13 @@ namespace logic {
                     static_cast<int>(max_color_f)
                 });
             }
+            if (property_value_idx != 0 && ImGui::Button("Remove Value")) {
+                location::remove_property_value(selected_idx, property_value_idx);
+                property_value_idx = 0;
+            }
             static std::string value_name;
             ImGui::InputText("New Value", &value_name);
-            if (ImGui::Button("Add Value")) { location::add_property_value(std::move(value_name), {0, 0, 0, 255}); }
+            if (ImGui::Button("Add Value") && !value_name.empty()) { location::add_property_value(std::move(value_name), {0, 0, 0, 255}); }
         }
     }
 
@@ -386,9 +408,7 @@ namespace logic {
                 std::format("##opacity_{}", iter).c_str(),
                 &opacity,
                 0.0F,
-                1.0F)) {
-                sprite.lock()->set_uniform("opacity"_zsv, opacity);
-            }
+                1.0F)) { sprite.lock()->set_uniform("opacity"_zsv, opacity); }
             iter++;
         }
     }
@@ -412,6 +432,7 @@ namespace logic {
                     current_location_ = current_location.idx();
                     if (const auto canvas = canvas_.lock()) {
                         canvas->set_color(current_location_, current_location.base_color());
+                        canvas_sprite_.lock()->set_uniform("selected_idx"_zsv, static_cast<unsigned int>(current_location_));
                     }
                 }
             }
